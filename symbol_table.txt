@@ -1,0 +1,13 @@
+------------ ------ ------------
+Name         Type   Line Numbers
+------------ ------ -------------
+printf       undef    19   21   23   25 
+matrix       undef     2 
+printmat     undef    20   22   24 
+A            undef     2    6   12   12   12   12   20 
+B            undef     2   16   22 
+X            undef     2   16   24 
+det          undef     3   12   13 
+float        undef     3 
+int          undef     1 
+IA           undef     2    6    7    7    8    8    9    9   13   13   16 
