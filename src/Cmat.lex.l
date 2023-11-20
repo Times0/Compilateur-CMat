@@ -6,10 +6,6 @@
 #include <string.h>
 #include "symbol_table.h" 
 
-#define IDENTIFIER_TYPE 1
-#define MATRIX_TYPE     2
-#define FLOAT_TYPE      4
-
 extern FILE *yyin;
 extern FILE *yyout;
 int lineno = 1;

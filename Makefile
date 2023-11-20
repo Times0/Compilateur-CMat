@@ -1,15 +1,43 @@
-lexer: lex.yy.o symbol_table.o
-	gcc -o $@ $^
+CC ?= gcc
+CFLAGS ?= 
 
-symbol_table.o: symbol_table.c symbol_table.h
-	gcc -c $<
+LDLIBS ?=
 
-lex.yy.c: lexer.l symbol_table.h
-	flex $<
+INCLUDE_PATH = ./include
+
+TARGET = CmatCompiler
+PREFIX = Cmat
+
+SRCDIR = src
+OBJDIR = obj
+BINDIR = bin
+
+SOURCES := $(wildcard $(SRCDIR)/*.c)
+INCLUDES := $(wildcard $(INCLUDE_PATH)/*.h)
+OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+LEXERS := $(wildcard $(SRCDIR)/*.l)
+LEXER_SRCS := $(LEXERS:$(SRCDIR)/%.l=$(SRCDIR)/%.c)
+LEXER_OBJS := $(LEXER_SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+
+$(BINDIR)/$(TARGET): $(OBJECTS) $(LEXER_OBJS)
+	mkdir -p $(BINDIR)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDLIBS)
+	@echo "Linking complete!"
+
+$(LEXER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.l
+	flex -o $@ $<
+
+$(OBJECTS) $(LEXER_OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
+	mkdir -p $(OBJDIR)
+	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH)
+
+
+.PHONY: clean cov
 
 clean:
-	rm -f \
-		lex.yy.o lex.yy.c \
-		main.o main \
-		symbol_table.o \
-		lexer
+	rm -f $(OBJDIR)/*.o
+	rm -f $(OBJDIR)/*.gcda
+	rm -f $(OBJDIR)/*.gcno
+	rm -f $(BINDIR)/$(TARGET)
+	rm -f $(LEXER_SRCS)
+

@@ -1,3 +1,6 @@
+#ifndef SYMBOLTABLE_H
+#define SYMBOLTABLE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,3 +79,5 @@ void hide_scope(); // hide the current scope
 void incr_scope(); // go to next scope
 void symtab_dump(FILE *of); // dump file
 
+
+#endif

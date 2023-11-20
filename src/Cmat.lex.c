@@ -1,5 +1,6 @@
+#line 2 "src/Cmat.lex.c"
 
-#line 3 "lex.yy.c"
+#line 4 "src/Cmat.lex.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -492,16 +493,12 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "lexer.l"
-#line 4 "lexer.l"
+#line 1 "src/Cmat.lex.l"
+#line 4 "src/Cmat.lex.l"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "symbol_table.h" 
-
-#define IDENTIFIER_TYPE 1
-#define MATRIX_TYPE     2
-#define FLOAT_TYPE      4
 
 extern FILE *yyin;
 extern FILE *yyout;
@@ -509,9 +506,9 @@ int lineno = 1;
 
 void ret_print(char *token_type);
 void yyerror(char *);
-#line 513 "lex.yy.c"
+#line 510 "src/Cmat.lex.c"
 
-#line 515 "lex.yy.c"
+#line 512 "src/Cmat.lex.c"
 
 #define INITIAL 0
 #define ML_COMMENT 1
@@ -730,10 +727,10 @@ YY_DECL
 		}
 
 	{
-#line 28 "lexer.l"
+#line 24 "src/Cmat.lex.l"
 
 
-#line 737 "lex.yy.c"
+#line 734 "src/Cmat.lex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -792,195 +789,195 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 30 "lexer.l"
+#line 26 "src/Cmat.lex.l"
 { BEGIN(ML_COMMENT); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 31 "lexer.l"
+#line 27 "src/Cmat.lex.l"
 { BEGIN(INITIAL); lineno++; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 32 "lexer.l"
+#line 28 "src/Cmat.lex.l"
 { /* consume anything inside multi-line comments */ }
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 33 "lexer.l"
+#line 29 "src/Cmat.lex.l"
 { lineno++; /* count lines inside multi-line comments */ }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 35 "lexer.l"
+#line 31 "src/Cmat.lex.l"
 { BEGIN(SL_COMMENT); }
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 36 "lexer.l"
+#line 32 "src/Cmat.lex.l"
 { BEGIN(INITIAL); lineno++; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 37 "lexer.l"
+#line 33 "src/Cmat.lex.l"
 { /* consume anything inside single-line comments */ }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 40 "lexer.l"
+#line 36 "src/Cmat.lex.l"
 { ret_print("KEYWORD_IF"); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 41 "lexer.l"
+#line 37 "src/Cmat.lex.l"
 { ret_print("KEYWORD_ELSE"); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 42 "lexer.l"
+#line 38 "src/Cmat.lex.l"
 { ret_print("KEYWORD_WHILE"); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 43 "lexer.l"
+#line 39 "src/Cmat.lex.l"
 { ret_print("KEYWORD_FOR"); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 44 "lexer.l"
+#line 40 "src/Cmat.lex.l"
 { ret_print("KEYWORD_RETURN"); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 45 "lexer.l"
+#line 41 "src/Cmat.lex.l"
 { ret_print("KEYWORD_MAIN"); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 49 "lexer.l"
+#line 45 "src/Cmat.lex.l"
 { insert(yytext, strlen(yytext), UNDEF, lineno);
                   ret_print("IDENTIFIER"); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 53 "lexer.l"
+#line 49 "src/Cmat.lex.l"
 { ret_print("INTEGER_CONST"); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 54 "lexer.l"
+#line 50 "src/Cmat.lex.l"
 { ret_print("FLOAT_CONST"); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 56 "lexer.l"
+#line 52 "src/Cmat.lex.l"
 { ret_print("ADD_OP"); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 57 "lexer.l"
+#line 53 "src/Cmat.lex.l"
 { ret_print("MUL_OP"); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 58 "lexer.l"
+#line 54 "src/Cmat.lex.l"
 { ret_print("ASSIGN_OP"); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 59 "lexer.l"
+#line 55 "src/Cmat.lex.l"
 { ret_print("EQ_OP"); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 60 "lexer.l"
+#line 56 "src/Cmat.lex.l"
 { ret_print("REL_OP"); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 61 "lexer.l"
+#line 57 "src/Cmat.lex.l"
 { ret_print("LOG_OP"); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 62 "lexer.l"
+#line 58 "src/Cmat.lex.l"
 { ret_print("NOT_OP"); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 64 "lexer.l"
+#line 60 "src/Cmat.lex.l"
 { ret_print("SEMI"); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 65 "lexer.l"
+#line 61 "src/Cmat.lex.l"
 { ret_print("COMMA"); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 66 "lexer.l"
+#line 62 "src/Cmat.lex.l"
 { ret_print("LPAREN"); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 67 "lexer.l"
+#line 63 "src/Cmat.lex.l"
 { ret_print("RPAREN"); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 68 "lexer.l"
+#line 64 "src/Cmat.lex.l"
 { ret_print("LBRACK"); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 69 "lexer.l"
+#line 65 "src/Cmat.lex.l"
 { ret_print("RBRACK"); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 70 "lexer.l"
+#line 66 "src/Cmat.lex.l"
 { ret_print("LBRACE"); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 71 "lexer.l"
+#line 67 "src/Cmat.lex.l"
 { ret_print("RBRACE"); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 72 "lexer.l"
+#line 68 "src/Cmat.lex.l"
 { ret_print("TRANSPOSE_OP"); }
 	YY_BREAK
 case 33:
 /* rule 33 can match eol */
 YY_RULE_SETUP
-#line 73 "lexer.l"
+#line 69 "src/Cmat.lex.l"
 { ret_print("STRING_LITERAL"); }
 	YY_BREAK
 case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
-#line 75 "lexer.l"
+#line 71 "src/Cmat.lex.l"
 { lineno++; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 76 "lexer.l"
+#line 72 "src/Cmat.lex.l"
 { /* ignore whitespace */ }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 78 "lexer.l"
+#line 74 "src/Cmat.lex.l"
 { yyerror("Unrecognized character"); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 80 "lexer.l"
+#line 76 "src/Cmat.lex.l"
 ECHO;
 	YY_BREAK
-#line 984 "lex.yy.c"
+#line 981 "src/Cmat.lex.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(ML_COMMENT):
 case YY_STATE_EOF(SL_COMMENT):
@@ -1987,7 +1984,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 80 "lexer.l"
+#line 76 "src/Cmat.lex.l"
 
 
 void ret_print(char *token_type) {
