@@ -1,4 +1,5 @@
 #include "symbol_table.h"
+#include "tokens.h"
 #include <stdio.h>
 #include <stdlib.h>
 
