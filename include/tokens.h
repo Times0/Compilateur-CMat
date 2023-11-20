@@ -9,4 +9,3 @@
 /* how parameter is passed */
 #define BY_VALUE 1
 #define BY_REFER 2
-
