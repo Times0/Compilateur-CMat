@@ -29,8 +29,7 @@ $(LEXER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.l
 
 $(OBJECTS) $(LEXER_OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	mkdir -p $(OBJDIR)
-	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH)
-
+	$(CC) -o $@ -c $< $(CFLAGS) -I $(INCLUDE_PATH)
 
 .PHONY: clean cov
 

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symbol_table.h" 
+#include "tokens.h"
 
 extern FILE *yyin;
 extern FILE *yyout;
@@ -105,8 +106,6 @@ int main(int argc, char **argv) {
     }
 
     symtab_dump(yyout);
-
     if (yyout != stdout) fclose(yyout);
-    
     return 0;
 }
