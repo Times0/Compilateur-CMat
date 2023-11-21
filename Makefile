@@ -4,8 +4,8 @@ LDLIBS ?=
 
 INCLUDE_PATH = ./include
 
-TARGET = CmatCompiler
-TARGET_TEST = CmatTestVersion
+TARGET = cmat
+TARGET_TEST = cmat_test_version
 PREFIX = Cmat
 
 SRCDIR = src
