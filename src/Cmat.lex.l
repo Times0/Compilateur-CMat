@@ -41,6 +41,10 @@ STRING  \"([^\\\"]|\\.)*\"
 "return"        { ret_print("KEYWORD_RETURN"); }
 "main"          { ret_print("KEYWORD_MAIN"); }
 
+"int"          { ret_print("KEYWORD_INT"); }
+"float"        { ret_print("KEYWORD_FLOAT"); }
+"void"         { ret_print("KEYWORD_VOID"); }
+
 
 
 {ID}            { insert(yytext, strlen(yytext), UNDEF, lineno);
