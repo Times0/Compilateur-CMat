@@ -1,5 +1,6 @@
 bin/
 obj/
+src/Cmat.*.(l|y)
 .vscode/
 *.txt
 
