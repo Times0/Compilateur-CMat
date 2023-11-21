@@ -2,6 +2,7 @@ bin/
 obj/
 src/cmat.*.c
 include/cmat.*.h
+src/cmat.*.c
 .vscode/
 *.txt
 
