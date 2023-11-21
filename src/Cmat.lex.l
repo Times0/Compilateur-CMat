@@ -69,15 +69,20 @@ STRING  \"([^\\\"]|\\.)*\"
 "~"             { ret_print("TRANSPOSE_OP"); }
 {STRING}        { ret_print("STRING_LITERAL"); }
 
-\n              { lineno++; }
+\n              { lineno++; ret_print("\n"); }
 [ \t]+          { /* ignore whitespace */ }
-
 .               { yyerror("Unrecognized character"); }
-
 %%
 
 void ret_print(char *token_type) {
-    printf("%s at line %d: %s\n", token_type, lineno, yytext);
+    // printf("%s at line %d: %s\n", token_type, lineno, yytext);
+    #ifdef TEST
+    if (strcmp(token_type, "\n") == 0) {
+        fprintf(stdout, "\n");
+    } else {
+        fprintf(stdout, "%s:<%s> ", token_type, yytext);
+    }
+    #endif
 }
 
 void yyerror(char *message) {
@@ -106,6 +111,7 @@ int main(int argc, char **argv) {
     }
 
     symtab_dump(yyout);
+    // printf("Symbol table dumped to symbol_table.txt\n");
     if (yyout != stdout) fclose(yyout);
     return 0;
 }

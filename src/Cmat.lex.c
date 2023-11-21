@@ -961,7 +961,7 @@ case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
 #line 72 "src/Cmat.lex.l"
-{ lineno++; }
+{ lineno++; ret_print("\n"); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
@@ -970,12 +970,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 75 "src/Cmat.lex.l"
+#line 74 "src/Cmat.lex.l"
 { yyerror("Unrecognized character"); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 77 "src/Cmat.lex.l"
+#line 75 "src/Cmat.lex.l"
 ECHO;
 	YY_BREAK
 #line 982 "src/Cmat.lex.c"
@@ -1985,11 +1985,18 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 77 "src/Cmat.lex.l"
+#line 75 "src/Cmat.lex.l"
 
 
 void ret_print(char *token_type) {
-    printf("%s at line %d: %s\n", token_type, lineno, yytext);
+    // printf("%s at line %d: %s\n", token_type, lineno, yytext);
+    #ifdef TEST
+    if (strcmp(token_type, "\n") == 0) {
+        fprintf(stdout, "\n");
+    } else {
+        fprintf(stdout, "%s:<%s> ", token_type, yytext);
+    }
+    #endif
 }
 
 void yyerror(char *message) {
@@ -2018,6 +2025,7 @@ int main(int argc, char **argv) {
     }
 
     symtab_dump(yyout);
+    // printf("Symbol table dumped to symbol_table.txt\n");
     if (yyout != stdout) fclose(yyout);
     return 0;
 }
