@@ -2005,7 +2005,7 @@ void yyerror(char *message) {
 }
 
 int main(int argc, char **argv) {
-    init_hash_table(); // Initialisez la table des symboles
+    init_hash_table(); // Initialiser la table des symboles
 
     if (argc > 1) {
         if (!(yyin = fopen(argv[1], "r"))) {
@@ -2026,7 +2026,8 @@ int main(int argc, char **argv) {
 
     symtab_dump(yyout);
     // printf("Symbol table dumped to symbol_table.txt\n");
-    if (yyout != stdout) fclose(yyout);
+    if (yyout != stdout)
+        fclose(yyout);
     return 0;
 }
 

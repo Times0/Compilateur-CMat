@@ -1,6 +1,5 @@
 CC ?= gcc
-CFLAGS ?= 
-
+CFLAGS ?=
 LDLIBS ?=
 
 INCLUDE_PATH = ./include
@@ -19,30 +18,22 @@ LEXERS := $(wildcard $(SRCDIR)/*.l)
 LEXER_SRCS := $(LEXERS:$(SRCDIR)/%.l=$(SRCDIR)/%.c)
 LEXER_OBJS := $(LEXER_SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 PARSERS := $(wildcard $(SRCDIR)/*.y)
-PARSER_SRCS := $(PARSERS:$(SRCDIR)/%.l=$(SRCDIR)/%.c)
+PARSER_SRCS := $(PARSERS:$(SRCDIR)/%.y=$(SRCDIR)/%.c)
 PARSER_OBJS := $(PARSER_SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
+TARGET_OBJ := $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
 
 .PHONY: all tests
 
-
-
-
-
 all: $(BINDIR)/$(TARGET)
 
-tests : CFLAGS += -DTEST
-tests : $(BINDIR)/cmat_test_version
+tests: CFLAGS += -DTEST
+tests: $(BINDIR)/cmat_test_version
 
-$(BINDIR)/$(TARGET): $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
+$(BINDIR)/$(TARGET) $(BINDIR)/cmat_test_version: $(TARGET_OBJ)
 	mkdir -p $(BINDIR)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDLIBS)
 	@echo "Linking complete!"
-
-$(BINDIR)/cmat_test_version: $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
-	mkdir -p $(BINDIR)
-	$(CC) -o $@ $^ $(CFLAGS) $(LDLIBS)
-	@echo "Linking complete! (test version)"
 
 $(LEXER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.l
 	flex -o $@ $<
@@ -50,17 +41,13 @@ $(LEXER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.l
 $(PARSER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.y
 	bison -o $@ $<
 
-$(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
+$(TARGET_OBJ): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	mkdir -p $(OBJDIR)
 	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH)
-
-
 
 clean:
 	rm -f $(OBJDIR)/*.o
 	rm -f $(OBJDIR)/*.gcda
 	rm -f $(OBJDIR)/*.gcno
-	rm -f $(BINDIR)/$(TARGET)
-	rm -f $(LEXER_SRCS)
-	rm -f $(PARSER_SRCS)
-
+	rm -f $(BINDIR)/$(TARGET) $(BINDIR)/cmat_test_version
+	rm -f $(LEXER_SRCS) $(PARSER_SRCS)
