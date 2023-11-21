@@ -1,0 +1,9 @@
+float a = 1.2;
+int b = 5006457;
+
+/*
+Les commentaires sont ignorés par le lexer
+*/
+
+float c = 512;
+int d = 1.2; // Pas de soucis pour le lexer
