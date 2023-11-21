@@ -6,7 +6,7 @@ INCLUDE_PATH = ./include
 
 TARGET = cmat
 TARGET_TEST = cmat_test_version
-PREFIX = Cmat
+PREFIX = cmat
 
 SRCDIR = src
 OBJDIR = obj

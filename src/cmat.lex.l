@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../include/symbol_table.h"
-#include "../include/Cmat.tab.h"
+#include "../include/cmat.tab.h"
 
 extern FILE *yyin;
 extern FILE *yyout;

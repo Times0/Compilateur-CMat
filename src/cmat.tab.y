@@ -1,4 +1,4 @@
-%define api.header.include {"../include/Cmat.tab.h"}
+%define api.header.include {"../include/cmat.tab.h"}
 
 %{
 #include <stdio.h>
