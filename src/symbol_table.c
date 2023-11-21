@@ -1,7 +1,7 @@
 #include "symbol_table.h"
-#include "tokens.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "../include/Cmat.tab.h"
 
 int current_scope = 0;
 

@@ -1,8 +1,9 @@
+%define api.header.include {"../include/Cmat.tab.h"}
+
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "tokens.h"
 
 extern int yylex();
 extern int yyerror(char *s);
@@ -15,7 +16,7 @@ typedef struct table_elem{
 
 %}
 
-%token ID ELEMENT UNION INTER COMP DIFF AFF '{' '}' '\n' ','
+%token UNDEF INT_TYPE FLOAT_TYPE STRING MATRIX_TYPE FUNCTION_TYPE BY_VALUE BY_REFER /*useless tokens*/ID ELEMENT UNION INTER COMP DIFF AFF '{' '}' '\n' ','
 
 %start liste
 

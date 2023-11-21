@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "symbol_table.h" 
-#include "tokens.h"
+#include "../include/symbol_table.h"
+#include "../include/Cmat.tab.h"
 
 extern FILE *yyin;
 extern FILE *yyout;
