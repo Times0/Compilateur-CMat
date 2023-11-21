@@ -1,10 +1,11 @@
 CC ?= gcc
-CFLAGS ?=
+CFLAGS ?= -Werror
 LDLIBS ?=
 
 INCLUDE_PATH = ./include
 
 TARGET = CmatCompiler
+TARGET_TEST = CmatTestVersion
 PREFIX = Cmat
 
 SRCDIR = src
@@ -31,9 +32,9 @@ TARGET_OBJ := $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
 all: $(BINDIR)/$(TARGET)
 
 tests: CFLAGS += -DTEST
-tests: check_tools $(BINDIR)/cmat_test_version
+tests: check_tools $(BINDIR)/$(TARGET_TEST)
 
-$(BINDIR)/$(TARGET) $(BINDIR)/cmat_test_version: $(TARGET_OBJ) 
+$(BINDIR)/$(TARGET) $(BINDIR)/$(TARGET_TEST): $(TARGET_OBJ) 
 	mkdir -p $(BINDIR)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDLIBS)
 	@echo "Linking complete!"
@@ -52,9 +53,9 @@ clean:
 	rm -f $(OBJDIR)/*.o
 	rm -f $(OBJDIR)/*.gcda
 	rm -f $(OBJDIR)/*.gcno
-	rm -f $(BINDIR)/$(TARGET) $(BINDIR)/cmat_test_version
+	rm -f $(BINDIR)/$(TARGET) $(BINDIR)/$(TARGET_TEST)
 	rm -f $(LEXER_SRCS) $(PARSER_SRCS)
-	rm -f $(INCLUDE_PATH)/Cmat.*.h
+	rm -f $(INCLUDE_PATH)/$(PREFIX).*.h
 
 # Check if Flex and Bison are installed
 check_tools:
