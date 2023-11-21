@@ -36,10 +36,12 @@ $(BINDIR)/$(TARGET) $(BINDIR)/cmat_test_version: $(TARGET_OBJ)
 	@echo "Linking complete!"
 
 $(LEXER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.l
-	flex -o $@ $<
+	flex --header-file=$(INCLUDE_PATH)/$*.h -o $@ $<
 
 $(PARSER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.y
-	bison -o $@ $<
+	bison -o $@ -d $<
+	mv $(SRCDIR)/$*.h $(INCLUDE_PATH)/$*.h
+
 
 $(TARGET_OBJ): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	mkdir -p $(OBJDIR)
@@ -51,3 +53,4 @@ clean:
 	rm -f $(OBJDIR)/*.gcno
 	rm -f $(BINDIR)/$(TARGET) $(BINDIR)/cmat_test_version
 	rm -f $(LEXER_SRCS) $(PARSER_SRCS)
+	rm -f $(INCLUDE_PATH)/Cmat.*.h

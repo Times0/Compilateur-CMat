@@ -67,11 +67,12 @@
 
 
 /* First part of user prologue.  */
-#line 1 "src/Cmat.bison.y"
+#line 1 "src/Cmat.tab.y"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "tokens.h"
 
 extern int yylex();
 extern int yyerror(char *s);
@@ -83,7 +84,7 @@ typedef struct table_elem{
 }table_elem;
 
 
-#line 87 "src/Cmat.bison.c"
+#line 88 "src/Cmat.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -106,50 +107,7 @@ typedef struct table_elem{
 #  endif
 # endif
 
-
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
-
-/* Token kinds.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    YYEMPTY = -2,
-    YYEOF = 0,                     /* "end of file"  */
-    YYerror = 256,                 /* error  */
-    YYUNDEF = 257,                 /* "invalid token"  */
-    ID = 258,                      /* ID  */
-    ELEMENT = 259,                 /* ELEMENT  */
-    UNION = 260,                   /* UNION  */
-    INTER = 261,                   /* INTER  */
-    COMP = 262,                    /* COMP  */
-    DIFF = 263,                    /* DIFF  */
-    AFF = 264                      /* AFF  */
-  };
-  typedef enum yytokentype yytoken_kind_t;
-#endif
-
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
-#endif
-
-
-extern YYSTYPE yylval;
-
-
-int yyparse (void);
-
-
-
+#include "Cmat.tab.h"
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -563,8 +521,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    23,    23,    24,    27,    28,    30,    31,    32,    34,
-      35,    36,    38,    40,    41,    43,    44,    46,    47
+       0,    24,    24,    25,    28,    29,    31,    32,    33,    35,
+      36,    37,    39,    41,    42,    44,    45,    47,    48
 };
 #endif
 
@@ -1133,7 +1091,7 @@ yyreduce:
   switch (yyn)
     {
 
-#line 1137 "src/Cmat.bison.c"
+#line 1095 "src/Cmat.tab.c"
 
       default: break;
     }
@@ -1326,4 +1284,4 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 48 "src/Cmat.bison.y"
+#line 49 "src/Cmat.tab.y"
