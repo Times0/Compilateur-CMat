@@ -22,7 +22,6 @@ LEXER_OBJS := $(LEXER_SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 PARSERS := $(wildcard $(SRCDIR)/*.y)
 PARSER_SRCS := $(PARSERS:$(SRCDIR)/%.y=$(SRCDIR)/%.c)
-PARSER_HEADERS := $(PARSERS:$(SRCDIR)/%.y=$(INCLUDE_PATH)/%.h)
 PARSER_OBJS := $(PARSER_SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 TARGET_OBJ := $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
@@ -42,10 +41,10 @@ $(BINDIR)/$(TARGET) $(BINDIR)/$(TARGET_TEST): $(TARGET_OBJ)
 $(LEXER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.l
 	flex --header-file=$(INCLUDE_PATH)/$*.h -o $@ $<
 
-$(PARSER_SRCS) $(PARSER_HEADERS): $(SRCDIR)/%.c : $(SRCDIR)/%.y
+$(PARSER_SRCS) : $(SRCDIR)/%.c : $(SRCDIR)/%.y
 	bison -o $@ --header=$(INCLUDE_PATH)/$*.h $<
 
-$(TARGET_OBJ): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(LEXER_SRCS) $(PARSER_SRCS) 
+$(TARGET_OBJ): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(PARSER_SRCS) 
 	mkdir -p $(OBJDIR)
 	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH)
 
