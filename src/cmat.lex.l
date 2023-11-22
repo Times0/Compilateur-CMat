@@ -80,7 +80,7 @@ STRING  \"([^\\\"]|\\.)*\"
 {STRING}            { ret_print("STRING_LITERAL");  return STRING;}
 
 \n                  { lineno++; ret_print("\n");}
-[ \t]+              { /* ignore whitespace */ }
+[ \t]+              { /* ignore whitespaces */ }
 .                   { yyerror("Unrecognized character"); }
 %%
 
