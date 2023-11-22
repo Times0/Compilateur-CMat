@@ -47,10 +47,8 @@ STRING  \"([^\\\"]|\\.)*\"
 "void"          { ret_print("KEYWORD_VOID");    return VOID;}
 
 
-
 {ID}                { insert(yytext, strlen(yytext), UNDEF, lineno);
                         ret_print("IDENTIFIER"); return ID;}
-
 
 {DIGIT}+            { ret_print("INTEGER_CONST");   return INT_CONST;}
 {DIGIT}+"."{DIGIT}* { ret_print("FLOAT_CONST");     return FLOAT_CONST;}
@@ -84,6 +82,7 @@ STRING  \"([^\\\"]|\\.)*\"
 .                   { yyerror("Unrecognized character"); }
 %%
 
+// For tests only
 void ret_print(char *token_type) {
     // printf("%s at line %d: %s\n", token_type, lineno, yytext);
     #ifdef TEST
@@ -101,7 +100,7 @@ void yyerror(char *message) {
 }
 
 int main(int argc, char **argv) {
-    init_hash_table(); // Initialiser la table des symboles
+    init_hash_table();
 
     if (argc > 1) {
         if (!(yyin = fopen(argv[1], "r"))) {
