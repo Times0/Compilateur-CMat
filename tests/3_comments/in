@@ -1,0 +1,12 @@
+int main{
+    // This is a comment
+    int a = 12
+    /*
+    This is a multiline comment
+    where we can write anything and it will be ignored by the compiler
+    int b = 13
+    matrix mat = [1,2,3;4,5,6;7,8,9]
+    yourmom = 42.69
+    */
+   return 0; // This is a comment too
+}
