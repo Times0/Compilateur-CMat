@@ -9,35 +9,35 @@ extern int yylex();
 extern int yyerror(char *s);
 %}
 
-%token IF ELSE WHILE FOR RETURN MAIN INT FLOAT VOID ID INT_CONST FLOAT_CONST '+' '-' '*' '/' '=' EQ NEQ LT LE GT GE AND OR '!' ';' ',' '(' ')' '[' ']' '{' '}' '~' STRING '\n' UNDEF MATRIX FUNCTION_TYPE BY_VALUE BY_REFER
+%token IF ELSE WHILE FOR RETURN MAIN INT FLOAT MATRIX VOID ID INT_CONST FLOAT_CONST '+' '-' '*' '/' '=' EQ NEQ LT LE GT GE AND OR '!' ';' ',' '(' ')' '[' ']' '{' '}' '~' STRING '\n' UNDEF FUNCTION_TYPE BY_VALUE BY_REFER
 
-%start liste
+%start liste_id // temporaire
 
 %%
+  // peut etre eclaté, genere par ia
 
-  liste : liste instruction '\n'                
-        | %empty
-        
+  type : INT
+       | FLOAT
+       | MATRIX
 
-  instruction : ID '=' expression               
-              | ID                              
+  type_fonction : type
+                | VOID
 
-  expression : operande                         
-             | operande operateur2 operande     
-             | operateur1 operande              
+  liste_type : type
+              | type ',' liste_type
 
-  operateur2 : OR                           
-             | AND                           
-             | '~'                            
+  liste_parametres : liste_type ID
+                   | liste_type ID ',' liste_parametres
+                   | %empty
 
-  operateur1 : EQ                            
+  liste_id : ID
+           | ID ',' liste_id
 
-  operande : ID                                 
-           | ensemble             
+  liste_declarations : declaration
+                     | declaration liste_declarations
 
-  ensemble : '{' '}'                            
-           | '{' liste-elements '}'             
-
-  liste-elements : INT_CONST                      
-                 | INT_CONST ',' liste-elements 
+  declaration : type ID ';'
+              | type ID '[' INT_CONST ']' ';'
+              | type ID '[' INT_CONST ']' '[' INT_CONST ']' ';'
+                          
 %%

@@ -27,6 +27,7 @@ void insert(char *name, int len, int type, int lineno)
 	unsigned int hashval = hash(name);
 	list_t *l = hash_table[hashval];
 
+	// maybe nul
 	while ((l != NULL) && (strcmp(name, l->st_name) != 0))
 		l = l->next;
 

@@ -29,9 +29,9 @@ STRING  \"([^\\\"]|\\.)*\"
 <ML_COMMENT>.       { /* consume anything inside multi-line comments */ }
 <ML_COMMENT>\n      { lineno++; /* count lines inside multi-line comments */ }
 
-"//"            { BEGIN(SL_COMMENT); }
-<SL_COMMENT>\n  { BEGIN(INITIAL); lineno++; }
-<SL_COMMENT>.   { /* consume anything inside single-line comments */ }
+"//"                { BEGIN(SL_COMMENT); }
+<SL_COMMENT>\n      { BEGIN(INITIAL); lineno++; }
+<SL_COMMENT>.       { /* consume anything inside single-line comments */ }
 
 
 "if"            { ret_print("KEYWORD_IF");      return IF;}
@@ -43,37 +43,43 @@ STRING  \"([^\\\"]|\\.)*\"
 
 "int"           { ret_print("KEYWORD_INT");     return INT;}
 "float"         { ret_print("KEYWORD_FLOAT");   return FLOAT;}
+"matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX;}
 "void"          { ret_print("KEYWORD_VOID");    return VOID;}
 
 
 
-{ID}            { insert(yytext, strlen(yytext), UNDEF, lineno);
-                  ret_print("IDENTIFIER"); return ID;}
+{ID}                { insert(yytext, strlen(yytext), UNDEF, lineno);
+                        ret_print("IDENTIFIER"); return ID;}
 
 
-{DIGIT}+            { ret_print("INTEGER_CONST"); return INT_CONST;}
-{DIGIT}+"."{DIGIT}* { ret_print("FLOAT_CONST"); return FLOAT_CONST;}
+{DIGIT}+            { ret_print("INTEGER_CONST");   return INT_CONST;}
+{DIGIT}+"."{DIGIT}* { ret_print("FLOAT_CONST");     return FLOAT_CONST;}
 
-"+"|"-"             { ret_print("ADD_OP"); return yytext[0];}
-"*"|"/"             { ret_print("MUL_OP"); return yytext[0];}
-"="                 { ret_print("ASSIGN_OP"); return yytext[0];}
-"=="|"!="           { ret_print("EQ_OP"); }
-"<"|"<="|">"|">="   { ret_print("REL_OP"); }
-"&&"|"||"           { ret_print("LOG_OP"); }
-"!"                 { ret_print("NOT_OP"); return yytext[0];}
+"+"|"-"             { ret_print("ADD_OP");          return yytext[0];}
+"*"|"/"             { ret_print("MUL_OP");          return yytext[0];}
+"="                 { ret_print("ASSIGN_OP");       return yytext[0];}
+"=="                { ret_print("EQ_OP");           return EQ;}
+"!="                { ret_print("NEQ_OP");          return NEQ;}
+"<"                 { ret_print("REL_OP");          return LT;}
+"<="                { ret_print("REL_OP");          return LE;}
+">"                 { ret_print("REL_OP");          return GT;}
+">="                { ret_print("REL_OP");          return GE;}
+"&&"                { ret_print("LOG_OP");          return AND;}
+"||"                { ret_print("LOG_OP");          return OR;}
+"!"                 { ret_print("NOT_OP");          return yytext[0];}
 
-";"                 { ret_print("SEMI"); return yytext[0];}
-","                 { ret_print("COMMA"); return yytext[0];}
-"("                 { ret_print("LPAREN"); return yytext[0];}
-")"                 { ret_print("RPAREN"); return yytext[0];}
-"["                 { ret_print("LBRACK"); return yytext[0];}
-"]"                 { ret_print("RBRACK"); return yytext[0];}
-"{"                 { ret_print("LBRACE"); return yytext[0];}
-"}"                 { ret_print("RBRACE"); return yytext[0];}
-"~"                 { ret_print("TRANSPOSE_OP"); return yytext[0];}
-{STRING}            { ret_print("STRING_LITERAL"); }
+";"                 { ret_print("SEMI");            return yytext[0];}
+","                 { ret_print("COMMA");           return yytext[0];}
+"("                 { ret_print("LPAREN");          return yytext[0];}
+")"                 { ret_print("RPAREN");          return yytext[0];}
+"["                 { ret_print("LBRACK");          return yytext[0];}
+"]"                 { ret_print("RBRACK");          return yytext[0];}
+"{"                 { ret_print("LBRACE");          return yytext[0];}
+"}"                 { ret_print("RBRACE");          return yytext[0];}
+"~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
+{STRING}            { ret_print("STRING_LITERAL");  return STRING;}
 
-\n                  { lineno++; ret_print("\n"); return yytext[0];}
+\n                  { lineno++; ret_print("\n");    return yytext[0];}
 [ \t]+              { /* ignore whitespace */ }
 .                   { yyerror("Unrecognized character"); }
 %%
@@ -104,12 +110,16 @@ int main(int argc, char **argv) {
         }
     }
 
-    yylex();
+    int token = yylex();
+    while(token)
+    {
+        token = yylex();   
+    }
 
     if (yyin != stdin) fclose(yyin);
 
     // Afficher la table des symboles
-    if (!(yyout = fopen("symbol_table.txt", "w"))) {
+    if (!(yyout = fopen("symbol_table.txt", "w+"))) {
         perror("symbol_table.txt");
         return 1;
     }
