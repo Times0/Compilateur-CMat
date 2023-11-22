@@ -7,16 +7,9 @@
 
 extern int yylex();
 extern int yyerror(char *s);
-
-// element de la table des symboles
-typedef struct table_elem{
-  char nom;
-  uint32_t value;
-}table_elem;
-
 %}
 
-%token UNDEF INT_TYPE FLOAT_TYPE STRING MATRIX_TYPE FUNCTION_TYPE BY_VALUE BY_REFER /*useless tokens*/ID ELEMENT UNION INTER COMP DIFF AFF '{' '}' '\n' ','
+%token IF ELSE WHILE FOR RETURN MAIN INT FLOAT VOID ID INT_CONST FLOAT_CONST '+' '-' '*' '/' '=' EQ NEQ LT LE GT GE AND OR '!' ';' ',' '(' ')' '[' ']' '{' '}' '~' STRING '\n' UNDEF MATRIX FUNCTION_TYPE BY_VALUE BY_REFER
 
 %start liste
 
@@ -26,18 +19,18 @@ typedef struct table_elem{
         | %empty
         
 
-  instruction : ID AFF expression               
+  instruction : ID '=' expression               
               | ID                              
 
   expression : operande                         
              | operande operateur2 operande     
              | operateur1 operande              
 
-  operateur2 : UNION                           
-             | INTER                           
-             | DIFF                            
+  operateur2 : OR                           
+             | AND                           
+             | '~'                            
 
-  operateur1 : COMP                            
+  operateur1 : EQ                            
 
   operande : ID                                 
            | ensemble             
@@ -45,6 +38,6 @@ typedef struct table_elem{
   ensemble : '{' '}'                            
            | '{' liste-elements '}'             
 
-  liste-elements : ELEMENT                      
-                 | ELEMENT ',' liste-elements 
+  liste-elements : INT_CONST                      
+                 | INT_CONST ',' liste-elements 
 %%

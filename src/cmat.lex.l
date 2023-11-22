@@ -24,58 +24,58 @@ STRING  \"([^\\\"]|\\.)*\"
 
 %%
 
-"/*"            { BEGIN(ML_COMMENT); }
-<ML_COMMENT>"*/" { BEGIN(INITIAL); lineno++; }
-<ML_COMMENT>.   { /* consume anything inside multi-line comments */ }
-<ML_COMMENT>\n  { lineno++; /* count lines inside multi-line comments */ }
+"/*"                { BEGIN(ML_COMMENT); }
+<ML_COMMENT>"*/"    { BEGIN(INITIAL); lineno++; }
+<ML_COMMENT>.       { /* consume anything inside multi-line comments */ }
+<ML_COMMENT>\n      { lineno++; /* count lines inside multi-line comments */ }
 
 "//"            { BEGIN(SL_COMMENT); }
-<SL_COMMENT>\n { BEGIN(INITIAL); lineno++; }
-<SL_COMMENT>.  { /* consume anything inside single-line comments */ }
+<SL_COMMENT>\n  { BEGIN(INITIAL); lineno++; }
+<SL_COMMENT>.   { /* consume anything inside single-line comments */ }
 
 
-"if"            { ret_print("KEYWORD_IF"); }
-"else"          { ret_print("KEYWORD_ELSE"); }
-"while"         { ret_print("KEYWORD_WHILE"); }
-"for"           { ret_print("KEYWORD_FOR"); }
-"return"        { ret_print("KEYWORD_RETURN"); }
-"main"          { ret_print("KEYWORD_MAIN"); }
+"if"            { ret_print("KEYWORD_IF");      return IF;}
+"else"          { ret_print("KEYWORD_ELSE");    return ELSE;}
+"while"         { ret_print("KEYWORD_WHILE");   return WHILE;}
+"for"           { ret_print("KEYWORD_FOR");     return FOR;}
+"return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
+"main"          { ret_print("KEYWORD_MAIN");    return MAIN;}
 
-"int"          { ret_print("KEYWORD_INT"); }
-"float"        { ret_print("KEYWORD_FLOAT"); }
-"void"         { ret_print("KEYWORD_VOID"); }
+"int"           { ret_print("KEYWORD_INT");     return INT;}
+"float"         { ret_print("KEYWORD_FLOAT");   return FLOAT;}
+"void"          { ret_print("KEYWORD_VOID");    return VOID;}
 
 
 
 {ID}            { insert(yytext, strlen(yytext), UNDEF, lineno);
-                  ret_print("IDENTIFIER"); }
+                  ret_print("IDENTIFIER"); return ID;}
 
 
-{DIGIT}+        { ret_print("INTEGER_CONST"); }
-{DIGIT}+"."{DIGIT}* { ret_print("FLOAT_CONST"); }
+{DIGIT}+            { ret_print("INTEGER_CONST"); return INT_CONST;}
+{DIGIT}+"."{DIGIT}* { ret_print("FLOAT_CONST"); return FLOAT_CONST;}
 
-"+"|"-"         { ret_print("ADD_OP"); }
-"*"|"/"         { ret_print("MUL_OP"); }
-"="             { ret_print("ASSIGN_OP"); }
-"=="|"!="       { ret_print("EQ_OP"); }
-"<"|"<="|">"|">=" { ret_print("REL_OP"); }
-"&&"|"||"       { ret_print("LOG_OP"); }
-"!"             { ret_print("NOT_OP"); }
+"+"|"-"             { ret_print("ADD_OP"); return yytext[0];}
+"*"|"/"             { ret_print("MUL_OP"); return yytext[0];}
+"="                 { ret_print("ASSIGN_OP"); return yytext[0];}
+"=="|"!="           { ret_print("EQ_OP"); }
+"<"|"<="|">"|">="   { ret_print("REL_OP"); }
+"&&"|"||"           { ret_print("LOG_OP"); }
+"!"                 { ret_print("NOT_OP"); return yytext[0];}
 
-";"             { ret_print("SEMI"); }
-","             { ret_print("COMMA"); }
-"("             { ret_print("LPAREN"); }
-")"             { ret_print("RPAREN"); }
-"["             { ret_print("LBRACK"); }
-"]"             { ret_print("RBRACK"); }
-"{"             { ret_print("LBRACE"); }
-"}"             { ret_print("RBRACE"); }
-"~"             { ret_print("TRANSPOSE_OP"); }
-{STRING}        { ret_print("STRING_LITERAL"); }
+";"                 { ret_print("SEMI"); return yytext[0];}
+","                 { ret_print("COMMA"); return yytext[0];}
+"("                 { ret_print("LPAREN"); return yytext[0];}
+")"                 { ret_print("RPAREN"); return yytext[0];}
+"["                 { ret_print("LBRACK"); return yytext[0];}
+"]"                 { ret_print("RBRACK"); return yytext[0];}
+"{"                 { ret_print("LBRACE"); return yytext[0];}
+"}"                 { ret_print("RBRACE"); return yytext[0];}
+"~"                 { ret_print("TRANSPOSE_OP"); return yytext[0];}
+{STRING}            { ret_print("STRING_LITERAL"); }
 
-\n              { lineno++; ret_print("\n"); }
-[ \t]+          { /* ignore whitespace */ }
-.               { yyerror("Unrecognized character"); }
+\n                  { lineno++; ret_print("\n"); return yytext[0];}
+[ \t]+              { /* ignore whitespace */ }
+.                   { yyerror("Unrecognized character"); }
 %%
 
 void ret_print(char *token_type) {

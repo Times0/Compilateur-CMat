@@ -106,17 +106,17 @@ void symtab_dump(FILE *of)
 		{
 			RefList *t = l->lines;
 			fprintf(of, "%-12s ", l->st_name);
-			if (l->st_type == INT_TYPE)
+			if (l->st_type == INT)
 				fprintf(of, "%-7s", "int");
-			else if (l->st_type == FLOAT_TYPE)
+			else if (l->st_type == FLOAT)
 				fprintf(of, "%-7s", "float");
 			else if (l->st_type == STRING)
 				fprintf(of, "%-7s", "string");
-			else if (l->st_type == MATRIX_TYPE)
+			else if (l->st_type == MATRIX)
 			{
-				if (l->inf_type == INT_TYPE)
+				if (l->inf_type == INT)
 					fprintf(of, "%-7s", "int");
-				else if (l->inf_type == FLOAT_TYPE)
+				else if (l->inf_type == FLOAT)
 					fprintf(of, "%-7s", "float");
 				else
 					fprintf(of, "%-7s", "undef type");
@@ -125,9 +125,9 @@ void symtab_dump(FILE *of)
 			else if (l->st_type == FUNCTION_TYPE)
 			{
 				fprintf(of, "%-7s", "function returns ");
-				if (l->inf_type == INT_TYPE)
+				if (l->inf_type == INT)
 					fprintf(of, "%-7s", "int");
-				else if (l->inf_type == FLOAT_TYPE)
+				else if (l->inf_type == FLOAT)
 					fprintf(of, "%-7s", "float");
 				else
 					fprintf(of, "%-7s", "undef");
