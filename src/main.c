@@ -5,7 +5,7 @@
 #include "../include/cmat.lex.h"
 #include "../include/cmat.tab.h"
 
-#ifdef DRELEASE
+#ifdef RELEASE
 
 int verbose_flag = 0;
 

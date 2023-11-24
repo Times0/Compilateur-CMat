@@ -11,7 +11,7 @@ all_tests=$(ls -d */ | cut -f1 -d'/')
 succeeded_tests=0
 failed_tests=0
 
-
+# Lexer tests
 for test_folder in $all_tests; do
   if [ -d "$test_folder" ]; then
     test_name=$(basename "$test_folder")
@@ -33,6 +33,9 @@ for test_folder in $all_tests; do
     fi
   fi
 done
+
+# Parser tests
+
 
 # Print test results
 echo -e "\n\e[93mTest Results:\e[0m"
