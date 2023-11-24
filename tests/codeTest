@@ -1,0 +1,50 @@
+int main() {
+    int i, j;
+    matrix m[3][3];
+
+    // Initialize matrix with values
+    for (i = 0; i < 3; ++i) {
+        for (j = 0; j < 3; ++j) {
+            matrix[i][j] = (float)(i * 3 + j);
+        }
+    }
+
+    // Print the matrix
+    printmat(matrix);
+
+    // Perform some arithmetic operations
+    int x = 5;
+    int y = 3;
+
+    int sum = x + y;
+    int difference = x - y;
+    int product = x * y;
+    int quotient = x / y;
+
+    // Print the results
+    printf("Sum: %d\n", sum);
+    printf("Difference: %d\n", difference);
+    printf("Product: %d\n", product);
+    printf("Quotient: %d\n", quotient);
+
+    // Use a conditional statement
+    if (x > y) {
+        printf("x is greater than y\n");
+    } else {
+        printf("y is greater than or equal to x\n");
+    }
+
+    // Use a while loop
+    int count = 0;
+    while (count < 5) {
+        printf("Count: %d\n", count);
+        ++count;
+    }
+
+    // Use a for loop
+    for (int k = 0; k < 3; ++k) {
+        printf("Value at matrix[1][%d]: %f\n", k, matrix[1][k]);
+    }
+
+    return 0;
+}

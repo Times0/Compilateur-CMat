@@ -77,7 +77,7 @@ STRING  \"([^\\\"]|\\.)*\"
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
 {STRING}            { ret_print("STRING_LITERAL");  return STRING;}
 
-\n                  { lineno++; ret_print("\n");    return yytext[0];}
+\n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }
 .                   { yyerror("Unrecognized character"); }
 %%

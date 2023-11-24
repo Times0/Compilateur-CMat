@@ -19,11 +19,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    /*int token = yylex();
-    while(token)
-    {
-        token = yylex();   
-    }
+    int r = yyparse();
+    printf("-> Analyseur lexical retourne : %d\n", r);
 
     if (yyin != stdin) fclose(yyin);
 
@@ -34,11 +31,9 @@ int main(int argc, char **argv) {
     }
 
     symtab_dump(yyout);
-    // printf("Symbol table dumped to symbol_table.txt\n");
     if (yyout != stdout)
-        fclose(yyout);*/
-    int r = yyparse();
-    printf("-> Analyseur lexical retourne : %d\n", r);
+        fclose(yyout);
+    
     return 0;
 }
 #endif

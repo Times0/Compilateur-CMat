@@ -17,11 +17,11 @@ extern int yyerror(char *s);
   // peut etre eclaté, genere par ia
     liste_instructions : instruction
                        | instruction liste_instructions
-                       | instruction '\n' liste_instructions
                        | %empty
                     
 
     instruction : declaration
+                | declaration_fonction
                 | affectation
                 | expression
                 | condition
@@ -29,12 +29,33 @@ extern int yyerror(char *s);
                 | return
                 | bloc
                 | ';'
-                | error { yyerrok; }
+
+    type : INT
+       | FLOAT
+       | MATRIX
+
+    type_fonction : type
+                  | VOID
     
-    bloc : '{' liste_declarations liste_instructions '}'
-            | '{' liste_declarations '}'
-            | '{' liste_instructions '}'
-            | '{' '}'
+    declaration : type liste_id ';'
+                | type ID '[' INT_CONST ']' ';'
+                | type ID '[' INT_CONST ']' '[' INT_CONST ']' ';'
+
+    liste_id : ID
+             | ID ',' liste_id
+
+    declaration_fonction : type_fonction nom_fonction '(' liste_parametres ')' bloc
+
+    nom_fonction : ID
+                 | MAIN
+
+    liste_parametres : type ID
+                     | type ID ',' liste_parametres
+                     | %empty
+
+    bloc : '{' liste_instructions '}'
+
+    // Je garantis pas que ça marche
 
     affectation : ID '=' expression ';'
 
@@ -74,32 +95,6 @@ extern int yyerror(char *s);
     liste_expression : expression
                      | expression ',' liste_expression
 
-    
-
-
-
-  type : INT
-       | FLOAT
-       | MATRIX
-
-  type_fonction : type
-                | VOID
-
-  liste_type : type
-              | type ',' liste_type
-
-  liste_parametres : liste_type ID
-                   | liste_type ID ',' liste_parametres
-                   | %empty
-
-  liste_id : ID
-           | ID ',' liste_id
-
-  liste_declarations : declaration
-                     | declaration liste_declarations
-
-  declaration : type ID ';'
-              | type ID '[' INT_CONST ']' ';'
-              | type ID '[' INT_CONST ']' '[' INT_CONST ']' ';'
+  
                           
 %%
