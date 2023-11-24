@@ -1,6 +1,11 @@
 CC ?= gcc
-CFLAGS ?= -Werror
 LDLIBS ?=
+
+ifeq ($(MAKECMDGOALS),tests)
+    CFLAGS += -DTEST
+else
+    CFLAGS += -DRELEASE -Werror
+endif
 
 INCLUDE_PATH = ./include
 
@@ -44,7 +49,7 @@ $(LEXER_SRCS): $(SRCDIR)/%.c : $(SRCDIR)/%.l
 $(PARSER_SRCS) : $(SRCDIR)/%.c : $(SRCDIR)/%.y
 	bison -o $@ --header=$(INCLUDE_PATH)/$*.h $<
 
-$(TARGET_OBJ): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(PARSER_SRCS) 
+$(TARGET_OBJ): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(PARSER_SRCS) $(LEXER_SRCS) 
 	mkdir -p $(OBJDIR)
 	$(CC) -o $@ -c $< $(CFLAGS) -I$(INCLUDE_PATH)
 

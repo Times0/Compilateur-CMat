@@ -77,7 +77,7 @@ STRING  \"([^\\\"]|\\.)*\"
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
 {STRING}            { ret_print("STRING_LITERAL");  return STRING;}
 
-\n                  { lineno++; ret_print("\n");}
+\n                  { lineno++; ret_print("\n");    return yytext[0];}
 [ \t]+              { /* ignore whitespaces */ }
 .                   { yyerror("Unrecognized character"); }
 %%
@@ -99,6 +99,8 @@ void yyerror(char *message) {
     exit(1);
 }
 
+// For tests only
+#ifdef TEST
 int main(int argc, char **argv) {
     init_hash_table();
 
@@ -129,3 +131,4 @@ int main(int argc, char **argv) {
         fclose(yyout);
     return 0;
 }
+#endif
