@@ -1,31 +1,61 @@
+#include <unistd.h> // for getopt
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/symbol_table.h"
 #include "../include/cmat.lex.h"
 #include "../include/cmat.tab.h"
 
-#ifdef RELEASE
-extern FILE *yyin;
-extern FILE *yyout;
+#ifdef DRELEASE
 
+int verbose_flag = 0;
 
-int main(int argc, char **argv) {
-    init_hash_table();
-
-    if (argc > 1) {
-        if (!(yyin = fopen(argv[1], "r"))) {
-            perror(argv[1]);
-            return 1;
+int main(int argc, char *argv[])
+{
+    int option;
+    while ((option = getopt(argc, argv, "v")) != -1)
+    {
+        switch (option)
+        {
+        case 'v':
+            verbose_flag = 1;
+            break;
+        default:
+            fprintf(stderr, "Usage: %s file [-v]\n", argv[0]);
+            exit(EXIT_FAILURE);
         }
     }
 
-    int r = yyparse();
-    printf("-> Analyseur lexical retourne : %d\n", r);
+    if (optind >= argc)
+    {
+        fprintf(stderr, "Expected argument after options\n");
+        exit(EXIT_FAILURE);
+    }
 
-    if (yyin != stdin) fclose(yyin);
+    // set yyin to the file we want to parse
+    if (!(yyin = fopen(argv[optind], "r")))
+    {
+        perror(argv[optind]);
+        return 1;
+    }
+
+    if (verbose_flag)
+        printf("-> Initializing hash table...\n");
+    init_hash_table();
+
+    if (verbose_flag)
+        printf("-> Starting lexical analysis...\n");
+
+    int r = yyparse();
+
+    if (verbose_flag)
+        printf("-> Lexical analysis finished with code %d\n", r);
+
+    if (yyin != stdin)
+        fclose(yyin);
 
     // Afficher la table des symboles
-    if (!(yyout = fopen("symbol_table.txt", "w+"))) {
+    if (!(yyout = fopen("symbol_table.txt", "w+")))
+    {
         perror("symbol_table.txt");
         return 1;
     }
@@ -33,7 +63,8 @@ int main(int argc, char **argv) {
     symtab_dump(yyout);
     if (yyout != stdout)
         fclose(yyout);
-    
+
     return 0;
 }
+
 #endif
