@@ -11,10 +11,9 @@ extern int yyerror(char *s);
 
 %token IF ELSE WHILE FOR RETURN MAIN INT FLOAT MATRIX VOID ID INT_CONST FLOAT_CONST '+' '-' '*' '/' '=' EQ NEQ LT LE GT GE AND OR '!' ';' ',' '(' ')' '[' ']' '{' '}' '~' STRING '\n' UNDEF FUNCTION_TYPE BY_VALUE BY_REFER
 
-%start liste_instructions // temporaire
+%start liste_instructions
 
 %%
-  // peut etre eclaté, genere par ia
     liste_instructions : instruction
                        | instruction liste_instructions
                        | %empty
