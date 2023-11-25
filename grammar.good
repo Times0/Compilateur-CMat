@@ -15,7 +15,7 @@ extern int yyerror(char *s);
 %token INT FLOAT MATRIX VOID FUNCTION STRING
 %token IF ELSE WHILE FOR RETURN MAIN LOGIC_TYPE   
 %token '+' '-' '*' '/' INCR DECR AND_OP OR_OP EQ_OP NEQ_OP LT_OP LE_OP GT_OP GE_OP '!' '~'
-%token '(' ')' '[' ']' '{' '}' ';' ',' '=' REFER
+%token '(' ')' '[' ']' '{' '}' ';' ',' DDOT '=' REFER
 %token ID INT_CONST FLOAT_CONST UNDEF
 
 
@@ -29,124 +29,151 @@ extern int yyerror(char *s);
 %left '!'
 
 %%
-     instruction_list: instruction instruction_list
-                     | %empty
+instruction_list: instruction instruction_list
+                | %empty
      
-     instruction : declaration
-                 | declaration_function
-                 | condition
-                 | affectation ';'
-                 | expression ';'
-                 | loop
-                 | return ';'
-                 | bloc
+instruction : declaration
+            | declaration_function
+            | condition
+            | affectation ';'
+            | expression ';'
+            | loop
+            | return ';'
+            | bloc
 
-     // ajouter matrice en chaine
-     // Declarations
-     declaration : type id_or_affectation_list ';'
-                 | type  declaration_matrix_list ';'
 
-     declaration_matrix_list : declaration_matrix
-                             | declaration_matrix ',' declaration_matrix_list
+// Declarations
+declaration : type id_or_affectation_list ';'
+            | type declaration_matrix_list ';'
 
-     declaration_matrix : ID '[' INT_CONST ']' affectation_matrix
-                        | ID '[' INT_CONST ']' '[' INT_CONST ']' affectation_matrix
 
-     declaration_function : type nom_fonction '(' liste_parametres ')' bloc
-                          | VOID nom_fonction '(' liste_parametres ')' bloc
+// Declarations variables
+id_or_affectation_list : id_or_affectation
+                       | id_or_affectation ',' id_or_affectation_list
 
-     type: INT
-         | FLOAT
-         | MATRIX
+id_or_affectation : ID
+                  | ID '=' expression_or_cst_or_array_or_id
 
-     affectation_matrix : '=' '{' array_element_list '}'
-                        | %empty
 
-     array_element_list : constant_list
-                        | '{' constant_list '}'
-                        | '{' constant_list '}' ',' array_element_list
+// Declaration de matrices
+declaration_matrix_list : declaration_matrix
+                        | declaration_matrix ',' declaration_matrix_list
 
-     id_or_affectation_list : id_or_affectation
-                            | id_or_affectation ',' id_or_affectation_list
+declaration_matrix : ID '[' INT_CONST ']' affectation_matrix
+                   | ID '[' INT_CONST ']' '[' INT_CONST ']' affectation_matrix
 
-     id_or_affectation : ID
-                       | ID '=' expression_or_cst_or_array_or_id
 
-     affectation : ID '=' expression_or_cst_or_array_or_id
-                 | array '=' expression_or_cst_or_array_or_id
+// Declarations fonctions
+declaration_function : type function_name '(' parameter_list ')' bloc
+                     | VOID function_name '(' parameter_list ')' bloc
+
+function_name : ID
+              | MAIN
+
+parameter_list : type ID
+               | type ID ',' parameter_list
+               | %empty
+
+
+// Return
+return : RETURN expression_or_cst_or_array_or_id
+
+
+// Boucles
+loop : WHILE '(' expression_or_cst_or_array_or_id ')' bloc
+     | FOR '(' affectation ';' expression_or_cst_or_array_or_id ';' expression_or_cst_or_array_or_id')' bloc
+     | FOR '(' declaration expression_or_cst_or_array_or_id ';' expression_or_cst_or_array_or_id ')' bloc
+
+
+// Conditions
+condition : IF '(' expression ')' bloc
+          | IF '(' expression ')' bloc ELSE bloc
+          | IF '(' expression ')' bloc ELSE condition
+
+
+// Affectation initiale de matrices
+affectation_matrix : '=' '{' array_element_list '}'
+                   | %empty
+
+array_element_list : constant_list
+                   | '{' constant_list '}'
+                   | '{' constant_list '}' ',' array_element_list
+
+
+// Affectation
+affectation : ID '=' expression_or_cst_or_array_or_id
+            | array '=' expression_or_cst_or_array_or_id
+
+
+// Types & signes & constantes
+type : INT
+     | FLOAT
+     | MATRIX
+
+sign : '+'
+     | '-'
+
+constant : INT_CONST
+         | FLOAT_CONST
                  
-     constant_list : sign constant
+constant_list : sign constant
+              | constant
+              | sign constant ',' constant_list
+              | constant ',' constant_list
+
+
+// Expressions
+expression : cst_or_array_or_id '+' expression_or_cst_or_array_or_id
+           | cst_or_array_or_id '-' expression_or_cst_or_array_or_id 
+           | cst_or_array_or_id '*' expression_or_cst_or_array_or_id
+           | cst_or_array_or_id '/' expression_or_cst_or_array_or_id
+           | cst_or_array_or_id OR_OP expression_or_cst_or_array_or_id
+           | cst_or_array_or_id AND_OP expression_or_cst_or_array_or_id
+           | cst_or_array_or_id EQ_OP expression_or_cst_or_array_or_id
+           | cst_or_array_or_id NEQ_OP expression_or_cst_or_array_or_id
+           | cst_or_array_or_id LT_OP expression_or_cst_or_array_or_id
+           | cst_or_array_or_id LE_OP expression_or_cst_or_array_or_id
+           | cst_or_array_or_id GT_OP expression_or_cst_or_array_or_id
+           | cst_or_array_or_id GE_OP expression_or_cst_or_array_or_id
+           | '(' expression_or_cst_or_array_or_id ')'                       
+           | ID INCR                                                        /* incrementation */                                            
+           | INCR ID           
+           | ID DECR                                                        /* decrementation */         
+           | DECR ID
+           | '!' expression_or_cst_or_array_or_id                           /* negation logique */
+           | '(' type ')' expression_or_cst_or_array_or_id                  /* cast */
+           | ID '(' expression_or_cst_or_array_or_id_or_string_list')'      /* appel de fonction */
+           | '~' ID
+           | sign expression_or_cst_or_array_or_id                           /*negation arithmetique*/
+
+
+// Slices de matrices
+array : ID '[' expression_or_cst_or_array_or_id_or_slice ']'
+      | ID '[' expression_or_cst_or_array_or_id_or_slice ']' '[' expression_or_cst_or_array_or_id_or_slice ']'
+     
+expression_or_cst_or_array_or_id_or_slice : expression_or_cst_or_array_or_idexpression_or_cst_or_array_or_id_or_slice
+                                          | expression_or_cst_or_array_or_idexpression_or_cst_or_array_or_id_or_slice ';' expression_or_cst_or_array_or_idexpression_or_cst_or_array_or_id_or_slice
+
+expression_or_cst_or_array_or_idexpression_or_cst_or_array_or_id_or_slice : slice
+                                                                          | expression_or_cst_or_array_or_id
+
+slice : '*'
+      | expression_or_cst_or_array_or_id DDOT expression_or_cst_or_array_or_id
+
+     
+// Misc
+bloc : '{' instruction_list '}'     
+
+cst_or_array_or_id : array
+                   | ID
                    | constant
-                   | sign constant ',' constant_list
-                   | constant ',' constant_list
 
-     sign: '+'
-         | '-'
+expression_or_cst_or_array_or_id : expression
+                                 | cst_or_array_or_id
+
+expression_or_cst_or_array_or_id_or_string_list : expression_or_cst_or_array_or_id
+                                                | expression_or_cst_or_array_or_id ',' expression_or_cst_or_array_or_id_or_string_list
+                                                | STRING
+                                                | STRING ',' expression_or_cst_or_array_or_id_or_string_list
 
      
-     constant: INT_CONST
-             | FLOAT_CONST
-
-     // Fonctions
-     nom_fonction : ID
-                  | MAIN
-
-     liste_parametres : type ID
-                      | type ID ',' liste_parametres
-                      | %empty
-
-     bloc : '{' instruction_list '}'
-
-     // Return
-
-     return : RETURN expression_or_cst_or_array_or_id
-
-     // Boucles
-
-     loop : WHILE '(' expression_or_cst_or_array_or_id ')' bloc
-          | FOR '(' affectation ';' expression_or_cst_or_array_or_id ';' expression_or_cst_or_array_or_id')' bloc
-          | FOR '(' declaration expression_or_cst_or_array_or_id ';' expression_or_cst_or_array_or_id ')' bloc
-
-     // Conditions
-
-     condition : IF '(' expression ')' bloc
-               | IF '(' expression ')' bloc ELSE bloc
-               | IF '(' expression ')' bloc ELSE condition
-     
-     array : ID '[' expression_or_cst_or_array_or_id ']'
-           | ID '[' expression_or_cst_or_array_or_id ']' '[' expression_or_cst_or_array_or_id ']'
-
-     cst_or_array_or_id : array
-                        | ID
-                        | constant
-
-     expression_or_cst_or_array_or_id : expression
-                                      | cst_or_array_or_id
-
-     expression_or_cst_or_array_or_id_or_string_list : expression_or_cst_or_array_or_id
-                                                     | expression_or_cst_or_array_or_id ',' expression_or_cst_or_array_or_id_or_string_list
-                                                     | STRING
-                                                     | STRING ',' expression_or_cst_or_array_or_id_or_string_list
-
-     expression: cst_or_array_or_id '+' expression_or_cst_or_array_or_id
-               | cst_or_array_or_id '-' expression_or_cst_or_array_or_id 
-               | cst_or_array_or_id '*' expression_or_cst_or_array_or_id
-               | cst_or_array_or_id '/' expression_or_cst_or_array_or_id
-               | cst_or_array_or_id OR_OP expression_or_cst_or_array_or_id
-               | cst_or_array_or_id AND_OP expression_or_cst_or_array_or_id
-               | cst_or_array_or_id EQ_OP expression_or_cst_or_array_or_id
-               | cst_or_array_or_id NEQ_OP expression_or_cst_or_array_or_id
-               | cst_or_array_or_id LT_OP expression_or_cst_or_array_or_id
-               | cst_or_array_or_id LE_OP expression_or_cst_or_array_or_id
-               | cst_or_array_or_id GT_OP expression_or_cst_or_array_or_id
-               | cst_or_array_or_id GE_OP expression_or_cst_or_array_or_id
-               | '(' expression_or_cst_or_array_or_id ')'                       
-               | ID INCR                                                        /* incrementation */                                            
-               | INCR ID           
-               | ID DECR                                                        /* decrementation */         
-               | DECR ID
-               | '!' expression_or_cst_or_array_or_id                           /* negation logique */
-               | '(' type ')' expression_or_cst_or_array_or_id                  /* cast */
-               | ID '(' expression_or_cst_or_array_or_id_or_string_list')'      /* appel de fonction */
-               | '~' ID
-               | sign expression_or_cst_or_array_or_id                           /*negation arithmetique*/
