@@ -1,4 +1,4 @@
-#include "symbol_table.h"
+#include "../include/symbol_table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/cmat.tab.h"
@@ -107,23 +107,23 @@ void symtab_dump(FILE *of)
 		{
 			RefList *t = l->lines;
 			fprintf(of, "%-12s ", l->st_name);
-			if (l->st_type == INT)
+			if (l->st_type == CMAT_INT_TYPE)
 				fprintf(of, "%-7s", "int");
-			else if (l->st_type == FLOAT)
+			else if (l->st_type == CMAT_FLOAT_TYPE)
 				fprintf(of, "%-7s", "float");
-			else if (l->st_type == STRING)
+			else if (l->st_type == CMAT_STR_TYPE)
 				fprintf(of, "%-7s", "string");
-			else if (l->st_type == MATRIX)
+			else if (l->st_type == CMAT_MATRIX_TYPE)
 			{
-				if (l->inf_type == INT)
+				if (l->inf_type == CMAT_INT_TYPE)
 					fprintf(of, "%-7s", "int");
-				else if (l->inf_type == FLOAT)
+				else if (l->inf_type == CMAT_FLOAT_TYPE)
 					fprintf(of, "%-7s", "float");
 				else
 					fprintf(of, "%-7s", "undef type");
 				fprintf(of, " matrix");
 			}
-			else if (l->st_type == FUNCTION_TYPE)
+			/* else if (l->st_type == FUNCTION_TYPE)
 			{
 				fprintf(of, "%-7s", "function returns ");
 				if (l->inf_type == INT)
@@ -132,7 +132,7 @@ void symtab_dump(FILE *of)
 					fprintf(of, "%-7s", "float");
 				else
 					fprintf(of, "%-7s", "undef");
-			}
+			}*/
 			else
 				fprintf(of, "%-7s", "undef"); // if UNDEF or 0
 			while (t != NULL)

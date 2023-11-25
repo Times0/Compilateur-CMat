@@ -7,6 +7,7 @@
 #include "../include/symbol_table.h"
 #include "../include/cmat.tab.h"
 
+
 extern FILE *yyin;
 extern FILE *yyout;
 int lineno = 1;
@@ -63,16 +64,16 @@ STRING  \"([^\\\"]|\\.)*\"
 "||"                { ret_print("LOG_OP");          return OR_OP;}
 "!"                 { ret_print("NOT_OP");          return yytext[0];}
 
-";"                 { ret_print("SEMI");            return yytext[0];}
-","                 { ret_print("COMMA");           return yytext[0];}
-"("                 { ret_print("LPAREN");          return yytext[0];}
-")"                 { ret_print("RPAREN");          return yytext[0];}
-"["                 { ret_print("LBRACK");          return yytext[0];}
-"]"                 { ret_print("RBRACK");          return yytext[0];}
-"{"                 { ret_print("LBRACE");          return yytext[0];}
-"}"                 { ret_print("RBRACE");          return yytext[0];}
-"~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
-{STRING}            { ret_print("STRING_LITERAL");  return STR_TYPE;}
+";"                 { ret_print("SEMI");            return SEMI;}
+","                 { ret_print("COMMA");           return COMMA;}
+"("                 { ret_print("LPAREN");          return LPAREN;}
+")"                 { ret_print("RPAREN");          return RPAREN;}
+"["                 { ret_print("LBRACK");          return LBRACKET;}
+"]"                 { ret_print("RBRACK");          return RBRACKET;}
+"{"                 { ret_print("LBRACE");          return LBRACE;}
+"}"                 { ret_print("RBRACE");          return RBRACE;}
+"~"                 { ret_print("TRANSPOSE_OP");    return TRANSPOSE_OP;}
+{STRING}            { ret_print("STRING_LITERAL");  return yytext[0];}
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }
