@@ -21,7 +21,9 @@ void yyerror(char *);
 
 DIGIT   [0-9]
 ID      [a-zA-Z_][a-zA-Z_0-9]*
-STRING  \"([^\\\"]|\\.)*\" 
+STRING  \"([^\\\"]|\\.)*\"
+INTEGER_CONST   {DIGIT}+
+FLOAT_CONST {DIGIT}+"."{DIGIT}*
 
 %%
 
@@ -48,11 +50,12 @@ STRING  \"([^\\\"]|\\.)*\"
 "void"          { ret_print("KEYWORD_VOID");    return VOID_TYPE;}
 
 
-{ID}                { insert(yytext, strlen(yytext), UNDEF, lineno);
-                        ret_print("IDENTIFIER"); return ID;}
+{ID}            { insert(yytext, strlen(yytext), UNDEF, lineno);
+		          yylval.symbol_table_item = lookup(yytext);
+		          return ID;;}
 
-{DIGIT}+            { ret_print("INTEGER_CONST");   return INT_CONST;}
-{DIGIT}+"."{DIGIT}* { ret_print("FLOAT_CONST");     return FLOAT_CONST;}
+{INTEGER_CONST} { yylval.int_val = atoi(yytext); ret_print("INTEGER_CONST");   return INT_CONST;}
+{FLOAT_CONST}   { yylval.double_val = atof(yytext); ret_print("FLOAT_CONST");     return FLOAT_CONST;}
 
 "+"|"-"             { ret_print("ADD_OP");          return yytext[0];}
 "*"|"/"             { ret_print("MUL_OP");          return yytext[0];}
@@ -73,7 +76,9 @@ STRING  \"([^\\\"]|\\.)*\"
 "{"                 { ret_print("LBRACE");          return LBRACE;}
 "}"                 { ret_print("RBRACE");          return RBRACE;}
 "~"                 { ret_print("TRANSPOSE_OP");    return TRANSPOSE_OP;}
-{STRING}            { ret_print("STRING_LITERAL");  return yytext[0];}
+{STRING}            { yylval.str_val = malloc(yyleng * sizeof(char)); 
+                      strcpy(yylval.str_val, yytext); 
+                      ret_print("STRING_LITERAL");  return yytext[0];}
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include "symbol_table.h"
+
 
 extern int yylex(void);
 extern void yyerror(const char *s);
@@ -10,10 +12,20 @@ extern void yyerror(const char *s);
 int yywrap() { return 1; }
 %}
 
-%token INT_TYPE FLOAT_TYPE MATRIX_TYPE STR_TYPE IF ELSE WHILE FOR VOID_TYPE RETURN MAIN LOGIC_TYPE
-%token ADD_OP MUL_OP DIV_OP INCR DECR AND_OP OR_OP EQ_OP NEQ_OP REL_OP NOT_OP TRANSPOSE_OP
-%token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE SEMI DOT COMMA ASSIGN REFER
-%token ID INT_CONST FLOAT_CONST UNDEF
+%union {
+     int int_val;
+     double double_val;
+     char *str_val;
+     list_t* symbol_table_item;
+}
+
+%token<int_val> INT_TYPE FLOAT_TYPE IF ELSE WHILE FOR VOID_TYPE RETURN MAIN LOGIC_TYPE MATRIX_TYPE
+%token<int_val> ADD_OP MUL_OP DIV_OP INCR DECR AND_OP OR_OP EQ_OP NEQ_OP REL_OP NOT_OP TRANSPOSE_OP
+%token<int_val> LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE SEMI DOT COMMA ASSIGN REFER
+%token<symbol_table_item> ID
+%token<int_val> INT_CONST 
+%token<double_val> FLOAT_CONST
+%token<str_val> STR_TYPE
 
 // Define operator precedence (highest to lowest)
 %nonassoc LOWER_THAN_ELSE
@@ -56,6 +68,11 @@ type
 names
     : ID
     | names COMMA ID
+    ;
+
+constant
+    : INT_CONST     { printf("%d\n", yylval.int_val); }
+    | FLOAT_CONST   { printf("%.2f\n", yylval.double_val); }
     ;
 
 statements
@@ -104,8 +121,7 @@ matrix_variable
     ;
 
 expression
-    : INT_CONST
-    | FLOAT_CONST
+    : constant
     | variable
     | matrix_variable
     | LPAREN expression RPAREN

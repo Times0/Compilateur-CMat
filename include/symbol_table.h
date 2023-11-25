@@ -14,6 +14,7 @@
 #define CMAT_MATRIX_TYPE 6
 #define CMAT_STR_TYPE 7
 #define CMAT_VOID_TYPE 8
+#define UNDEF 9
 
 /* How parameters are passed */
 #define PASS_BY_VALUE 1
