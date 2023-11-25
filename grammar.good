@@ -1,0 +1,117 @@
+%define api.header.include {"../include/cmat.tab.h"}
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+
+extern FILE *yyin;
+extern FILE *yyout;
+extern int yylex();
+extern int yyerror(char *s);
+%}
+
+%token INT FLOAT MATRIX VOID FUNCTION STRING
+%token IF ELSE WHILE FOR RETURN MAIN LOGIC_TYPE   
+%token '+' '-' '*' '/' INCR DECR AND_OP OR_OP EQ_OP NEQ_OP LT_OP LE_OP GT_OP GE_OP '!' '~'
+%token '(' ')' '[' ']' '{' '}' ';' ',' '=' REFER
+%token ID INT_CONST FLOAT_CONST UNDEF
+
+
+%start instruction_list
+
+%left '+'
+
+
+%%
+     instruction_list: instruction instruction_list
+                     | %empty
+     
+     instruction : declaration
+                 /* | condition */
+                 /* | affectation */
+                 /* | expression */
+                 | loop
+                 | return
+                 /* | bloc */
+
+     // ajouter matrice en chaine
+     // Declarations
+     declaration : type id_or_affectation_list ';'
+                 | type nom_fonction '(' liste_parametres ')' bloc
+                 | VOID nom_fonction '(' liste_parametres ')' bloc
+                 | type ID '[' INT_CONST ']' ';'
+                 | type ID '[' INT_CONST ']' '[' INT_CONST ']' ';'
+
+     type: INT
+         | FLOAT
+         | MATRIX
+
+     id_or_affectation_list : id_or_affectation
+                            | id_or_affectation ',' id_or_affectation_list
+
+     id_or_affectation : ID
+                       | affectation
+
+     affectation : ID '=' expression_or_cst_or_id
+
+     sign: '+'
+         | '-'
+     
+     constant: INT_CONST
+             | FLOAT_CONST
+
+     // Fonctions
+     nom_fonction : ID
+                  | MAIN
+
+     liste_parametres : type ID
+                      | type ID ',' liste_parametres
+                      | %empty
+
+     bloc : '{' instruction_list '}'
+
+     // Return
+
+     return : RETURN expression_or_cst_or_id ';'
+
+
+     // Conditions
+
+     loop : WHILE '(' expression_or_cst_or_id ')' instruction
+          | FOR '(' affectation ';' expression_or_cst_or_id ';' expression_or_cst_or_id')' bloc
+
+     cst_or_id : ID
+               | constant
+               | sign constant
+
+     expression_or_cst_or_id : expression
+                             | cst_or_id
+
+     expression: cst_or_id '+' expression_or_cst_or_id
+               | cst_or_id '-' expression_or_cst_or_id 
+               | cst_or_id '*' expression_or_cst_or_id
+               | cst_or_id '/' expression_or_cst_or_id
+               | cst_or_id OR_OP expression_or_cst_or_id
+               | cst_or_id AND_OP expression_or_cst_or_id
+               | cst_or_id EQ_OP expression_or_cst_or_id
+               | cst_or_id NEQ_OP expression_or_cst_or_id
+               | cst_or_id LT_OP expression_or_cst_or_id
+               | cst_or_id LE_OP expression_or_cst_or_id
+               | cst_or_id GT_OP expression_or_cst_or_id
+               | cst_or_id GE_OP expression_or_cst_or_id
+               | '(' expression_or_cst_or_id ')'
+               | ID INCR
+               | ID DECR
+               | INCR ID
+               | DECR ID
+               | '!' expression_or_cst_or_id
+    
+
+    
+
+     
+
+     /* condition : IF '(' expression ')' instruction */
+               /* | IF '(' expression ')' instruction ELSE instruction */
