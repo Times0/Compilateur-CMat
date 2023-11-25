@@ -1,3 +1,5 @@
+%define api.header.include {"../include/cmat.tab.h"}
+
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,12 +8,13 @@
 #include "symbol_table.h"
 
 
-extern int yylex(void);
-extern void yyerror(const char *s);
-
-int yywrap() { return 1; }
+extern FILE *yyin;
+extern FILE *yyout;
+extern int yylex();
+extern int yyerror(char *s);
 %}
 
+<<<<<<< Updated upstream
 %union {
      int int_val;
      double double_val;
@@ -26,25 +29,32 @@ int yywrap() { return 1; }
 %token<int_val> INT_CONST 
 %token<double_val> FLOAT_CONST
 %token<str_val> STR_TYPE
+=======
+/* tokens */
+%token INT FLOAT MATRIX VOID FUNCTION STRING
+%token IF ELSE WHILE FOR RETURN MAIN LOGIC_TYPE   
+%token '+' '-' '*' '/' INCR DECR AND_OP OR_OP EQ_OP NEQ_OP LT_OP LE_OP GT_OP GE_OP '!' '~'
+%token '(' ')' '[' ']' '{' '}' ';' ',' '=' REFER
+%token ID INT_CONST FLOAT_CONST UNDEF
+>>>>>>> Stashed changes
 
-// Define operator precedence (highest to lowest)
-%nonassoc LOWER_THAN_ELSE
-%nonassoc ELSE
-%right ASSIGN
-%left OR_OP
-%left AND_OP
-%nonassoc EQ_OP NEQ_OP
-%nonassoc REL_OP
-%left ADD_OP SUB_OP
-%left MUL_OP DIV_OP
-%right NOT_OP
-%right INCR DECR
-%precedence TRANSPOSE_OP
 
-%start program
+%start instruction_list
 
 %%
+     instruction_list: instruction instruction_list
+                     | %empty
+     
+     instruction : declaration
+                 /* | declaration_fonction */
+                 /* | condition */
+                 /* | affectation */
+                 /* | expression */
+                 /* | loop */
+                 | return
+                 /* | bloc */
 
+<<<<<<< Updated upstream
 program
     : declarations statements
     ;
@@ -150,6 +160,176 @@ opt_expression
     : /* empty */
     | expression
     ;
+=======
+     // Declarations
+     declaration : type ID ';'
+                 | type nom_fonction '(' liste_parametres ')' bloc
+                 | VOID nom_fonction '(' liste_parametres ')' bloc
+                 | type ID '[' INT_CONST ']' ';'
+                 | type ID '[' INT_CONST ']' '[' INT_CONST ']' ';'
+>>>>>>> Stashed changes
 
-%%
+     type: INT
+         | FLOAT
+         | MATRIX
 
+     /* id_or_affectation_list : id_or_affectation */
+                            /* | id_or_affectation ',' id_or_affectation_list */
+
+     id_or_affectation : ID
+                       /* | affectation */
+
+     /* affectation : ID '=' sign constant */
+                 /* | ID '=' constant */
+                 /* | ID '=' expression */
+
+     sign: '+'
+         | '-'
+     
+     constant: INT_CONST
+             | FLOAT_CONST
+
+     // Fonctions
+
+     
+
+     
+
+     nom_fonction : ID
+                  | MAIN
+
+     liste_parametres : type ID
+                      | type ID ',' liste_parametres
+                      | %empty
+
+     bloc : '{' instruction_list '}'
+
+     // Return
+
+     return : RETURN expression ';'
+
+
+/*     // Conditions
+
+     loop : WHILE '(' expression ')' instruction
+          | FOR '(' affectation ';' expression ';' expression')' instruction*/
+
+     
+
+     expression: ID '+' expression
+               | ID
+              /* | expression '-' expression
+              | expression '*' expression
+              | expression '/' expression
+              | INCR expression
+              | DECR expression
+              | expression INCR
+              | expression DECR
+              | expression OR_OP expression
+              | expression AND_OP expression
+              | '!' expression
+              | expression EQ_OP expression
+              | expression NEQ_OP expression
+              | expression LT_OP expression
+              | expression LE_OP expression
+              | expression GT_OP expression
+              | expression GE_OP expression
+              | '(' expression ')'
+              | ID 
+              | sign constant
+              | constant
+      */
+
+    
+
+    
+
+     /*
+
+     condition : IF '(' expression ')' instruction
+               | IF '(' expression ')' instruction ELSE instruction
+
+     
+
+     
+
+     /*
+     // Declarations
+
+	declarations: declarations declaration
+			  | declaration
+
+
+    //declaration: type names ';'
+     
+    variable : ID
+             | pointer ID
+             | ID array
+     
+    pointer: pointer '*' 
+           | '*'
+     
+    array: array '[' INT_CONST ']'
+         | '[' INT_CONST ']'
+     
+    statements: statements statement
+              | statement
+     
+     // Conditions
+
+	tail: statement ';' 
+	 	| '{' statements '}'
+
+    if_statement: IF '{' expression '}' tail else_if_part else_part
+
+    else_if_part: else_if_part ELSE IF '(' expression ')' tail
+                | ELSE IF '(' expression ')' tail
+                | empty
+
+    else_part: ELSE tail
+             | empty 
+     
+    for_statement: FOR '(' declaration expression ';' statement ')' tail
+
+    while_statement: WHILE '(' expression ')' tail
+
+     // Expressions
+
+    
+     
+    statement | '{' statements '}'
+
+    
+     
+    matrix_op: matrix_variable '+' matrix_variable
+             | matrix_variable '*' matrix_variable
+             | matrix_variable '/' matrix_variable
+             | TRANSPOSE matrix_variable
+             | sign matrix_variable
+             | matrix_variable '[' INT_CONST '.' '.' INT_CONST ']'
+             | matrix_variable '[' INT_CONST '.' '.' INT_CONST ']' '[' INT_CONST '.' '.' INT_CONST ']'
+             | constant '*' matrix_variable
+             | matrix_variable '*' constant
+             | constant '/' matrix_variable
+             | matrix_variable '/' constant
+             | constant '+' matrix_variable
+             | matrix_variable '+' constant
+             | INCR matrix_variable
+             | DECR matrix_variable
+             | matrix_variable INCR
+             | matrix_variable DECR
+              
+     
+
+	
+
+    statement: if_statement 
+             | for_statement
+             | while_statement
+             | RETURN
+             
+     assignment: reference variable ASSIGN expression ';' 
+          
+	reference: REFER
+             | empty 
+	*/
