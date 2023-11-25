@@ -4,96 +4,133 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
+extern FILE *yyin;
+extern FILE *yyout;
 extern int yylex();
 extern int yyerror(char *s);
 %}
 
-%token IF ELSE WHILE FOR RETURN MAIN INT FLOAT MATRIX VOID ID INT_CONST FLOAT_CONST '+' '-' '*' '/' '=' EQ NEQ LT LE GT GE AND OR '!' ';' ',' '(' ')' '[' ']' '{' '}' '~' STRING '\n' UNDEF FUNCTION_TYPE BY_VALUE BY_REFER
+/* tokens */
+%token INT_TYPE FLOAT_TYPE MATRIX_TYPE STR_TYPE IF ELSE WHILE FOR  VOID_TYPE RETURN MAIN  LOGIC_TYPE   
+%token ADD_OP MUL_OP DIV_OP INCR DECR AND_OP OR_OP EQ_OP NEQ_OP REL_OP NOT_OP TRANSPOSE
+%token LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE SEMI DOT COMMA ASSIGN REFER
+%token ID INT_CONST FLOAT_CONST UNDEF
 
-%start liste_instructions
+
+%start program
 
 %%
-    liste_instructions : instruction
-                       | instruction liste_instructions
-                       | %empty
-                    
 
-    instruction : declaration
-                | declaration_fonction
-                | affectation
-                | expression
-                | condition
-                | iteration
-                | return
-                | bloc
-                | ';'
+     // Program
+     program: declarations statements 
 
-    type : INT
-       | FLOAT
-       | MATRIX
+     // Declarations
 
-    type_fonction : type
-                  | VOID
-    
-    declaration : type liste_id ';'
-                | type ID '[' INT_CONST ']' ';'
-                | type ID '[' INT_CONST ']' '[' INT_CONST ']' ';'
+	declarations: declarations declaration
+				| declaration
 
-    liste_id : ID
-             | ID ',' liste_id
 
-    declaration_fonction : type_fonction nom_fonction '(' liste_parametres ')' bloc
+    declaration: type names SEMI
+	 
 
-    nom_fonction : ID
-                 | MAIN
+    matrix_variable: ID LBRACKET INT_CONST RBRACKET
+                   | ID LBRACKET INT_CONST RBRACKET LBRACKET INT_CONST RBRACKET
 
-    liste_parametres : type ID
-                     | type ID ',' liste_parametres
-                     | %empty
+    type: INT_TYPE
+        | FLOAT_TYPE
+        | VOID_TYPE
+	    | STR_TYPE
+         
+    names: ID
+         | names COMMA ID
+     
+    variable : ID
+             | pointer ID
+             | ID array
+     
+    pointer: pointer '*' 
+           | '*'
+     
+    array: array LBRACKET INT_CONST RBRACKET
+         | LBRACKET INT_CONST RBRACKET
+     
+    statements: statements statement
+              | statement
+     
+     // Conditions
 
-    bloc : '{' liste_instructions '}'
+	tail: statement SEMI 
+	 	| LBRACE statements RBRACE
 
-    // Je garantis pas que ça marche
+    if_statement: IF LBRACE expression RBRACE tail else_if_part else_part
 
-    affectation : ID '=' expression ';'
+    else_if_part: else_if_part ELSE IF LPAREN expression RPAREN tail
+                | ELSE IF LPAREN expression RPAREN tail
+                | /* empty */
 
-    condition : IF '(' expression ')' bloc
-              | IF '(' expression ')' bloc ELSE instruction %prec BY_VALUE
+    else_part: ELSE tail
+             | /* empty */
+     
+    for_statement: FOR LPAREN declaration expression SEMI statement RPAREN tail
 
-    iteration : WHILE '(' expression ')' bloc
-              | FOR '(' affectation expression ';' affectation ')' bloc   
+    while_statement: WHILE LPAREN expression RPAREN tail
 
-    return : RETURN expression ';'
-           | RETURN ';'
-           
-    expression : expression '+' expression
-               | expression '-' expression
-               | expression '*' expression
-               | expression '/' expression
-               | expression EQ expression
-               | expression NEQ expression
-               | expression LT expression
-               | expression LE expression
-               | expression GT expression
-               | expression GE expression
-               | expression AND expression
-               | expression OR expression
-               | expression '[' expression ']' // accès à un élément d'un tableau
-               | expression '(' liste_expression ')' // appel de fonction
-               | '-' expression %prec UNARY
-               | '!' expression %prec UNARY
-               | '(' expression ')'
-               | ID
-               | INT_CONST
-               | FLOAT_CONST
-               | STRING
-               | ID '[' expression ']' // accès à un élément d'un tableau
-               | ID '(' liste_expression ')' // appel de fonction
+     // Expressions
 
-    liste_expression : expression
-                     | expression ',' liste_expression
+    sign: ADD_OP
+        | /* empty */
+     
+    statement | LBRACE statements RBRACE
 
-  
-                          
-%%
+    expression: expression ADD_OP expression
+              | expression MUL_OP expression
+              | expression DIV_OP expression
+              | INCR expression
+              | DECR expression
+              | expression INCR
+              | expression DECR
+              | expression OR_OP expression
+              | expression AND_OP expression
+              | NOT_OP expression
+              | expression EQ_OP expression
+              | expression NEQ_OP expression
+              | expression REL_OP expression
+              | LPAREN expression RPAREN
+              | variable 
+              | sign constant
+     
+    matrix_op: matrix_variable ADD_OP matrix_variable
+             | matrix_variable MUL_OP matrix_variable
+             | matrix_variable DIV_OP matrix_variable
+             | TRANSPOSE matrix_variable
+             | sign matrix_variable
+             | matrix_variable LBRACKET INT_CONST DOT DOT INT_CONST RBRACKET
+             | matrix_variable LBRACKET INT_CONST DOT DOT INT_CONST RBRACKET LBRACKET INT_CONST DOT DOT INT_CONST RBRACKET
+             | constant MUL_OP matrix_variable
+             | matrix_variable MUL_OP constant
+             | constant DIV_OP matrix_variable
+             | matrix_variable DIV_OP constant
+             | constant ADD_OP matrix_variable
+             | matrix_variable ADD_OP constant
+             | INCR matrix_variable
+             | DECR matrix_variable
+             | matrix_variable INCR
+             | matrix_variable DECR
+              
+     
+
+	constant: INT_CONST
+            | FLOAT_CONST
+
+    statement: if_statement 
+             | for_statement
+             | while_statement
+             | RETURN
+             
+    assignment: reference variable ASSIGN expression SEMI
+          
+	reference: REFER
+             | /* empty */
+	

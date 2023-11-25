@@ -41,10 +41,10 @@ STRING  \"([^\\\"]|\\.)*\"
 "return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
 "main"          { ret_print("KEYWORD_MAIN");    return MAIN;}
 
-"int"           { ret_print("KEYWORD_INT");     return INT;}
-"float"         { ret_print("KEYWORD_FLOAT");   return FLOAT;}
-"matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX;}
-"void"          { ret_print("KEYWORD_VOID");    return VOID;}
+"int"           { ret_print("KEYWORD_INT");     return INT_TYPE;}
+"float"         { ret_print("KEYWORD_FLOAT");   return FLOAT_TYPE;}
+"matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX_TYPE;}
+"void"          { ret_print("KEYWORD_VOID");    return VOID_TYPE;}
 
 
 {ID}                { insert(yytext, strlen(yytext), UNDEF, lineno);
@@ -56,14 +56,11 @@ STRING  \"([^\\\"]|\\.)*\"
 "+"|"-"             { ret_print("ADD_OP");          return yytext[0];}
 "*"|"/"             { ret_print("MUL_OP");          return yytext[0];}
 "="                 { ret_print("ASSIGN_OP");       return yytext[0];}
-"=="                { ret_print("EQ_OP");           return EQ;}
-"!="                { ret_print("NEQ_OP");          return NEQ;}
-"<"                 { ret_print("REL_OP");          return LT;}
-"<="                { ret_print("REL_OP");          return LE;}
-">"                 { ret_print("REL_OP");          return GT;}
-">="                { ret_print("REL_OP");          return GE;}
-"&&"                { ret_print("LOG_OP");          return AND;}
-"||"                { ret_print("LOG_OP");          return OR;}
+"=="                { ret_print("EQ_OP");           return EQ_OP;}
+"!="                { ret_print("NEQ_OP");          return NEQ_OP;}
+"<"|"<="|">"|">="   { ret_print("REL_OP");          return REL_OP;}
+"&&"                { ret_print("LOG_OP");          return AND_OP;}
+"||"                { ret_print("LOG_OP");          return OR_OP;}
 "!"                 { ret_print("NOT_OP");          return yytext[0];}
 
 ";"                 { ret_print("SEMI");            return yytext[0];}
@@ -75,7 +72,7 @@ STRING  \"([^\\\"]|\\.)*\"
 "{"                 { ret_print("LBRACE");          return yytext[0];}
 "}"                 { ret_print("RBRACE");          return yytext[0];}
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
-{STRING}            { ret_print("STRING_LITERAL");  return STRING;}
+{STRING}            { ret_print("STRING_LITERAL");  return STR_TYPE;}
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }
