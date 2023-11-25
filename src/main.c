@@ -1,23 +1,27 @@
 #include <unistd.h> // for getopt
 #include <stdio.h>
 #include <stdlib.h>
-#include "../include/symbol_table.h"
-#include "../include/cmat.lex.h"
-#include "../include/cmat.tab.h"
 
-#ifdef RELEASE
+
+#include "symbol_table.h"
+#include "cmat.lex.h"
+#include "cmat.tab.h"
 
 int verbose_flag = 0;
+int lex_only_flag = 0;
 
 int main(int argc, char *argv[])
 {
     int option;
-    while ((option = getopt(argc, argv, "v")) != -1)
+    while ((option = getopt(argc, argv, "vl")) != -1)
     {
         switch (option)
         {
         case 'v':
             verbose_flag = 1;
+            break;
+        case 'l':
+            lex_only_flag = 1;
             break;
         default:
             fprintf(stderr, "Usage: %s file [-v]\n", argv[0]);
@@ -35,20 +39,40 @@ int main(int argc, char *argv[])
     if (!(yyin = fopen(argv[optind], "r")))
     {
         perror(argv[optind]);
-        return 1;
+        return 2;
     }
 
     if (verbose_flag)
         printf("-> Initializing hash table...\n");
     init_hash_table();
 
+    if (lex_only_flag)
+    {
+        if (verbose_flag)
+            printf("-> Starting lexical analysis...\n");
+
+        int token = yylex();
+        while (token)
+        {
+            token = yylex();
+        }
+
+        if (verbose_flag)
+            printf("-> Lexical analysis finished\n");
+
+        if (yyin != stdin)
+            fclose(yyin);
+
+        return 0;
+    }
+
     if (verbose_flag)
-        printf("-> Starting lexical analysis...\n");
+        printf("-> Starting parsing...\n");
 
     int r = yyparse();
 
     if (verbose_flag)
-        printf("-> Lexical analysis finished with code %d\n", r);
+        printf("-> Finished parsing with error code : %d\n", r);
 
     if (yyin != stdin)
         fclose(yyin);
@@ -66,5 +90,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-#endif

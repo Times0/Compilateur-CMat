@@ -1,10 +1,11 @@
 CC ?= gcc
 LDLIBS ?=
+CFLAGS ?= -g # for debug
 
 ifeq ($(MAKECMDGOALS),tests)
     CFLAGS += -DTEST
 else
-    CFLAGS += -DRELEASE -Werror
+    CFLAGS += -Werror
 endif
 
 INCLUDE_PATH = ./include
@@ -35,7 +36,6 @@ TARGET_OBJ := $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
 
 all: $(BINDIR)/$(TARGET)
 
-tests: CFLAGS += -DTEST
 tests: check_tools $(BINDIR)/$(TARGET_TEST)
 
 $(BINDIR)/$(TARGET) $(BINDIR)/$(TARGET_TEST): $(TARGET_OBJ) 
