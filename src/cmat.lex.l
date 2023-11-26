@@ -50,9 +50,9 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "void"          { ret_print("KEYWORD_VOID");    return VOID;}
 
 
-{ID}            { insert(yytext, strlen(yytext), UNDEF, lineno);
+{ID}            { ret_print("IDENTIFIER"); insert(yytext, strlen(yytext), UNDEF, lineno);
 		          yylval.symbol_table_item = lookup(yytext);
-		          return ID;;}
+		          return ID;}
 
 {INTEGER_CONST} { yylval.int_val = atoi(yytext); ret_print("INTEGER_CONST");   return INT_CONST;}
 {FLOAT_CONST}   { yylval.double_val = atof(yytext); ret_print("FLOAT_CONST");     return FLOAT_CONST;}
