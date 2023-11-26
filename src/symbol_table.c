@@ -1,4 +1,4 @@
-#include "symbol_table.h"
+#include "../include/symbol_table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/cmat.tab.h"
@@ -123,7 +123,7 @@ void symtab_dump(FILE *of)
 					fprintf(of, "%-7s", "undef type");
 				fprintf(of, " matrix");
 			}
-			else if (l->st_type == FUNCTION_TYPE)
+			/* else if (l->st_type == FUNCTION_TYPE)
 			{
 				fprintf(of, "%-7s", "function returns ");
 				if (l->inf_type == INT)
@@ -132,7 +132,7 @@ void symtab_dump(FILE *of)
 					fprintf(of, "%-7s", "float");
 				else
 					fprintf(of, "%-7s", "undef");
-			}
+			}*/
 			else
 				fprintf(of, "%-7s", "undef"); // if UNDEF or 0
 			while (t != NULL)

@@ -5,6 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Token types */
+#define CMAT_LOGIC_TYPE 3
+#define CMAT_ARRAY_TYPE 4
+#define CMAT_FUNCTION_TYPE 5
+
+/* How parameters are passed */
+#define PASS_BY_VALUE 1
+#define PASS_BY_REFERENCE 2
+
 /* maximum size of hash table */
 #define SIZE 211
  
@@ -57,6 +66,8 @@ typedef struct list_t
 /* the hash table */
 static list_t **hash_table;
  
+
+// function declarations
 void init_hash_table();                                     // initialize hash table
 unsigned int hash(char *key);                               // hash function 
 void insert(char *name, int len, int type, int lineno);     // insert entry
