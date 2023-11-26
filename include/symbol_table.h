@@ -6,15 +6,9 @@
 #include <string.h>
 
 /* Token types */
-#define CMAT_INT_TYPE 1
-#define CMAT_FLOAT_TYPE 2
 #define CMAT_LOGIC_TYPE 3
 #define CMAT_ARRAY_TYPE 4
 #define CMAT_FUNCTION_TYPE 5
-#define CMAT_MATRIX_TYPE 6
-#define CMAT_STR_TYPE 7
-#define CMAT_VOID_TYPE 8
-#define UNDEF 9
 
 /* How parameters are passed */
 #define PASS_BY_VALUE 1

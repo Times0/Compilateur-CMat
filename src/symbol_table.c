@@ -107,17 +107,17 @@ void symtab_dump(FILE *of)
 		{
 			RefList *t = l->lines;
 			fprintf(of, "%-12s ", l->st_name);
-			if (l->st_type == CMAT_INT_TYPE)
+			if (l->st_type == INT)
 				fprintf(of, "%-7s", "int");
-			else if (l->st_type == CMAT_FLOAT_TYPE)
+			else if (l->st_type == FLOAT)
 				fprintf(of, "%-7s", "float");
-			else if (l->st_type == CMAT_STR_TYPE)
+			else if (l->st_type == STRING)
 				fprintf(of, "%-7s", "string");
-			else if (l->st_type == CMAT_MATRIX_TYPE)
+			else if (l->st_type == MATRIX)
 			{
-				if (l->inf_type == CMAT_INT_TYPE)
+				if (l->inf_type == INT)
 					fprintf(of, "%-7s", "int");
-				else if (l->inf_type == CMAT_FLOAT_TYPE)
+				else if (l->inf_type == FLOAT)
 					fprintf(of, "%-7s", "float");
 				else
 					fprintf(of, "%-7s", "undef type");

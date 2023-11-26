@@ -21,9 +21,9 @@ void yyerror(char *);
 
 DIGIT   [0-9]
 ID      [a-zA-Z_][a-zA-Z_0-9]*
-STRING  \"([^\\\"]|\\.)*\"
+STRING  \"[^\"]*\"
 INTEGER_CONST   {DIGIT}+
-FLOAT_CONST {DIGIT}+"."{DIGIT}*
+FLOAT_CONST {DIGIT}*"."{DIGIT}+
 
 %%
 
@@ -44,10 +44,10 @@ FLOAT_CONST {DIGIT}+"."{DIGIT}*
 "return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
 "main"          { ret_print("KEYWORD_MAIN");    return MAIN;}
 
-"int"           { ret_print("KEYWORD_INT");     return INT_TYPE;}
-"float"         { ret_print("KEYWORD_FLOAT");   return FLOAT_TYPE;}
-"matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX_TYPE;}
-"void"          { ret_print("KEYWORD_VOID");    return VOID_TYPE;}
+"int"           { ret_print("KEYWORD_INT");     return INT;}
+"float"         { ret_print("KEYWORD_FLOAT");   return FLOAT;}
+"matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX;}
+"void"          { ret_print("KEYWORD_VOID");    return VOID;}
 
 
 {ID}            { insert(yytext, strlen(yytext), UNDEF, lineno);
@@ -57,28 +57,34 @@ FLOAT_CONST {DIGIT}+"."{DIGIT}*
 {INTEGER_CONST} { yylval.int_val = atoi(yytext); ret_print("INTEGER_CONST");   return INT_CONST;}
 {FLOAT_CONST}   { yylval.double_val = atof(yytext); ret_print("FLOAT_CONST");     return FLOAT_CONST;}
 
+"++"                { ret_print("INC_OP");          return INCR;}    
+"--"                { ret_print("DEC_OP");          return DECR;}
+".."                { ret_print("DDOT");            return DDOT;}
 "+"|"-"             { ret_print("ADD_OP");          return yytext[0];}
-"*"|"/"             { ret_print("MUL_OP");          return yytext[0];}
+"*"|"/"|"%"         { ret_print("MUL_OP");          return yytext[0];}
 "="                 { ret_print("ASSIGN_OP");       return yytext[0];}
 "=="                { ret_print("EQ_OP");           return EQ_OP;}
 "!="                { ret_print("NEQ_OP");          return NEQ_OP;}
-"<"|"<="|">"|">="   { ret_print("REL_OP");          return REL_OP;}
+"<"                 { ret_print("REL_OP");          return LT_OP;}
+"<="                { ret_print("REL_OP");          return LE_OP;}
+">"                 { ret_print("REL_OP");          return GT_OP;}
+">="                { ret_print("REL_OP");          return GE_OP;}
 "&&"                { ret_print("LOG_OP");          return AND_OP;}
 "||"                { ret_print("LOG_OP");          return OR_OP;}
 "!"                 { ret_print("NOT_OP");          return yytext[0];}
 
-";"                 { ret_print("SEMI");            return SEMI;}
-","                 { ret_print("COMMA");           return COMMA;}
-"("                 { ret_print("LPAREN");          return LPAREN;}
-")"                 { ret_print("RPAREN");          return RPAREN;}
-"["                 { ret_print("LBRACK");          return LBRACKET;}
-"]"                 { ret_print("RBRACK");          return RBRACKET;}
-"{"                 { ret_print("LBRACE");          return LBRACE;}
-"}"                 { ret_print("RBRACE");          return RBRACE;}
-"~"                 { ret_print("TRANSPOSE_OP");    return TRANSPOSE_OP;}
+";"                 { ret_print("SEMI");            return yytext[0];}
+","                 { ret_print("COMMA");           return yytext[0];}
+"("                 { ret_print("LPAREN");          return yytext[0];}
+")"                 { ret_print("RPAREN");          return yytext[0];}
+"["                 { ret_print("LBRACK");          return yytext[0];}
+"]"                 { ret_print("RBRACK");          return yytext[0];}
+"{"                 { ret_print("LBRACE");          return yytext[0];}
+"}"                 { ret_print("RBRACE");          return yytext[0];}
+"~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
 {STRING}            { yylval.str_val = malloc(yyleng * sizeof(char)); 
                       strcpy(yylval.str_val, yytext); 
-                      ret_print("STRING_LITERAL");  return yytext[0];}
+                      ret_print("STRING_LITERAL");  return STRING;}
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }
