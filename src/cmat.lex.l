@@ -42,7 +42,9 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "while"         { ret_print("KEYWORD_WHILE");   return WHILE;}
 "for"           { ret_print("KEYWORD_FOR");     return FOR;}
 "return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
-"main"          { ret_print("KEYWORD_MAIN");    return MAIN;}
+"main"          { ret_print("KEYWORD_MAIN");    insert(yytext, strlen(yytext), UNDEF, lineno);
+		          yylval.symbol_table_item = lookup(yytext);
+                return MAIN;}
 
 "int"           { ret_print("KEYWORD_INT");     return INT;}
 "float"         { ret_print("KEYWORD_FLOAT");   return FLOAT;}
@@ -54,8 +56,8 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 		          yylval.symbol_table_item = lookup(yytext);
 		          return ID;}
 
-{INTEGER_CONST} { yylval.int_val = atoi(yytext); ret_print("INTEGER_CONST");   return INT_CONST;}
-{FLOAT_CONST}   { yylval.double_val = atof(yytext); ret_print("FLOAT_CONST");     return FLOAT_CONST;}
+{INTEGER_CONST} { yylval.int_v = atoi(yytext); ret_print("INTEGER_CONST");   return INT_CONST;}
+{FLOAT_CONST}   { yylval.float_v = atof(yytext); ret_print("FLOAT_CONST");   return FLOAT_CONST;}
 
 "++"                { ret_print("INC_OP");          return INCR;}    
 "--"                { ret_print("DEC_OP");          return DECR;}
@@ -82,8 +84,8 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "{"                 { ret_print("LBRACE");          return yytext[0];}
 "}"                 { ret_print("RBRACE");          return yytext[0];}
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
-{STRING}            { yylval.str_val = malloc(yyleng * sizeof(char)); 
-                      strcpy(yylval.str_val, yytext); 
+{STRING}            { yylval.str_v = malloc(yyleng * sizeof(char)); 
+                      strcpy(yylval.str_v, yytext); 
                       ret_print("STRING_LITERAL");  return STRING;}
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/

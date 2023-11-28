@@ -90,6 +90,19 @@ void incr_scope()
 	current_scope++;
 }
 
+void add_type(char *name, int type)
+{
+	unsigned int hashval = hash(name);
+	list_t *l = hash_table[hashval];
+	
+	while ((l != NULL) && (strcmp(name, l->st_name) != 0))
+		l = l->next;
+	
+	if (l != NULL)
+		if(l->st_type == UNDEF)
+			l->st_type = type;
+}
+
 /* print to stdout by default */
 void symtab_dump(FILE *of)
 {
@@ -114,27 +127,12 @@ void symtab_dump(FILE *of)
 			else if (l->st_type == STRING)
 				fprintf(of, "%-7s", "string");
 			else if (l->st_type == MATRIX)
-			{
-				if (l->inf_type == INT)
-					fprintf(of, "%-7s", "int");
-				else if (l->inf_type == FLOAT)
-					fprintf(of, "%-7s", "float");
-				else
-					fprintf(of, "%-7s", "undef type");
-				fprintf(of, " matrix");
-			}
-			/* else if (l->st_type == FUNCTION_TYPE)
-			{
-				fprintf(of, "%-7s", "function returns ");
-				if (l->inf_type == INT)
-					fprintf(of, "%-7s", "int");
-				else if (l->inf_type == FLOAT)
-					fprintf(of, "%-7s", "float");
-				else
-					fprintf(of, "%-7s", "undef");
-			}*/
+				fprintf(of, "%-7s", "matrix");
+			else if (l->st_type == VOID)
+				fprintf(of, "%-7s", "void");
 			else
 				fprintf(of, "%-7s", "undef"); // if UNDEF or 0
+			
 			while (t != NULL)
 			{
 				fprintf(of, "%4d ", t->lineno);

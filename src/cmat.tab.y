@@ -15,17 +15,54 @@ extern int yyerror(char *s);
 %}
 
 %union {
-     int int_val;
-     double double_val;
-     char *str_val;
+     int int_v;
+     double float_v;
+     char *str_v;
      list_t* symbol_table_item;
+     int type_v;
 }
 
-%token INT FLOAT MATRIX VOID FUNCTION STRING
-%token IF ELSE WHILE FOR RETURN MAIN LOGIC_TYPE   
+%type <type_v> type
+%type <symbol_table_item> id_or_affectation
+%type <symbol_table_item> id_or_affectation_list
+%type <symbol_table_item> declaration_function
+%type <symbol_table_item> function_name
+%type <symbol_table_item> declaration_matrix_list
+%type <symbol_table_item> declaration_matrix
+/*
+
+%type <symbol_table_item> parameter
+%type <symbol_table_item> parameter_list
+%type <symbol_table_item> return
+%type <symbol_table_item> loop
+%type <symbol_table_item> condition
+%type <symbol_table_item> affectation_matrix
+%type <symbol_table_item> array_element_list
+%type <symbol_table_item> affectation
+%type <symbol_table_item> type
+%type <symbol_table_item> sign
+%type <symbol_table_item> constant
+%type <symbol_table_item> constant_list
+%type <symbol_table_item> expression
+%type <symbol_table_item> cst_or_array_or_id
+%type <symbol_table_item> expression_or_cst_or_array_or_id
+%type <symbol_table_item> expression_or_cst_or_array_or_id_or_string_list
+%type <symbol_table_item> array
+%type <symbol_table_item> slice
+%type <symbol_table_item> instruction
+%type <symbol_table_item> instruction_list
+%type <symbol_table_item> bloc
+%type <symbol_table_item> expression_or_cst_or_array_or_idexpression_or_cst_or_array_or_id_or_slice
+%type <symbol_table_item> expression_or_cst_or_array_or_id_or_slice*/
+
+
+%token <type_v>INT FLOAT MATRIX VOID STRING
+%token IF ELSE WHILE FOR RETURN
 %token '+' '-' '*' '/' '%' INCR DECR AND_OP OR_OP EQ_OP NEQ_OP LT_OP LE_OP GT_OP GE_OP '!' '~'
-%token '(' ')' '[' ']' '{' '}' ';' ',' DDOT '=' REFER
-%token ID INT_CONST FLOAT_CONST UNDEF
+%token '(' ')' '[' ']' '{' '}' ';' ',' DDOT '='
+%token <symbol_table_item>ID MAIN
+%token <int_v>INT_CONST
+%token <float_v>FLOAT_CONST
 
 
 %start instruction_list
@@ -35,7 +72,7 @@ extern int yyerror(char *s);
 %left INCR DECR
 %left AND_OP OR_OP
 %left EQ_OP NEQ_OP LT_OP LE_OP GT_OP GE_OP
-%left '!'
+%right '!'
 
 %%
 instruction_list: instruction instruction_list
@@ -53,8 +90,8 @@ instruction : declaration
 
 
 // Declarations
-declaration : type id_or_affectation_list ';'
-            | type declaration_matrix_list ';'
+declaration : type id_or_affectation_list ';'  {add_type($2->st_name, $1);}
+            | type declaration_matrix_list ';' {add_type($2->st_name, $1);}
 
 
 // Declarations variables
@@ -74,11 +111,11 @@ declaration_matrix : ID '[' INT_CONST ']' affectation_matrix
 
 
 // Declarations fonctions
-declaration_function : type function_name '(' parameter_list ')' bloc
-                     | VOID function_name '(' parameter_list ')' bloc
+declaration_function : type function_name '(' parameter_list ')' bloc {add_type($2->st_name, $1);}
+                     | VOID function_name '(' parameter_list ')' bloc {add_type($2->st_name, VOID);} // $1 ne marche pas => VOID
 
-function_name : ID
-              | MAIN
+function_name : ID            { $$ = $1; }
+              | MAIN          { $$ = $1; }
 
 parameter : type ID
           | type ID '[' INT_CONST ']'
@@ -120,9 +157,9 @@ affectation : ID '=' expression_or_cst_or_array_or_id
 
 
 // Types & signes & constantes
-type : INT
-     | FLOAT
-     | MATRIX
+type : INT          { $$ = INT; }
+     | FLOAT        { $$ = FLOAT; }
+     | MATRIX       { $$ = MATRIX; }
 
 sign : '+'
      | '-'

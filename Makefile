@@ -34,7 +34,7 @@ TARGET_OBJ := $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
 
 .PHONY: all tests clean check_tools
 
-all: $(BINDIR)/$(TARGET)
+all: check_tools $(BINDIR)/$(TARGET)
 
 tests: check_tools $(BINDIR)/$(TARGET_TEST)
 

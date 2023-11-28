@@ -6,16 +6,10 @@
 #include <string.h>
 
 /* Token types */
-#define CMAT_LOGIC_TYPE 3
-#define CMAT_ARRAY_TYPE 4
-#define CMAT_FUNCTION_TYPE 5
-
-/* How parameters are passed */
-#define PASS_BY_VALUE 1
-#define PASS_BY_REFERENCE 2
+#define UNDEF 0
 
 /* maximum size of hash table */
-#define SIZE 211
+#define SIZE 300
  
 /* maximum size of tokens-identifiers */
 #define MAXTOKENLEN 40
@@ -30,7 +24,6 @@ typedef struct Param
     char param_name[MAXTOKENLEN];
     // to store value
     int ival; double fval; char *st_sval;
-    int passing; // value or reference
 }Param;
  
 /* a linked list of references (lineno's) for each variable */
@@ -66,7 +59,6 @@ typedef struct list_t
 /* the hash table */
 static list_t **hash_table;
  
-
 // function declarations
 void init_hash_table();                                     // initialize hash table
 unsigned int hash(char *key);                               // hash function 
@@ -75,7 +67,7 @@ list_t *lookup(char *name);                                 // search for entry
 list_t *lookup_scope(char *name, int scope);                // search for entry in scope
 void hide_scope();                                          // hide the current scope
 void incr_scope();                                          // go to next scope
+void add_type(char *name, int type);                        // add type to entry
 void symtab_dump(FILE *of);                                 // dump file
-
 
 #endif
