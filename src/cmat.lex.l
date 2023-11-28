@@ -10,7 +10,7 @@
 
 extern FILE *yyin;
 extern FILE *yyout;
-int lineno = 1;
+__uint32_t lineno = 1;
 
 void ret_print(char *token_type);
 void yyerror(char *);
@@ -81,8 +81,8 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 ")"                 { ret_print("RPAREN");          return yytext[0];}
 "["                 { ret_print("LBRACK");          return yytext[0];}
 "]"                 { ret_print("RBRACK");          return yytext[0];}
-"{"                 { ret_print("LBRACE");          return yytext[0];}
-"}"                 { ret_print("RBRACE");          return yytext[0];}
+"{"                 { ret_print("LBRACE");incr_scope();return yytext[0];}
+"}"                 { ret_print("RBRACE");return yytext[0];}
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
 {STRING}            { yylval.str_v = malloc(yyleng * sizeof(char)); 
                       strcpy(yylval.str_v, yytext); 
@@ -95,7 +95,6 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 
 // For tests only
 void ret_print(char *token_type) {
-    // printf("%s at line %d: %s\n", token_type, lineno, yytext);
     #ifdef TEST
     if (strcmp(token_type, "\n") == 0) {
         fprintf(stdout, "\n");

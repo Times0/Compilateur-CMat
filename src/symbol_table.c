@@ -3,32 +3,33 @@
 #include <stdlib.h>
 #include "../include/cmat.tab.h"
 
-int current_scope = 0;
+__uint32_t current_scope = 0;
+__uint32_t next_scope = 1;
+__uint32_t previous_scope = 0;
 
 void init_hash_table()
 {
-	int i;
 	hash_table = malloc(SIZE * sizeof(list_t *));
-	for (i = 0; i < SIZE; i++)
+	for (__uint32_t i = 0; i < SIZE; i++)
 		hash_table[i] = NULL;
 }
 
-unsigned int hash(char *key)
+__uint32_t hash(char *key)
 {
-	unsigned int hashval = 0;
+	__uint32_t hashval = 0;
 	for (; *key != '\0'; key++)
 		hashval += *key;
 	hashval += key[0] % 11 + (key[0] << 3) - key[0];
 	return hashval % SIZE;
 }
 
-void insert(char *name, int len, int type, int lineno)
+void insert(char *name, __uint32_t len, __uint32_t type, __uint32_t lineno)
 {
-	unsigned int hashval = hash(name);
+	__uint32_t hashval = hash(name);
 	list_t *l = hash_table[hashval];
 
 	// maybe nul
-	while ((l != NULL) && (strcmp(name, l->st_name) != 0))
+	while ((l != NULL) && (strcmp(name, l->st_name) != 0) && (l->scope != current_scope))
 		l = l->next;
 
 	/* variable not yet in table */
@@ -49,7 +50,7 @@ void insert(char *name, int len, int type, int lineno)
 	/* found in table, so just add line number */
 	else
 	{
-		l->scope = current_scope;
+		// l->scope = current_scope;
 		RefList *t = l->lines;
 		while (t->next != NULL)
 			t = t->next;
@@ -63,39 +64,41 @@ void insert(char *name, int len, int type, int lineno)
 
 list_t *lookup(char *name)
 { /* return symbol if found or NULL if not found */
-	unsigned int hashval = hash(name);
+	__uint32_t hashval = hash(name);
 	list_t *l = hash_table[hashval];
 	while ((l != NULL) && (strcmp(name, l->st_name) != 0))
 		l = l->next;
 	return l; // NULL is not found
 }
 
-list_t *lookup_scope(char *name, int scope)
+list_t *lookup_scope(char *name, __uint32_t scope)
 { /* return symbol if found or NULL if not found */
-	unsigned int hashval = hash(name);
+	__uint32_t hashval = hash(name);
 	list_t *l = hash_table[hashval];
 	while ((l != NULL) && (strcmp(name, l->st_name) != 0) && (scope != l->scope))
 		l = l->next;
 	return l; // NULL is not found
 }
 
-void hide_scope()
+void decr_scope()
 {
-	if (current_scope > 0)
-		current_scope--;
+	// if (current_scope > 0)
+		current_scope = previous_scope;
 }
 
 void incr_scope()
 {
-	current_scope++;
+	previous_scope = current_scope;
+	current_scope = next_scope;
+	next_scope++;
 }
 
-void add_type(char *name, int type)
+void add_type(char *name, __uint32_t type)
 {
-	unsigned int hashval = hash(name);
+	__uint32_t hashval = hash(name);
 	list_t *l = hash_table[hashval];
 	
-	while ((l != NULL) && (strcmp(name, l->st_name) != 0))
+	while ((l != NULL) && (strcmp(name, l->st_name) != 0) && l->scope)
 		l = l->next;
 	
 	if (l != NULL)
@@ -106,10 +109,10 @@ void add_type(char *name, int type)
 /* print to stdout by default */
 void symtab_dump(FILE *of)
 {
-	int i;
-	fprintf(of, "------------ ------ ------------\n");
-	fprintf(of, "Name         Type   Line Numbers\n");
-	fprintf(of, "------------ ------ -------------\n");
+	__uint32_t i;
+	fprintf(of, "------------ ------- ------- ---------------\n");
+	fprintf(of, "Name         Type    Scope    Line Numbers   \n");
+	fprintf(of, "------------ ------- ------- ---------------\n");
 	for (i = 0; i < SIZE; ++i)
 	{
 		if (hash_table[i] == NULL)
@@ -120,24 +123,28 @@ void symtab_dump(FILE *of)
 		{
 			RefList *t = l->lines;
 			fprintf(of, "%-12s ", l->st_name);
-			if (l->st_type == INT)
-				fprintf(of, "%-7s", "int");
-			else if (l->st_type == FLOAT)
-				fprintf(of, "%-7s", "float");
-			else if (l->st_type == STRING)
-				fprintf(of, "%-7s", "string");
-			else if (l->st_type == MATRIX)
-				fprintf(of, "%-7s", "matrix");
-			else if (l->st_type == VOID)
-				fprintf(of, "%-7s", "void");
-			else
-				fprintf(of, "%-7s", "undef"); // if UNDEF or 0
 			
+			if (l->st_type == INT)
+				fprintf(of, "%-7s ", "int");
+			else if (l->st_type == FLOAT)
+				fprintf(of, "%-7s ", "float");
+			else if (l->st_type == STRING)
+				fprintf(of, "%-7s ", "string");
+			else if (l->st_type == MATRIX)
+				fprintf(of, "%-7s ", "matrix");
+			else if (l->st_type == VOID)
+				fprintf(of, "%-7s ", "void");
+			else
+				fprintf(of, "%-7s ", "undef"); // if UNDEF or 0, both are equal
+			
+			fprintf(of, "%-7d ", l->scope);
+
 			while (t != NULL)
 			{
 				fprintf(of, "%4d ", t->lineno);
 				t = t->next;
 			}
+			
 			fprintf(of, "\n");
 			l = l->next;
 		}

@@ -9,17 +9,17 @@
 
 extern FILE *yyin;
 extern FILE *yyout;
-extern int yylex();
-extern int yyerror(char *s);
+extern __uint32_t yylex();
+extern __uint32_t yyerror(char *s);
 
 %}
 
 %union {
-     int int_v;
+     __int32_t int_v;
      double float_v;
+     __uint32_t type_v;
      char *str_v;
      list_t* symbol_table_item;
-     int type_v;
 }
 
 %type <type_v> type
@@ -29,8 +29,8 @@ extern int yyerror(char *s);
 %type <symbol_table_item> function_name
 %type <symbol_table_item> declaration_matrix_list
 %type <symbol_table_item> declaration_matrix
-/*
 
+/*
 %type <symbol_table_item> parameter
 %type <symbol_table_item> parameter_list
 %type <symbol_table_item> return
