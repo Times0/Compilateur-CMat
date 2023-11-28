@@ -19,7 +19,7 @@ extern __uint32_t yyerror(char *s);
      double float_v;
      __uint32_t type_v;
      char *str_v;
-     list_t* symbol_table_item;
+     SymbolTableElement* symbol_table_item;
 }
 
 %type <type_v> type
@@ -90,8 +90,8 @@ instruction : declaration
 
 
 // Declarations
-declaration : type id_or_affectation_list ';'  {add_type($2->st_name, $1);}
-            | type declaration_matrix_list ';' {add_type($2->st_name, $1);}
+declaration : type id_or_affectation_list ';'  {add_type($2->name, $1);}
+            | type declaration_matrix_list ';' {add_type($2->name, $1);}
 
 
 // Declarations variables
@@ -111,8 +111,8 @@ declaration_matrix : ID '[' INT_CONST ']' affectation_matrix
 
 
 // Declarations fonctions
-declaration_function : type function_name '(' parameter_list ')' bloc {add_type($2->st_name, $1);}
-                     | VOID function_name '(' parameter_list ')' bloc {add_type($2->st_name, VOID);} // $1 ne marche pas => VOID
+declaration_function : type function_name '(' parameter_list ')' bloc {add_type($2->name, $1);}
+                     | VOID function_name '(' parameter_list ')' bloc {add_type($2->name, VOID);} // $1 ne marche pas => VOID
 
 function_name : ID            { $$ = $1; }
               | MAIN          { $$ = $1; }

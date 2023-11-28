@@ -9,42 +9,45 @@ __uint32_t previous_scope = 0;
 
 void init_hash_table()
 {
-	hash_table = malloc(SIZE * sizeof(list_t *));
+	symbol_table = malloc(SIZE * sizeof(SymbolTableElement *));
 	for (__uint32_t i = 0; i < SIZE; i++)
-		hash_table[i] = NULL;
+		symbol_table[i] = NULL;
 }
 
 __uint32_t hash(char *key)
 {
-	__uint32_t hashval = 0;
-	for (; *key != '\0'; key++)
-		hashval += *key;
-	hashval += key[0] % 11 + (key[0] << 3) - key[0];
-	return hashval % SIZE;
+    __uint32_t hashval = 0;
+    for (; *key != '\0'; key++)
+        hashval += *key;
+    hashval += key[0] % 11 + (key[0] << 3) - key[0];
+    // hashval += additionalValue;  // Incorporate the additional integer value
+    return hashval % SIZE;
 }
+
+
 
 void insert(char *name, __uint32_t len, __uint32_t type, __uint32_t lineno)
 {
 	__uint32_t hashval = hash(name);
-	list_t *l = hash_table[hashval];
+	SymbolTableElement *l = symbol_table[hashval];
 
 	// maybe nul
-	while ((l != NULL) && (strcmp(name, l->st_name) != 0) && (l->scope != current_scope))
+	while ((l != NULL) && (strcmp(name, l->name) != 0) && (l->scope != current_scope))
 		l = l->next;
 
 	/* variable not yet in table */
 	if (l == NULL)
 	{
-		l = (list_t *)malloc(sizeof(list_t));
-		strncpy(l->st_name, name, len);
+		l = (SymbolTableElement *)malloc(sizeof(SymbolTableElement));
+		strncpy(l->name, name, len);
 		/* add to hashtable */
-		l->st_type = type;
+		l->type = type;
 		l->scope = current_scope;
 		l->lines = (RefList *)malloc(sizeof(RefList));
 		l->lines->lineno = lineno;
 		l->lines->next = NULL;
-		l->next = hash_table[hashval];
-		hash_table[hashval] = l;
+		l->next = symbol_table[hashval];
+		symbol_table[hashval] = l;
 		// printf("Inserted %s for the first time with linenumber %d!\n", name, lineno); // error checking
 	}
 	/* found in table, so just add line number */
@@ -62,20 +65,20 @@ void insert(char *name, __uint32_t len, __uint32_t type, __uint32_t lineno)
 	}
 }
 
-list_t *lookup(char *name)
+SymbolTableElement *lookup(char *name)
 { /* return symbol if found or NULL if not found */
 	__uint32_t hashval = hash(name);
-	list_t *l = hash_table[hashval];
-	while ((l != NULL) && (strcmp(name, l->st_name) != 0))
+	SymbolTableElement *l = symbol_table[hashval];
+	while ((l != NULL) && (strcmp(name, l->name) != 0))
 		l = l->next;
 	return l; // NULL is not found
 }
 
-list_t *lookup_scope(char *name, __uint32_t scope)
+SymbolTableElement *lookup_scope(char *name, __uint32_t scope)
 { /* return symbol if found or NULL if not found */
 	__uint32_t hashval = hash(name);
-	list_t *l = hash_table[hashval];
-	while ((l != NULL) && (strcmp(name, l->st_name) != 0) && (scope != l->scope))
+	SymbolTableElement *l = symbol_table[hashval];
+	while ((l != NULL) && (strcmp(name, l->name) != 0) && (scope != l->scope))
 		l = l->next;
 	return l; // NULL is not found
 }
@@ -96,18 +99,18 @@ void incr_scope()
 void add_type(char *name, __uint32_t type)
 {
 	__uint32_t hashval = hash(name);
-	list_t *l = hash_table[hashval];
+	SymbolTableElement *l = symbol_table[hashval];
 	
-	while ((l != NULL) && (strcmp(name, l->st_name) != 0) && l->scope)
+	while ((l != NULL) && (strcmp(name, l->name) != 0) && l->scope)
 		l = l->next;
 	
 	if (l != NULL)
-		if(l->st_type == UNDEF)
-			l->st_type = type;
+		if(l->type == UNDEF)
+			l->type = type;
 }
 
 /* print to stdout by default */
-void symtab_dump(FILE *of)
+void symbol_table_dump(FILE *of)
 {
 	__uint32_t i;
 	fprintf(of, "------------ ------- ------- ---------------\n");
@@ -115,24 +118,24 @@ void symtab_dump(FILE *of)
 	fprintf(of, "------------ ------- ------- ---------------\n");
 	for (i = 0; i < SIZE; ++i)
 	{
-		if (hash_table[i] == NULL)
+		if (symbol_table[i] == NULL)
 			continue;
 
-		list_t *l = hash_table[i];
+		SymbolTableElement *l = symbol_table[i];
 		while (l != NULL)
 		{
 			RefList *t = l->lines;
-			fprintf(of, "%-12s ", l->st_name);
+			fprintf(of, "%-12s ", l->name);
 			
-			if (l->st_type == INT)
+			if (l->type == INT)
 				fprintf(of, "%-7s ", "int");
-			else if (l->st_type == FLOAT)
+			else if (l->type == FLOAT)
 				fprintf(of, "%-7s ", "float");
-			else if (l->st_type == STRING)
+			else if (l->type == STRING)
 				fprintf(of, "%-7s ", "string");
-			else if (l->st_type == MATRIX)
+			else if (l->type == MATRIX)
 				fprintf(of, "%-7s ", "matrix");
-			else if (l->st_type == VOID)
+			else if (l->type == VOID)
 				fprintf(of, "%-7s ", "void");
 			else
 				fprintf(of, "%-7s ", "undef"); // if UNDEF or 0, both are equal

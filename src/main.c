@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    symtab_dump(yyout);
+    symbol_table_dump(yyout);
     if (yyout != stdout)
         fclose(yyout);
 
