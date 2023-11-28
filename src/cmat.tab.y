@@ -75,7 +75,7 @@ declaration_matrix : ID '[' INT_CONST ']' affectation_matrix
 
 // Declarations fonctions
 declaration_function : type function_name '(' parameter_list ')' bloc
-                     | VOID function_name '(' parameter_list ')' bloc
+                     | VOID function_name '(' parameter_list ')' bloc // On ajoute void car "type" est un type de variable
 
 function_name : ID
               | MAIN
