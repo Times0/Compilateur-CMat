@@ -1,5 +1,4 @@
-#ifndef AST_H
-#define AST_H
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,8 +17,4 @@ struct tree
 
 tree_t *create_tree();
 
-void add_operation(tree_t *root, char name);
-
 void print_tree(tree_t *root, int level);
-
-#endif

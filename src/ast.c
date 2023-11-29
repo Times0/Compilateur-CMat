@@ -1,7 +1,5 @@
 #include "ast.h"
 
-tree_t *root;
-
 tree_t *create_tree()
 {
     tree_t *node = malloc(sizeof(tree_t));

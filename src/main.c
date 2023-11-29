@@ -1,11 +1,4 @@
-#include <unistd.h> // for getopt
-#include <stdio.h>
-#include <stdlib.h>
-
-
-#include "symbol_table.h"
-#include "cmat.lex.h"
-#include "cmat.tab.h"
+#include "main.h"
 
 int verbose_flag = 0;
 int lex_only_flag = 0;
@@ -70,6 +63,7 @@ int main(int argc, char *argv[])
         printf("-> Starting parsing...\n");
 
     int r = yyparse();
+    print_tree(root, 0);
 
     if (verbose_flag)
         printf("-> Finished parsing with error code : %d\n", r);

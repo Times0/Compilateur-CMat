@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "../include/symbol_table.h"
-#include "../include/ast.h"
+#include "symbol_table.h"
+#include "ast.h"
+
 
 extern FILE *yyin;
 extern FILE *yyout;
@@ -52,7 +53,7 @@ extern tree_t *root;
 
 %start start
 %%
-start: instruction_list {root = $1; print_tree(root, 0);}
+start: instruction_list {root = $1;}
 
 instruction_list: instruction instruction_list {$$ = $1;} // todo 
                 | %empty 
