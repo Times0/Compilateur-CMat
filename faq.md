@@ -1,0 +1,6 @@
+- comment gerer printf et les fonctions sur les matrices 
+- mips ou riscV
+- Facilité genration code avec ast
+- Ast bonne idée
+- Code 3 addr apres ast ?
+- Montrer ton svg grammaire

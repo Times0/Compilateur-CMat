@@ -7,13 +7,11 @@
 #include "symbol_table.h"
 #include "ast.h"
 
-
 extern FILE *yyin;
 extern FILE *yyout;
 extern int yylex();
 extern int yyerror(char *s);
 extern tree_t *root;
-
 %}
 
 %union {

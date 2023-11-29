@@ -1,7 +1,15 @@
-#include "main.h"
+#include <unistd.h> // for getopt
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "symbol_table.h"
+#include "cmat.lex.h"
+#include "cmat.tab.h"
+#include "ast.h"
 
 int verbose_flag = 0;
 int lex_only_flag = 0;
+tree_t *root;
 
 int main(int argc, char *argv[])
 {
