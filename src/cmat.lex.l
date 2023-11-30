@@ -7,13 +7,9 @@
 #include "../include/symbol_table.h"
 #include "../include/cmat.tab.h"
 
-
-extern FILE *yyin;
-extern FILE *yyout;
-__uint32_t lineno = 1;
-
 void ret_print(char *token_type);
 void yyerror(char *);
+extern __uint32_t lineno;
 %}
 
 %x ML_COMMENT
@@ -42,25 +38,24 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "while"         { ret_print("KEYWORD_WHILE");   return WHILE;}
 "for"           { ret_print("KEYWORD_FOR");     return FOR;}
 "return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
-"main"          { ret_print("KEYWORD_MAIN");    insert(yytext, strlen(yytext), UNDEF, lineno);
-                return MAIN;}
+"main"          { ret_print("KEYWORD_MAIN");    return MAIN;}
 
-"int"           { ret_print("KEYWORD_INT");     return INT;}
-"float"         { ret_print("KEYWORD_FLOAT");   return FLOAT;}
+"int"           { ret_print("KEYWORD_INT");     yylval.type_val = INT;   return INT;}
+"float"         { ret_print("KEYWORD_FLOAT");   yylval.type_val = FLOAT; return FLOAT;}
 "matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX;}
 "void"          { ret_print("KEYWORD_VOID");    return VOID;}
 
 
-{ID}            {   ret_print("IDENTIFIER");
-                    if ( yyleng > MAXTOKENLEN )
-                        fprintf(stderr,"Identifier '%s' too long, truncated\n",yytext);
-                    strncpy(yylval.strval,yytext,7);
-                    yylval.strval[MAXTOKENLEN] = '\0';
-                    return ID;
+{ID}            { ret_print("IDENTIFIER");
+                  if ( yyleng > MAXTOKENLEN )
+                      fprintf(stderr,"Identifier '%s' too long, truncated\n",yytext);
+                  strncpy(yylval.strval,yytext,7);
+                  yylval.strval[MAXTOKENLEN] = '\0';
+                  return ID;
                 }
 
-{INTEGER_CONST} { ret_print("INTEGER_CONST");   return INT_CONST;}
-{FLOAT_CONST}   { ret_print("FLOAT_CONST");   return FLOAT_CONST;}
+{INTEGER_CONST}     { ret_print("INTEGER_CONST");   yylval.int_val = atoi(yytext); return INT_CONST;}
+{FLOAT_CONST}       { ret_print("FLOAT_CONST");     return FLOAT_CONST;}
 
 "++"                { ret_print("INC_OP");          return INCR;}    
 "--"                { ret_print("DEC_OP");          return DECR;}
@@ -84,8 +79,8 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 ")"                 { ret_print("RPAREN");          return yytext[0];}
 "["                 { ret_print("LBRACK");          return yytext[0];}
 "]"                 { ret_print("RBRACK");          return yytext[0];}
-"{"                 { ret_print("LBRACE");incr_scope();return yytext[0];}
-"}"                 { ret_print("RBRACE");return yytext[0];}
+"{"                 { ret_print("LBRACE");          return yytext[0];}
+"}"                 { ret_print("RBRACE");          return yytext[0];}
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
 {STRING}            { ret_print("STRING_LITERAL");  return STRING;}
 

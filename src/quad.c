@@ -41,7 +41,7 @@ SymbolTableElement *newtemp(SymbolTable *t)
     SymbolTableElement *s;
     char name[10];
     sprintf(name,"t%d",t->temporary);
-    s = insert(name,strlen(name),UNDEF,0);
+    s = insert(name, UNDEF, VARIABLE);
     ++(t->temporary);
     return s;
 }

@@ -4,8 +4,8 @@
 #include "../include/cmat.tab.h"
 
 __uint32_t current_scope = 0;
+__uint32_t lineno = 1;
 
-/* the hash table */
 SymbolTable *symbol_table;
 struct code * code;
 
@@ -27,69 +27,101 @@ void init_symbol_table()
 	}
 
 	for(__uint32_t i = 0; i < SYMBOLTABLE_SIZE; i++)
-		symbol_table->symbols[i].name[0] = '\0';
+		symbol_table->symbols[i].attribute.name[0] = '\0';
 }
 
-__uint32_t hash(char *key)
+void grow_symbol_table() 
 {
-    __uint32_t hashval = 0;
-    for (; *key != '\0'; key++)
-        hashval += *key;
-    hashval += key[0] % 11 + (key[0] << 3) - key[0];
-    return hashval % SYMBOLTABLE_SIZE;
+    symbol_table->capacity += 1024;
+    symbol_table->symbols = realloc(symbol_table->symbols,symbol_table->capacity*sizeof(SymbolTableElement));
+    if(symbol_table->symbols == NULL) 
+    {
+        fprintf(stderr,"Error attempting to grow symbol table (actual size is %d)\n",symbol_table->size);
+        exit(1);
+    }
 }
 
-SymbolTableElement* insert(char *name, __uint32_t len, __uint32_t type, __uint32_t lineno)
+SymbolTableElement* insert(char *name, __uint32_t type, __uint32_t class)
 {
-	__uint32_t hashval = hash(name);
-	SymbolTableElement l = symbol_table->symbols[hashval];
-
-	/* variable not yet in table */
-	if (l.name[0] == '\0')
+	if(class == VARIABLE)
 	{
-		strncpy(l.name, name, len);
-		/* add to hashtable */
-		l.type = type;
-		l.scopes = (ScopeList *)malloc(sizeof(ScopeList));
-		l.lines = (LineList *)malloc(sizeof(LineList));
-		if(l.lines == NULL|| l.scopes == NULL)
+		SymbolTableElement *l = lookup_scope(name, current_scope, VARIABLE);
+		/* variable not yet in table */
+		if (l == NULL)
 		{
-			perror("Error malloc in insert\n");
-			exit(1);
+			if(symbol_table->size == symbol_table->capacity)
+    			grow_symbol_table();
+
+			l = &(symbol_table->symbols[symbol_table->size]);
+
+			strcpy(l->attribute.name, name);
+			l->class = VARIABLE;
+			l->type = type;
+			l->scope = current_scope;
+			++(symbol_table->size);
 		}
-		l.lines->lineno = lineno;
-		l.lines->next = NULL;
-		symbol_table->symbols[hashval] = l;
+		return l;
 	}
-	/* found in table, so just add line number */
-	else
+}
+
+SymbolTableElement* insert_constant(Value value, __uint32_t type)
+{
+	SymbolTableElement *l = lookup_constant(value, type);
+	// printf("%p\n", l);
+	if (l == NULL)
 	{
-		LineList *t = l.lines;
-		while (t->next != NULL)
-			t = t->next;
-		/* add linenumber to reference list */
-		t->next = (LineList *)malloc(sizeof(LineList));
-		t->next->lineno = lineno;
-		t->next->next = NULL;
+		if(symbol_table->size == symbol_table->capacity)
+    		grow_symbol_table();
+
+		l = &(symbol_table->symbols[symbol_table->size]);
+		if(type == INT)
+			l->attribute.val.int_value = value.int_value;
+		else if(type == FLOAT)
+			l->attribute.val.float_value = value.float_value;
+		
+		l->class = CONSTANT;
+		l->type = type;
+		l->scope = current_scope;
+		++(symbol_table->size);
 	}
-	return &(symbol_table->symbols[hashval]);
+	return l;
 }
 
-SymbolTableElement* lookup(char *name)
-{ /* return symbol if found or NULL if not found */
-	__uint32_t hashval = hash(name);
-	return &(symbol_table->symbols[hashval]);
+/* return symbol if found or NULL if not found */
+SymbolTableElement* lookup_constant(Value value, __uint32_t type)
+{
+	if(type == INT)
+	{
+		__uint32_t i;
+    	for ( i=0 ; i<symbol_table->size; i++ )
+		{
+			if(symbol_table->symbols[i].class == CONSTANT)
+				if(symbol_table->symbols[i].attribute.val.int_value == value.int_value)
+					break;
+		}
+		// printf("%d %d\n", i, symbol_table->size);
+    	if(i < symbol_table->size)
+    		return &(symbol_table->symbols[i]);
+    	return NULL;	
+	}
 }
 
-SymbolTableElement* lookup_scope(char *name, __uint32_t scope)
-{ /* return symbol if found or NULL if not found */
-	__uint32_t hashval = hash(name);
-	return &(symbol_table->symbols[hashval]);
+/* return symbol if found or NULL if not found */
+SymbolTableElement* lookup_scope(char *name, __uint32_t scope, __uint32_t class)
+{
+	if(class == VARIABLE)
+	{
+		__uint32_t i;
+    	for ( i=0 ; i<symbol_table->size && strcmp(symbol_table->symbols[i].attribute.name, name) != 0; i++);
+		if(i < symbol_table->size)
+    	  	return &(symbol_table->symbols[i]);
+    	return NULL;
+	}
 }
 
 void decr_scope()
 {
-	// if (current_scope > 0)
+	if(current_scope > 0)
 		current_scope--;
 }
 
@@ -98,44 +130,22 @@ void incr_scope()
 	current_scope++;
 }
 
-void add_type(char *name, __uint32_t type)
-{
-	__uint32_t hashval = hash(name);
-	SymbolTableElement l = symbol_table->symbols[hashval];
-	
-	if (l.name[0] != '\0')
-		if(l.type == UNDEF)
-			l.type = type;
-}
-
-void add_scope(char *name, __uint32_t scope)
-{
-	__uint32_t hashval = hash(name);
-	SymbolTableElement l = symbol_table->symbols[hashval];
-	
-	if (l.name[0] != '\0')
-		if(l.type == UNDEF)
-			l.type = 0;
-}
-
 /* print to stdout by default */
 void symbol_table_dump(FILE *of)
 {
 	__uint32_t i;
-	fprintf(of, "------------ ------- ------- ---------------\n");
-	fprintf(of, "Name         Type    Scope    Line Numbers   \n");
-	fprintf(of, "------------ ------- ------- ---------------\n");
+	fprintf(of, "------------ ------- -------\n");
+	fprintf(of, "Name         Type    Scope  \n");
+	fprintf(of, "------------ ------- -------\n");
 	for (i = 0; i < SYMBOLTABLE_SIZE; ++i)
 	{
-		if(symbol_table->symbols[i].name[0] == '\0')
+		if(symbol_table->symbols[i].attribute.name[0] == '\0')
 			continue;
 
 		SymbolTableElement elem = symbol_table->symbols[i];
 
-			LineList *line = elem.lines;
-			ScopeList *scope = elem.scopes;
 
-			fprintf(of, "%-12s ", elem.name);
+			fprintf(of, "%-12s ", elem.attribute.name);
 			
 			if (elem.type == INT)
 				fprintf(of, "%-7s ", "int");
@@ -151,17 +161,7 @@ void symbol_table_dump(FILE *of)
 				fprintf(of, "%-7s ", "undef"); // if UNDEF
 			
 			
-			while (scope != NULL)
-			{
-				fprintf(of, "%-4d ", scope->scope);
-				scope = scope->next;
-			}
-			
-			while (line != NULL)
-			{
-				fprintf(of, "%4d ", line->lineno);
-				line = line->next;
-			}
+			fprintf(of, "%-4d ", elem.scope);
 			
 			fprintf(of, "\n");
 		
@@ -170,29 +170,20 @@ void symbol_table_dump(FILE *of)
 
 void symbol_dump(SymbolTableElement *e)
 {
-	if (e->name[0] == '\0')
-		return;
-	printf("%s", e->name);
+	if(e->class == VARIABLE)
+		printf("%s", e->attribute.name);
+	else if(e->class == CONSTANT)
+	{
+		if(e->type == INT)
+			printf("%ld", e->attribute.val.int_value);
+		else if(e->type == FLOAT)
+			printf("%f", e->attribute.val.float_value);
+	}
 }
 
 
 void free_symbol_table()
 {
-	__uint32_t i;
-	for (i = 0; i < SYMBOLTABLE_SIZE; ++i)
-	{
-		if(symbol_table->symbols[i].name[0] == '\0')
-			continue;
-
-		SymbolTableElement l = symbol_table->symbols[i];
-			
-		LineList *t = l.lines;
-		while (t != NULL)
-		{
-			LineList *temp = t;
-			t = t->next;
-			free(temp);
-		}
-	}
+	free(symbol_table->symbols);
 	free(symbol_table);
 }
