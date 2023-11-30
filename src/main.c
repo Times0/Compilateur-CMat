@@ -4,15 +4,19 @@
 
 
 #include "symbol_table.h"
+#include "../include/quad.h"
 #include "cmat.lex.h"
 #include "cmat.tab.h"
 
-int verbose_flag = 0;
-int lex_only_flag = 0;
+extern SymbolTable *symbol_table;
+extern struct code * code;
 
 int main(int argc, char *argv[])
 {
-    int option;
+    uint32_t option;
+    uint32_t verbose_flag = 0;
+    uint32_t lex_only_flag = 0;
+
     while ((option = getopt(argc, argv, "vl")) != -1)
     {
         switch (option)
@@ -43,8 +47,10 @@ int main(int argc, char *argv[])
     }
 
     if (verbose_flag)
-        printf("-> Initializing hash table...\n");
-    init_hash_table();
+        printf("-> Initializing symbol table...\n");
+    
+    init_symbol_table();
+    code = code_new();
 
     if (lex_only_flag)
     {
@@ -57,7 +63,7 @@ int main(int argc, char *argv[])
             token = yylex();
         }
 
-        if (verbose_flag)
+        if(verbose_flag)
             printf("-> Lexical analysis finished\n");
 
         if (yyin != stdin)
@@ -70,6 +76,8 @@ int main(int argc, char *argv[])
         printf("-> Starting parsing...\n");
 
     int r = yyparse();
+
+    code_dump(code);
 
     if (verbose_flag)
         printf("-> Finished parsing with error code : %d\n", r);
@@ -85,8 +93,11 @@ int main(int argc, char *argv[])
     }
 
     symbol_table_dump(yyout);
+    
     if (yyout != stdout)
         fclose(yyout);
+
+    free_symbol_table();
 
     return 0;
 }

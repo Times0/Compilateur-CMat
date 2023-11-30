@@ -43,7 +43,6 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "for"           { ret_print("KEYWORD_FOR");     return FOR;}
 "return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
 "main"          { ret_print("KEYWORD_MAIN");    insert(yytext, strlen(yytext), UNDEF, lineno);
-		          yylval.symbol_table_item = lookup(yytext);
                 return MAIN;}
 
 "int"           { ret_print("KEYWORD_INT");     return INT;}
@@ -52,12 +51,16 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "void"          { ret_print("KEYWORD_VOID");    return VOID;}
 
 
-{ID}            { ret_print("IDENTIFIER"); insert(yytext, strlen(yytext), UNDEF, lineno);
-		          yylval.symbol_table_item = lookup(yytext);
-		          return ID;}
+{ID}            {   ret_print("IDENTIFIER");
+                    if ( yyleng > MAXTOKENLEN )
+                        fprintf(stderr,"Identifier '%s' too long, truncated\n",yytext);
+                    strncpy(yylval.strval,yytext,7);
+                    yylval.strval[MAXTOKENLEN] = '\0';
+                    return ID;
+                }
 
-{INTEGER_CONST} { yylval.int_v = atoi(yytext); ret_print("INTEGER_CONST");   return INT_CONST;}
-{FLOAT_CONST}   { yylval.float_v = atof(yytext); ret_print("FLOAT_CONST");   return FLOAT_CONST;}
+{INTEGER_CONST} { ret_print("INTEGER_CONST");   return INT_CONST;}
+{FLOAT_CONST}   { ret_print("FLOAT_CONST");   return FLOAT_CONST;}
 
 "++"                { ret_print("INC_OP");          return INCR;}    
 "--"                { ret_print("DEC_OP");          return DECR;}
@@ -84,9 +87,7 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "{"                 { ret_print("LBRACE");incr_scope();return yytext[0];}
 "}"                 { ret_print("RBRACE");return yytext[0];}
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
-{STRING}            { yylval.str_v = malloc(yyleng * sizeof(char)); 
-                      strcpy(yylval.str_v, yytext); 
-                      ret_print("STRING_LITERAL");  return STRING;}
+{STRING}            { ret_print("STRING_LITERAL");  return STRING;}
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }
