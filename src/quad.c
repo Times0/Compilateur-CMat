@@ -33,7 +33,7 @@ void gencode(struct code * c, enum quad_kind k, SymbolTableElement * s1, SymbolT
     q->sym1 = s1;
     q->sym2 = s2;
     q->sym3 = s3;
-    ++(c->nextquad);
+    c->nextquad++;
 }
 
 SymbolTableElement *newtemp(SymbolTable *t)

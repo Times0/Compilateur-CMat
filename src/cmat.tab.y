@@ -13,7 +13,6 @@ extern int yylex();
 extern int yyerror(char *s);
 extern struct code *code;
 extern SymbolTable *symbol_table;
-extern struct code * code;
 extern __uint32_t lineno;
 extern __uint32_t current_scope;
 %}
@@ -68,7 +67,6 @@ instruction : declaration ';'
 
 declaration :  type ID
                {
-                    Value l;
                     insert($2, $1, VARIABLE);
                }
 
@@ -86,13 +84,13 @@ assign :  ID '=' expression
                     printf("Error variable \"%s\" not declared\n", $1);
                     exit(1);
                }
-               gencode(code,COPY,id,$3.ptr,NULL);
+               gencode(code, COPY, id, $3.ptr, NULL);
           }
 
 expression :   expression '+' expression     
                { 
                     $$.ptr = newtemp(symbol_table);
-                    gencode(code,BOP_PLUS,$$.ptr,$1.ptr,$3.ptr); 
+                    gencode(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
                }
                | expression '-' expression 
                | expression '*' expression 

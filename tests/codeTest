@@ -1,5 +1,7 @@
 int a;
-float b;
+int b;
 
-a = 3;
-b = 9+3+4+6;
+a = 1;
+b = 2;
+float c;
+c = 5;
