@@ -41,7 +41,6 @@ void grow_symbol_table()
 
 SymbolTableElement *insert(char *name, __uint32_t type, __uint32_t class)
 {
-	printf("insert %s\n", name);
 	if (class == VARIABLE)
 	{
 		SymbolTableElement *l = lookup_scope(name, current_scope, VARIABLE);
@@ -137,6 +136,7 @@ void symbol_table_dump(FILE *of)
 	fprintf(of, "------------ ------- -------\n");
 	fprintf(of, "Name         Type    Scope  \n");
 	fprintf(of, "------------ ------- -------\n");
+	int nb_cst = 0;
 	for (i = 0; i < symbol_table->size; ++i)
 	{
 		// if(symbol_table->symbols[i].attribute.name[0] == '\0')
@@ -144,9 +144,11 @@ void symbol_table_dump(FILE *of)
 		SymbolTableElement elem = symbol_table->symbols[i];
 
 		if (elem.class == CONSTANT)
+		{
+			nb_cst++;
 			continue;
+		}
 
-		printf("Showing symbol %s\n", elem.attribute.name);
 		const char *typeStr = "";
 		switch (elem.type)
 		{
@@ -173,6 +175,9 @@ void symbol_table_dump(FILE *of)
 		fprintf(of, "%-4d ", elem.scope);
 		fprintf(of, "\n");
 	}
+
+	fprintf(of, "------------ ------- -------\n");
+	fprintf(of, "Number of constants: %d\n", nb_cst);
 }
 
 void symbol_dump(SymbolTableElement *e)
