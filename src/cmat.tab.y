@@ -11,7 +11,7 @@ extern FILE *yyin;
 extern FILE *yyout;
 extern int yylex();
 extern int yyerror(char *s);
-extern struct code *code;
+extern QuadTable *code;
 extern SymbolTable *symbol_table;
 extern __uint32_t lineno;
 extern __uint32_t current_scope;
@@ -67,7 +67,7 @@ instruction : declaration ';'
 
 declaration :  type ID
                {
-                    insert($2, $1, VARIABLE);
+                    insert(&symbol_table, $2, $1, VARIABLE);
                }
 
 type : INT  
@@ -78,19 +78,19 @@ return : RETURN expression
 
 assign :  ID '=' expression
           {    
-               SymbolTableElement *id = lookup_scope($1, current_scope, VARIABLE);
+               SymbolTableElement *id = lookup_scope(symbol_table, $1, current_scope, VARIABLE);
                if(id == NULL)
                {
                     printf("Error variable \"%s\" not declared\n", $1);
                     exit(1);
                }
-               gencode(code, COPY, id, $3.ptr, NULL);
+               gen_quad(code, COPY, id, $3.ptr, NULL);
           }
 
 expression :   expression '+' expression     
                { 
                     $$.ptr = newtemp(symbol_table);
-                    gencode(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
+                    gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
                }
                | expression '-' expression 
                | expression '*' expression 
@@ -99,7 +99,7 @@ expression :   expression '+' expression
                { 
                     Value v;
                     v.int_value = $1;
-                    $$.ptr = insert_constant(v, INT);
+                    $$.ptr = insert_constant(&symbol_table, v, INT);
                }
           
 %%     

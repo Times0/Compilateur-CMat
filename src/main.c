@@ -5,11 +5,12 @@
 
 #include "symbol_table.h"
 #include "../include/quad.h"
+#include "../include/mips.h"
 #include "cmat.lex.h"
 #include "cmat.tab.h"
 
 extern SymbolTable *symbol_table;
-extern struct code * code;
+extern QuadTable * code;
 
 int main(int argc, char *argv[])
 {
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
     if (verbose_flag)
         printf("-> Initializing symbol table...\n");
     
-    init_symbol_table();
+    init_symbol_table(&symbol_table);
     code = code_new();
 
     if (lex_only_flag)
@@ -78,6 +79,10 @@ int main(int argc, char *argv[])
     int r = yyparse();
 
     code_dump(code);
+    FILE *ff = fopen("mips.s", "w+");
+    gencode_mips_global_variable(ff, symbol_table);
+    gencode_mips(code, ff);
+    fclose(ff);
 
     if (verbose_flag)
         printf("-> Finished parsing with error code : %d\n", r);
@@ -92,12 +97,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    symbol_table_dump(yyout);
+    symbol_table_dump(symbol_table, yyout);
     
     if (yyout != stdout)
         fclose(yyout);
 
-    free_symbol_table();
+    free_symbol_table(symbol_table);
 
     return 0;
 }

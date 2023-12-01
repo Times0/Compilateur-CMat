@@ -9,69 +9,69 @@ __uint32_t lineno = 1;
 SymbolTable *symbol_table;
 struct code *code;
 
-void init_symbol_table()
+void init_symbol_table(SymbolTable **s)
 {
-	symbol_table = malloc(sizeof(SymbolTable));
-	if (symbol_table == NULL)
+	*s = malloc(sizeof(SymbolTable));
+	if (*s == NULL)
 	{
 		perror("Error malloc in init_symbol_table\n");
 		exit(1);
 	}
-	symbol_table->symbols = malloc(SYMBOLTABLE_SIZE * sizeof(SymbolTableElement));
-	symbol_table->temporary = 0;
-	symbol_table->size = 0;
-	symbol_table->capacity = SYMBOLTABLE_SIZE;
-	if (symbol_table->symbols == NULL)
+	(*s)->symbols = malloc(SYMBOLTABLE_SIZE * sizeof(SymbolTableElement));
+	(*s)->temporary = 0;
+	(*s)->size = 0;
+	(*s)->capacity = SYMBOLTABLE_SIZE;
+	if ((*s)->symbols == NULL)
 	{
 		perror("Error malloc in init_symbol_table\n");
 		exit(1);
 	}
 }
 
-void grow_symbol_table()
+void grow_symbol_table(SymbolTable **s)
 {
-	symbol_table->capacity += 1024;
-	symbol_table->symbols = realloc(symbol_table->symbols, symbol_table->capacity * sizeof(SymbolTableElement));
-	if (symbol_table->symbols == NULL)
+	(*s)->capacity += 1024;
+	(*s)->symbols = realloc((*s)->symbols, (*s)->capacity * sizeof(SymbolTableElement));
+	if ((*s)->symbols == NULL)
 	{
-		fprintf(stderr, "Error attempting to grow symbol table (actual size is %d)\n", symbol_table->size);
+		fprintf(stderr, "Error attempting to grow symbol table (actual size is %d)\n", (*s)->size);
 		exit(1);
 	}
 }
 
-SymbolTableElement *insert(char *name, __uint32_t type, __uint32_t class)
+SymbolTableElement *insert(SymbolTable **s, char *name, __uint32_t type, __uint32_t class)
 {
 	if (class == VARIABLE)
 	{
-		SymbolTableElement *l = lookup_scope(name, current_scope, VARIABLE);
+		SymbolTableElement *l = lookup_scope(*s, name, current_scope, VARIABLE);
 
 		/* if variable not yet exists in the table insert it */
 		if (l == NULL)
 		{
-			if (symbol_table->size >= symbol_table->capacity)
+			if ((*s)->size >= (*s)->capacity)
 			{
-				grow_symbol_table();
+				grow_symbol_table(s);
 			}
-			l = &(symbol_table->symbols[symbol_table->size]);
+			l = &((*s)->symbols[(*s)->size]);
 			strcpy(l->attribute.name, name);
 			l->class = VARIABLE;
 			l->type = type;
 			l->scope = current_scope;
-			symbol_table->size++;
+			(*s)->size++;
 		}
 		return l;
 	}
 }
 
-SymbolTableElement *insert_constant(Value value, __uint32_t type)
+SymbolTableElement *insert_constant(SymbolTable **s, Value value, __uint32_t type)
 {
-	SymbolTableElement *l = lookup_constant(value, type);
+	SymbolTableElement *l = lookup_constant(*s,value, type);
 	if (l == NULL)
 	{
-		if (symbol_table->size == symbol_table->capacity)
-			grow_symbol_table();
+		if ((*s)->size == (*s)->capacity)
+			grow_symbol_table(s);
 
-		l = &(symbol_table->symbols[symbol_table->size]);
+		l = &((*s)->symbols[(*s)->size]);
 		if (type == INT)
 			l->attribute.val.int_value = value.int_value;
 		else if (type == FLOAT)
@@ -80,68 +80,67 @@ SymbolTableElement *insert_constant(Value value, __uint32_t type)
 		l->class = CONSTANT;
 		l->type = type;
 		l->scope = current_scope;
-		++(symbol_table->size);
+		++((*s)->size);
 	}
 	return l;
 }
 
 /* return symbol if found or NULL if not found */
-SymbolTableElement *lookup_constant(Value value, __uint32_t type)
+SymbolTableElement *lookup_constant(SymbolTable *s, Value value, __uint32_t type)
 {
 	if (type == INT)
 	{
 		__uint32_t i;
-		for (i = 0; i < symbol_table->size; i++)
+		for (i = 0; i < s->size; i++)
 		{
-			if (symbol_table->symbols[i].class == CONSTANT)
-				if (symbol_table->symbols[i].attribute.val.int_value == value.int_value)
+			if (s->symbols[i].class == CONSTANT)
+				if (s->symbols[i].attribute.val.int_value == value.int_value)
 					break;
 		}
-		// printf("%d %d\n", i, symbol_table->size);
-		if (i < symbol_table->size)
-			return &(symbol_table->symbols[i]);
+		if (i < s->size)
+			return &(s->symbols[i]);
 		return NULL;
 	}
 }
 
 /* return symbol if found or NULL if not found */
-SymbolTableElement *lookup_scope(char *name, __uint32_t scope, __uint32_t class)
+SymbolTableElement *lookup_scope(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class)
 {
 	if (class == VARIABLE)
 	{
 		__uint32_t i;
-		for (i = 0; i < symbol_table->size && strcmp(symbol_table->symbols[i].attribute.name, name) != 0; i++)
+		for (i = 0; i < s->size && strcmp(s->symbols[i].attribute.name, name) != 0; i++)
 			;
-		if (i < symbol_table->size)
-			return &(symbol_table->symbols[i]);
+		if (i < s->size)
+			return &(s->symbols[i]);
 		return NULL;
 	}
 }
 
-void decr_scope()
+void decr_scope(SymbolTable *s)
 {
 	if (current_scope > 0)
 		current_scope--;
 }
 
-void incr_scope()
+void incr_scope(SymbolTable *s)
 {
 	current_scope++;
 }
 
 /* print to stdout by default */
-void symbol_table_dump(FILE *of)
+void symbol_table_dump(SymbolTable *s, FILE *of)
 {
 	__uint32_t i;
 	fprintf(of, "------------ ------- -------\n");
 	fprintf(of, "Name         Type    Scope  \n");
 	fprintf(of, "------------ ------- -------\n");
 	int nb_cst = 0;
-	for (i = 0; i < symbol_table->size; ++i)
+	for (i = 0; i < s->size; ++i)
 	{
 		// if(symbol_table->symbols[i].attribute.name[0] == '\0')
 		// 	continue;
-		SymbolTableElement elem = symbol_table->symbols[i];
+		SymbolTableElement elem = s->symbols[i];
 
 		if (elem.class == CONSTANT)
 		{
@@ -187,14 +186,14 @@ void symbol_dump(SymbolTableElement *e)
 	else if (e->class == CONSTANT)
 	{
 		if (e->type == INT)
-			printf("%ld", e->attribute.val.int_value);
+			printf("%d", e->attribute.val.int_value);
 		else if (e->type == FLOAT)
 			printf("%f", e->attribute.val.float_value);
 	}
 }
 
-void free_symbol_table()
+void free_symbol_table(SymbolTable *s)
 {
-	free(symbol_table->symbols);
-	free(symbol_table);
+	free(s->symbols);
+	free(s);
 }

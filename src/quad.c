@@ -3,19 +3,19 @@
 #include <stdio.h>
 #include "quad.h"
 
-struct code * code_new()
+QuadTable *code_new()
 {
-    struct code * r = malloc(sizeof(struct code));
+    QuadTable *r = malloc(sizeof(QuadTable));
     r->capacity = 1024;
-    r->quads = malloc(r->capacity*sizeof(struct quad));
+    r->quads = malloc(r->capacity*sizeof(QuadTable));
     r->nextquad = 0;
     return r;
 }
 
-static void code_grow(struct code * c)
+static void code_grow(QuadTable *c)
 {
     c->capacity += 1024;
-    c->quads = realloc(c->quads,c->capacity*sizeof(struct quad));
+    c->quads = realloc(c->quads,c->capacity*sizeof(QuadTable));
     if(c->quads == NULL) 
     {
       fprintf(stderr,"Error attempting to grow quad list (actual size is %d)\n",c->nextquad);
@@ -23,12 +23,12 @@ static void code_grow(struct code * c)
     }
 }
 
-void gencode(struct code * c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3)
+void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3)
 {
     if ( c->nextquad == c->capacity )
         code_grow(c);
 
-    struct quad * q = &(c->quads[c->nextquad]);
+    Quad *q = &(c->quads[c->nextquad]);
     q->kind = k;
     q->sym1 = s1;
     q->sym2 = s2;
@@ -41,12 +41,12 @@ SymbolTableElement *newtemp(SymbolTable *t)
     SymbolTableElement *s;
     char name[10];
     sprintf(name,"t%d",t->temporary);
-    s = insert(name, UNDEF, VARIABLE);
+    s = insert(&t, name, UNDEF, VARIABLE);
     ++(t->temporary);
     return s;
 }
 
-static void quad_dump(struct quad * q)
+static void quad_dump(Quad *q)
 {
     switch ( q->kind )
     {
@@ -92,7 +92,7 @@ static void quad_dump(struct quad * q)
     }
 }
 
-void code_dump(struct code * c)
+void code_dump(QuadTable *c)
 {
     unsigned int i;
     for ( i=0 ; i<c->nextquad ; i++ )
@@ -103,7 +103,7 @@ void code_dump(struct code * c)
     }
 }
 
-void code_free(struct code * c)
+void code_free(QuadTable *c)
 {
     free(c->quads);
     free(c);

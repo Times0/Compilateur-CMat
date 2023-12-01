@@ -4,22 +4,23 @@
 
 /* QUADRUPLETS ET CODE */
 
-struct quad {
+typedef struct Quad {
   enum quad_kind { BOP_PLUS, BOP_MINUS, BOP_MULT, UOP_MINUS, COPY, CALL_PRINT } kind;
-  SymbolTableElement * sym1;
-  SymbolTableElement * sym2;
-  SymbolTableElement * sym3;
-};
+  SymbolTableElement * sym1; // result
+  SymbolTableElement * sym2; // operand 1
+  SymbolTableElement * sym3; // operand 2
+}Quad;
 
-struct code {
-    unsigned int capacity;
-    unsigned int nextquad;
-    struct quad * quads;
-};
+typedef struct QuadTable{
+    __uint32_t main_quad;
+    __uint32_t capacity;
+    __uint32_t nextquad;
+    Quad * quads;
+}QuadTable;
 
-struct code * code_new();
+QuadTable *code_new();
 
-void gencode(struct code * c,
+void gen_quad(QuadTable * c,
               enum quad_kind k,
               SymbolTableElement * s1,
               SymbolTableElement * s2,
@@ -27,9 +28,9 @@ void gencode(struct code * c,
 
 SymbolTableElement *newtemp(SymbolTable * t);
 
-void code_dump(struct code * c);
+void code_dump(QuadTable * c);
 
-void code_free(struct code * c);
+void code_free(QuadTable * c);
 
 
 #endif

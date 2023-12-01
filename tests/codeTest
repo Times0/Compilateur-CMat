@@ -1,7 +1,7 @@
 int a;
-int b;
+//int b;
 
-a = 1;
-b = 2;
-float c;
-c = 5 + 8 + 9 + 9;
+a = 9;
+//b = 2;
+//float c;
+//c = 5 + 8 + 9 + 9;

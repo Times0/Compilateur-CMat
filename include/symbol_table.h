@@ -22,7 +22,7 @@ typedef struct Param
 
 typedef union Value
 {
-    __uint64_t int_value;
+    __uint32_t int_value;
     float float_value;   
 }Value;
 
@@ -60,15 +60,16 @@ typedef struct SymbolTable {
 }SymbolTable;
  
 // function declarations
-void init_symbol_table();                                                       // initialize hash table
-SymbolTableElement* insert(char *name, __uint32_t type, __uint32_t class);    // insert entry
-SymbolTableElement* insert_constant(Value value, __uint32_t type);    // insert entry
-SymbolTableElement* lookup_constant(Value value, __uint32_t type);
-SymbolTableElement* lookup_scope(char *name, __uint32_t scope, __uint32_t class);                 // search for entry in scope
-void decr_scope();                                                              // hide the current scope
-void incr_scope();                                                              // go to next scope
+void init_symbol_table(SymbolTable **s);
+void grow_symbol_table(SymbolTable **s);
+SymbolTableElement* insert(SymbolTable **s, char *name, __uint32_t type, __uint32_t class);
+SymbolTableElement* insert_constant(SymbolTable **s, Value value, __uint32_t type);
+SymbolTableElement *lookup_constant(SymbolTable *s, Value value, __uint32_t type);
+SymbolTableElement *lookup_scope(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class);
+void decr_scope(SymbolTable *s);
+void incr_scope(SymbolTable *s);
 void symbol_dump(SymbolTableElement *);                                        // dump entry
-void symbol_table_dump(FILE *of);                                               // dump file
-void free_symbol_table();                                                       // free memory
+void symbol_table_dump(SymbolTable *s, FILE *of);
+void free_symbol_table(SymbolTable *s);                                                       // free memory
 
 #endif
