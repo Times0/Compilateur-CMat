@@ -36,12 +36,12 @@ void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTab
     c->nextquad++;
 }
 
-SymbolTableElement *newtemp(SymbolTable *t)
+SymbolTableElement *newtemp(SymbolTable *t, __uint32_t type, __int32_t offset)
 {
     SymbolTableElement *s;
-    char name[10];
-    sprintf(name,"t%d",t->temporary);
-    s = insert(&t, name, UNDEF, VARIABLE);
+    char name[MAXTOKENLEN];
+    sprintf(name,"%%%d",t->temporary);
+    s = insert(&t, name, type, VARIABLE, offset);
     ++(t->temporary);
     return s;
 }

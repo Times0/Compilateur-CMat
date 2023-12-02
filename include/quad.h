@@ -26,7 +26,7 @@ void gen_quad(QuadTable * c,
               SymbolTableElement * s2,
               SymbolTableElement * s3);
 
-SymbolTableElement *newtemp(SymbolTable * t);
+SymbolTableElement *newtemp(SymbolTable * t, __uint32_t type, __int32_t offset);
 
 void code_dump(QuadTable * c);
 

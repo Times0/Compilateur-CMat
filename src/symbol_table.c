@@ -39,7 +39,7 @@ void grow_symbol_table(SymbolTable **s)
 	}
 }
 
-SymbolTableElement *insert(SymbolTable **s, char *name, __uint32_t type, __uint32_t class)
+SymbolTableElement *insert(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __int32_t offset)
 {
 	if (class == VARIABLE)
 	{
@@ -53,7 +53,8 @@ SymbolTableElement *insert(SymbolTable **s, char *name, __uint32_t type, __uint3
 				grow_symbol_table(s);
 			}
 			l = &((*s)->symbols[(*s)->size]);
-			strcpy(l->attribute.name, name);
+			strcpy(l->attribute.variable.name, name);
+			l->attribute.variable.offset = offset;
 			l->class = VARIABLE;
 			l->type = type;
 			l->scope = current_scope;
@@ -63,9 +64,9 @@ SymbolTableElement *insert(SymbolTable **s, char *name, __uint32_t type, __uint3
 	}
 }
 
-SymbolTableElement *insert_constant(SymbolTable **s, Value value, __uint32_t type)
+SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32_t type)
 {
-	SymbolTableElement *l = lookup_constant(*s,value, type);
+	SymbolTableElement *l = lookup_constant(*s,constant, type);
 	if (l == NULL)
 	{
 		if ((*s)->size == (*s)->capacity)
@@ -73,9 +74,9 @@ SymbolTableElement *insert_constant(SymbolTable **s, Value value, __uint32_t typ
 
 		l = &((*s)->symbols[(*s)->size]);
 		if (type == INT)
-			l->attribute.val.int_value = value.int_value;
+			l->attribute.constant.int_value = constant.int_value;
 		else if (type == FLOAT)
-			l->attribute.val.float_value = value.float_value;
+			l->attribute.constant.float_value = constant.float_value;
 
 		l->class = CONSTANT;
 		l->type = type;
@@ -86,7 +87,7 @@ SymbolTableElement *insert_constant(SymbolTable **s, Value value, __uint32_t typ
 }
 
 /* return symbol if found or NULL if not found */
-SymbolTableElement *lookup_constant(SymbolTable *s, Value value, __uint32_t type)
+SymbolTableElement *lookup_constant(SymbolTable *s, Constant constant, __uint32_t type)
 {
 	if (type == INT)
 	{
@@ -94,7 +95,7 @@ SymbolTableElement *lookup_constant(SymbolTable *s, Value value, __uint32_t type
 		for (i = 0; i < s->size; i++)
 		{
 			if (s->symbols[i].class == CONSTANT)
-				if (s->symbols[i].attribute.val.int_value == value.int_value)
+				if (s->symbols[i].attribute.constant.int_value == constant.int_value)
 					break;
 		}
 		if (i < s->size)
@@ -109,7 +110,7 @@ SymbolTableElement *lookup_scope(SymbolTable *s, char *name, __uint32_t scope, _
 	if (class == VARIABLE)
 	{
 		__uint32_t i;
-		for (i = 0; i < s->size && strcmp(s->symbols[i].attribute.name, name) != 0; i++)
+		for (i = 0; i < s->size && strcmp(s->symbols[i].attribute.variable.name, name) != 0; i++)
 			;
 		if (i < s->size)
 			return &(s->symbols[i]);
@@ -170,7 +171,7 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 			typeStr = "undef";
 			break;
 		}
-		fprintf(of, "%-12s %-7s ", elem.attribute.name, typeStr);
+		fprintf(of, "%-12s %-7s ", elem.attribute.variable.name, typeStr);
 		fprintf(of, "%-4d ", elem.scope);
 		fprintf(of, "\n");
 	}
@@ -182,13 +183,13 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 void symbol_dump(SymbolTableElement *e)
 {
 	if (e->class == VARIABLE)
-		printf("%s", e->attribute.name);
+		printf("%s", e->attribute.variable.name);
 	else if (e->class == CONSTANT)
 	{
 		if (e->type == INT)
-			printf("%d", e->attribute.val.int_value);
+			printf("%d", e->attribute.constant.int_value);
 		else if (e->type == FLOAT)
-			printf("%f", e->attribute.val.float_value);
+			printf("%f", e->attribute.constant.float_value);
 	}
 }
 

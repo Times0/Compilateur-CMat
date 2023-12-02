@@ -20,12 +20,17 @@ typedef struct Param
     __uint32_t param_value;
 }Param;
 
-typedef union Value
+typedef union Constant
 {
     __uint32_t int_value;
     float float_value;   
-}Value;
+}Constant;
 
+typedef struct Variable
+{
+    __int32_t offset;
+    char name[MAXTOKENLEN];
+}Variable;
 
 // struct that represents a list node
 typedef struct SymbolTableElement
@@ -35,8 +40,8 @@ typedef struct SymbolTableElement
     __uint32_t scope;
 
     union Attribute{
-        char name[MAXTOKENLEN];
-        Value val;
+        Variable variable;
+        Constant constant;
         /*union array
         {
             __uint32_t size1;
@@ -62,9 +67,9 @@ typedef struct SymbolTable {
 // function declarations
 void init_symbol_table(SymbolTable **s);
 void grow_symbol_table(SymbolTable **s);
-SymbolTableElement* insert(SymbolTable **s, char *name, __uint32_t type, __uint32_t class);
-SymbolTableElement* insert_constant(SymbolTable **s, Value value, __uint32_t type);
-SymbolTableElement *lookup_constant(SymbolTable *s, Value value, __uint32_t type);
+SymbolTableElement* insert(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __int32_t offset);
+SymbolTableElement* insert_constant(SymbolTable **s, Constant constant, __uint32_t type);
+SymbolTableElement *lookup_constant(SymbolTable *s, Constant  constant, __uint32_t type);
 SymbolTableElement *lookup_scope(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class);
 void decr_scope(SymbolTable *s);
 void incr_scope(SymbolTable *s);

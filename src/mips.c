@@ -17,8 +17,8 @@ void gencode_mips_global_variable(FILE * f, SymbolTable * s)
     
     for (__uint32_t i=0 ; i < s->size; i++)
     {
-        if(s->symbols[i].class == VARIABLE)
-            fprintf (f, "\t%s:\t.word 0\n", s->symbols[i].attribute.name);
+        if(s->symbols[i].class == VARIABLE && s->symbols[i].attribute.variable.offset == -1)
+            fprintf (f, "\t%s:\t.word 0\n", s->symbols[i].attribute.variable.name);
     }
     fprintf (f, "\n");
 }
@@ -31,6 +31,7 @@ void gencode_mips(QuadTable *code, FILE * f)
     fprintf (f, ".text\n");
 
     fprintf (f, "main:\n"); // temporaire
+    fprintf (f, "\tmove $fp, $sp\n");
 
     // parcours de tous les quads apres le main
     for (size_t i = code->main_quad; i < code->nextquad; i ++)
@@ -42,6 +43,7 @@ void gencode_mips(QuadTable *code, FILE * f)
     }
     
     fprintf (f, "\tlw $a0, a\n\tli $v0, 1\n\tsyscall\n");
+    // fprintf (f, "\tlw $a0, d\n\tli $v0, 1\n\tsyscall\n");
 
     // fin du main et du code
     fprintf (f, "\tli $v0, 10\n\tsyscall\n");
@@ -51,7 +53,7 @@ void gencode_mips(QuadTable *code, FILE * f)
     {
         if (&(code->quads[i]) != NULL)
         {
-            gencode_mips_quad (f, &(code->quads[i]));
+            gencode_mips_quad(f, &(code->quads[i]));
         }
     }
 }
@@ -69,6 +71,7 @@ void gencode_mips_quad(FILE *f, Quad *quad)
     {
         case BOP_PLUS:
             gencode_arith(f, quad);
+            break;
         case COPY:
             gencode_affect(f, quad);
             break;
@@ -121,7 +124,7 @@ void gencode_mips_quad(FILE *f, Quad *quad)
 
 void gencode_arith (FILE * f, Quad *quad)
 {
-    int unsigned_operators = 0;
+    __uint32_t unsigned_operators = 0;
     
     // récupérer la valeur de op1 dans un registre temp
     load_operator(f, quad->sym2, &unsigned_operators);
@@ -132,7 +135,7 @@ void gencode_arith (FILE * f, Quad *quad)
     if (quad->kind == BOP_PLUS)
     {
         // stocker le résultat de (op1 + op2) dans un autre registre temp
-        if (unsigned_operators == 2)
+        if(unsigned_operators == 2)
             fprintf (f, "\taddu ");
         else
             fprintf (f, "\tadd ");
@@ -151,7 +154,7 @@ void gencode_arith (FILE * f, Quad *quad)
         if (unsigned_operators == 2)
             fprintf (f, "\tmultu ");
         else
-            fprintf (f, "\tmult ");
+            fprintf (f, "\tmult ";
         fprintf (f, "\t$t%zu, $t%zu\n", nb_reg_temp - 2, nb_reg_temp - 1);
 
         // mult $s,$t ⇐⇒ [Hi ← pref_32($s * $t)] & [Lo ← suff_32($s * $t)]
@@ -174,17 +177,16 @@ void gencode_arith (FILE * f, Quad *quad)
     }*/
 
     // stocker la valeur de ce dernier registre dans res 
-    //fprintf (f, "\tsw $t%zu, %d(fp)\n", nb_reg_temp, -4 * (quad.->content.entry->offset + 1));
+    fprintf (f, "\tsw $t%d, %d($fp)\n", current_register, -4 * (quad->sym1->attribute.variable.offset + 1));
 
     // décrémenter le nombre de registres temporaires utilisés
-    //nb_reg_temp -= 2;
+    current_register -= 2;
 }
 
 void gencode_affect (FILE * f, Quad *quad)
 {
     load_operator(f, quad->sym2, NULL);
 
-    // stocker cette valeur
     store_result (f, quad->sym1, 0);
 }
 
@@ -194,16 +196,15 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t *unsigned_ope
     if (elem->class == VARIABLE)
     {
         fprintf (f, "\tlw $t%d, ", current_register);
-        // if (quadop->content.entry->offset == -1)
-            // fprintf (f, "%s\n", quadop->content.entry->label);
-        // else
-            // fprintf (f, "%d($fp)\n", -4 * (quadop->content.entry->offset + 1));   
-        fprintf(f, "%s\n", elem->attribute.name);
+        if (elem->attribute.variable.offset == -1)
+            fprintf(f, "%s\n", elem->attribute.variable.name);
+        else
+            fprintf (f, "%d($fp)\n", -4 * (elem->attribute.variable.offset + 1));   
         current_register++;    
     }
     else if (elem->class == CONSTANT)
     {
-        fprintf (f, "\tli $t%d, %d\n", current_register, elem->attribute.val.int_value);
+        fprintf (f, "\tli $t%d, %d\n", current_register, elem->attribute.constant.int_value);
         current_register++;
         //if((unsigned_operator != NULL) && (quadop->content.cst->type == TYPE_INT) && (quadop->content.cst->value > 0))
             // (*unsigned_operator) ++;
@@ -231,18 +232,18 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t offset_res)
     {
         if (res->class == VARIABLE)
         {
-            // variable gloable
-            if (res->scope == 0)
+            // variable globale
+            if (res->attribute.variable.offset == -1)
             {
                 // get the address of the global variable
-                fprintf (f, "\tla $t%d, %s\n", current_register, res->attribute.name);
+                fprintf (f, "\tla $t%d, %s\n", current_register, res->attribute.variable.name);
                 // save the value in this address
                 fprintf (f, "\tsw $t%d, 0($t%d)\n", current_register - 1, current_register);
 
                 current_register--;
             }
-            // else
-                // fprintf (f, "\tsw $t%d, %d($fp)\n", current_register - 1, -4 * (res->content.entry->offset + 1));       
+            else
+                fprintf (f, "\tsw $t%d, %d($fp)\n", current_register - 1, -4 * (res->attribute.variable.offset + 1));       
         }
     }
     else

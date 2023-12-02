@@ -15,6 +15,7 @@ extern QuadTable *code;
 extern SymbolTable *symbol_table;
 extern __uint32_t lineno;
 extern __uint32_t current_scope;
+uint32_t offset = 0;
 %}
 
 %union {
@@ -67,7 +68,7 @@ instruction : declaration ';'
 
 declaration :  type ID
                {
-                    insert(&symbol_table, $2, $1, VARIABLE);
+                    insert(&symbol_table, $2, $1, VARIABLE, -1);
                }
 
 type : INT  
@@ -89,15 +90,16 @@ assign :  ID '=' expression
 
 expression :   expression '+' expression     
                { 
-                    $$.ptr = newtemp(symbol_table);
+                    $$.ptr = newtemp(symbol_table, INT, offset);
                     gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
                }
                | expression '-' expression 
                | expression '*' expression 
                | expression '/' expression 
                | INT_CONST
                { 
-                    Value v;
+                    Constant v;
                     v.int_value = $1;
                     $$.ptr = insert_constant(&symbol_table, v, INT);
                }
