@@ -16,6 +16,8 @@ extern SymbolTable *symbol_table;
 extern __uint32_t lineno;
 extern __uint32_t current_scope;
 uint32_t offset = 0;
+
+uint32_t get_float_type(uint32_t type1, uint32_t type2);
 %}
 
 %union {
@@ -85,23 +87,29 @@ assign :  ID '=' expression
                     printf("Error variable \"%s\" not declared\n", $1);
                     exit(1);
                }
-               if(id->type != $3.ptr->type)
+               if(id-> type == INT && $3.ptr->type == FLOAT)
                {
-                    printf("Error at line %d : %s can't be assigned to %s\n", lineno, id->type == INT ? "int" : "float", $3.ptr->type == INT ? "int" : "float");
+                    // printf("Warning at line %d : int assigned to float cause loss of precision\n", lineno);
+                    printf("Error at line %d : int assigned to float\n", lineno);
                     exit(1);
+               }
+               else if(id-> type == FLOAT && $3.ptr->type == INT)
+               {
+                    $3.ptr->type = FLOAT;
+                    $3.ptr->attribute.constant.float_value = $3.ptr->attribute.constant.int_value;
                }
                gen_quad(code, COPY, id, $3.ptr, NULL);
           }
 
 expression :   expression '+' expression     
                { 
-                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
                     gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
                     offset++;
                }
                | expression '-' expression 
                {
-                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
                     gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
                     offset++;
                }
@@ -109,16 +117,15 @@ expression :   expression '+' expression
                | expression '/' expression 
                | '-' expression %prec UNARY_OP
                {
-                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($2.ptr->type, INT), offset);
                     gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL);
-                    
                }
                | ID
                {
                     $$.ptr = lookup_scope(symbol_table, $1, current_scope, VARIABLE);
                     if($$.ptr == NULL)
                     {
-                         printf("Error variable \"%s\" not declared\n", $1);
+                         printf("Error at line %d : variable \"%s\" not declared\n", lineno, $1);
                          exit(1);
                     }
                }
@@ -136,3 +143,9 @@ expression :   expression '+' expression
                }
           
 %%     
+
+
+uint32_t get_float_type(uint32_t type1, uint32_t type2)
+{
+     return (type1 == FLOAT || type2 == FLOAT)? FLOAT : INT;
+}

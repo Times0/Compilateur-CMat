@@ -1,10 +1,10 @@
 float a;
-// float d; // b banni car opcode de branch
+float d; // b banni car opcode de branch
 
 // a = 1+2+3-4+6;
 // a = -2;
-// d = 5;
-a = 2;
+d = 5;
+a = 5;
 
 //float c;
 //c = 5 + 8 + 9 + 9;
@@ -15,25 +15,8 @@ a = 2;
 // plus binary OK
 // multiple variable declaration OK
 
-// float affectation NOT OK
-
-
-
-// code for printing float
-/*
-.data
-	a:	.float 0.0
-
-.globl main
-.text
-main:
-	move $fp, $sp
-	li.s $f0, 0.500000
-	la $t0, a
-	s.s $f0, 0($t0)
-	l.s $f12, a
-	li $v0, 2
-	syscall
-	li $v0, 10
-	syscall
-*/
+// float affectation OK
+// minus unary OK
+// minus binary OK
+// plus binary OK
+// multiple variable declaration OK

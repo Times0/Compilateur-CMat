@@ -140,8 +140,16 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
     if(quad->kind == UOP_MINUS)
     {
         load_operator(f, quad->sym2, NULL);
-        fprintf (f, "\tneg $t%d, $t%d\n", current_register_int, current_register_int - 1);
-        current_register_int++;
+        if(quad->sym1->type == INT)
+        {
+            fprintf (f, "\tneg $t%d, $t%d\n", current_register_int, current_register_int - 1);
+            current_register_int++;
+        }
+        else if(quad->sym1->type == FLOAT)
+        {
+            fprintf (f, "\tneg.s $f%d, $f%d\n", current_register_float, current_register_float - 1);
+            current_register_float++;
+        }
         store_result(f, quad->sym1, 0);
         return;
     }
@@ -158,30 +166,33 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
 
     if (quad->kind == BOP_PLUS)
     {
-        // stocker le résultat de (op1 + op2) dans un autre registre temp
-        if(unsigned_operators == 2)
-            fprintf (f, "\taddu ");
-        else
-            fprintf (f, "\tadd ");
-        fprintf (f, "$t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
+        if(quad->sym1->type == INT)
+        {
+            if(unsigned_operators == 2)
+                fprintf (f, "\taddu ");
+            else
+                fprintf (f, "\tadd ");
+            fprintf (f, "$t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
+        }
+        else if(quad->sym1->type == FLOAT)
+        {
+            fprintf (f, "\tadd.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
+        }
     }
     else if (quad->kind == BOP_MINUS)
     {
-        // stocker le résultat de (op1 - op2) dans un autre registre temp
-        if (unsigned_operators == 2)
-            fprintf (f, "\tsubu ");
-        else
-            fprintf (f, "\tsub ");
-        fprintf (f, "$t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
-    }
-    else if (quad->kind == UOP_MINUS)
-    {
-        // stocker le résultat de (- op2) dans un autre registre temp
-        /*if (unsigned_operators == 2)
-            fprintf (f, "\tnegu ");
-        else
-            fprintf (f, "\tneg ");
-        fprintf (f, "$t%d, $t%d\n", current_register_int, current_register_int - 1);*/
+        if(quad->sym1->type == INT)
+        {
+            if(unsigned_operators == 2)
+                fprintf (f, "\tsubu ");
+            else
+                fprintf (f, "\tsub ");
+            fprintf (f, "$t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
+        }
+        else if(quad->sym1->type == FLOAT)
+        {
+            fprintf (f, "\tsub.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
+        }
     }
     /*else if (quad->type == Q_MULT) {
         // stocker le résultat de (op1 * op2) dans un autre registre temp
@@ -210,12 +221,17 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
             fprintf (f, "\tmfhi $t%zu\n", nb_reg_temp);
     }*/
 
-    // stocker la valeur de ce dernier registre dans res 
-    current_register_int++;
+    if(quad->sym1->type == INT)
+        current_register_int++;
+    else if(quad->sym1->type == FLOAT)
+        current_register_float++;
+
     store_result(f, quad->sym1, 0);
 
-    // décrémenter le nombre de registres temporaires utilisés
-    current_register_int -= 2;
+    if(quad->sym1->type == INT)
+        current_register_int-=2;
+    else if(quad->sym1->type == FLOAT)
+        current_register_float-=2;
 }
 
 void gencode_affect (FILE * f, Quad *quad)
@@ -230,22 +246,25 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t *unsigned_ope
     // récupérer la valeur de op1 dans un registre temp
     if (elem->class == VARIABLE)
     {
-        fprintf (f, "\tlw $t%d, ", current_register_int);
-        if (elem->attribute.variable.offset == -1)
-            fprintf(f, "%s\n", elem->attribute.variable.name);
-        else
-            fprintf(f, "%d($fp)\n", -4 * (elem->attribute.variable.offset + 1));   
-        current_register_int++;    
-    }
-        /*else if (elem->type == FLOAT)
+        if(elem->type == INT)
         {
-            fprintf(f, "\tl.s $f%d, ", current_register_float);
+            fprintf (f, "\tlw $t%d, ", current_register_int);
+            if (elem->attribute.variable.offset == -1)
+                fprintf(f, "%s\n", elem->attribute.variable.name);
+            else
+                fprintf(f, "%d($fp)\n", -4 * (elem->attribute.variable.offset + 1));   
+            current_register_int++;    
+        }
+        else if (elem->type == FLOAT)
+        {
+            fprintf (f, "\tl.s $f%d, ", current_register_float);
             if (elem->attribute.variable.offset == -1)
                 fprintf(f, "%s\n", elem->attribute.variable.name);
             else
                 fprintf(f, "%d($fp)\n", -4 * (elem->attribute.variable.offset + 1));
             current_register_float++;
-        }*/
+        }
+    }
     else if (elem->class == CONSTANT)
     {
         if(elem->type == INT)
