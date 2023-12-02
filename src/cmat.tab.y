@@ -23,23 +23,23 @@ uint32_t offset = 0;
      __uint64_t int_val;
      float float_val;
 
-    char strval[40];
+    char strval[MAXTOKENLEN];
     struct {
         SymbolTableElement * ptr;
     } exprval;
 }
 
 %token <int_val> INT_CONST
+%token <float_val> FLOAT_CONST
 %token <type_val> INT FLOAT MATRIX 
-%token FLOAT_CONST
 
 %token RETURN
 %token <strval>ID
-%token ';' '-' '*' '/' '^' '(' ')'
+%token ';' '*' '/' '^' '(' ')'
 
-%token '+' 
+%token '+' '-' 
 // useless
-%token STRING VOID MAIN IF ELSE WHILE FOR LOG_OP OR_OP COMP_OP ASSIGN_OP UNARY_OP  GT_OP LE_OP LT_OP NEQ_OP EQ_OP DEC_OP DDOT
+%token STRING VOID MAIN IF ELSE WHILE FOR LOG_OP OR_OP COMP_OP ASSIGN_OP UNARY_OP GT_OP LE_OP LT_OP NEQ_OP EQ_OP DEC_OP DDOT
 %token REl_OP INC_OP GE_OP AND_OP DECR INCR
 
 
@@ -95,13 +95,39 @@ expression :   expression '+' expression
                     offset++;
                }
                | expression '-' expression 
+               {
+                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
                | expression '*' expression 
                | expression '/' expression 
+               | '-' expression %prec UNARY_OP
+               {
+                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL);
+                    
+               }
+               | ID
+               {
+                    $$.ptr = lookup_scope(symbol_table, $1, current_scope, VARIABLE);
+                    if($$.ptr == NULL)
+                    {
+                         printf("Error variable \"%s\" not declared\n", $1);
+                         exit(1);
+                    }
+               }
                | INT_CONST
                { 
                     Constant v;
                     v.int_value = $1;
                     $$.ptr = insert_constant(&symbol_table, v, INT);
+               }
+               | FLOAT_CONST
+               { 
+                    Constant v;
+                    v.float_value = $1;
+                    $$.ptr = insert_constant(&symbol_table, v, FLOAT);
                }
           
 %%     

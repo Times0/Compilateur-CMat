@@ -1,7 +1,16 @@
 int a;
-// int d; // b banni car opcode de branch
+float d; // b banni car opcode de branch
 
-a = 9+2+3;
-// d = 2;
+// d = 9+2+3+9+8+7;
+a = -2;
+d = 2;
+a = d+9;
+
 //float c;
 //c = 5 + 8 + 9 + 9;
+
+// minus unary OK
+// minus binary OK
+// plus binary OK
+// multiple variable declaration NOT OK
+// float variable declaration NOT OK

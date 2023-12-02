@@ -1,21 +1,27 @@
 .data
 	a:	.word 0
+	d:	.word 0
 
 .globl main
 .text
 main:
 	move $fp, $sp
-	li $t0, 9
+	li $t0, 2
+	neg $t1, $t0
+	sw $t1, -4($fp)
+	lw $t1, -4($fp)
+	la $t2, a
+	sw $t1, 0($t2)
 	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -4($fp)
-	lw $t0, -4($fp)
-	li $t1, 3
-	add $t2, $t0, $t1
-	sw $t2, -8($fp)
-	lw $t0, -8($fp)
-	la $t1, a
-	sw $t0, 0($t1)
+	la $t2, d
+	sw $t1, 0($t2)
+	lw $t1, d
+	li $t2, 9
+	add $t3, $t1, $t2
+	sw $t3, -4($fp)
+	lw $t1, -4($fp)
+	la $t2, a
+	sw $t1, 0($t2)
 	lw $a0, a
 	li $v0, 1
 	syscall
