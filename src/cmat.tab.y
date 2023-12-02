@@ -85,6 +85,11 @@ assign :  ID '=' expression
                     printf("Error variable \"%s\" not declared\n", $1);
                     exit(1);
                }
+               if(id->type != $3.ptr->type)
+               {
+                    printf("Error at line %d : %s can't be assigned to %s\n", lineno, id->type == INT ? "int" : "float", $3.ptr->type == INT ? "int" : "float");
+                    exit(1);
+               }
                gen_quad(code, COPY, id, $3.ptr, NULL);
           }
 

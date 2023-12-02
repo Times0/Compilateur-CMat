@@ -102,6 +102,19 @@ SymbolTableElement *lookup_constant(SymbolTable *s, Constant constant, __uint32_
 			return &(s->symbols[i]);
 		return NULL;
 	}
+	else if (type == FLOAT)
+	{
+		__uint32_t i;
+		for (i = 0; i < s->size; i++)
+		{
+			if (s->symbols[i].class == CONSTANT)
+				if (s->symbols[i].attribute.constant.float_value == constant.float_value)
+					break;
+		}
+		if (i < s->size)
+			return &(s->symbols[i]);
+		return NULL;
+	}
 }
 
 /* return symbol if found or NULL if not found */
