@@ -83,6 +83,15 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case BOP_MINUS:
             gencode_arith_binary_op(f, quad);
             break;
+        case BOP_MULT:
+            gencode_arith_binary_op(f, quad);
+            break;
+        case BOP_DIV:
+            gencode_arith_binary_op(f, quad);
+            break;
+        case BOP_MOD:
+            gencode_arith_binary_op(f, quad);
+            break;
         case UOP_MINUS:
             gencode_arith_unary_op(f, quad);
             break;
@@ -192,6 +201,38 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         else if(quad->sym1->type == FLOAT)
             fprintf (f, "\tsub.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
     }
+    else if (quad->kind == BOP_MULT)
+    {
+        if(quad->sym1->type == INT)
+        {
+            fprintf (f, "\tmult $t%d, $t%d\n", current_register_int - 2, current_register_int - 1);
+            fprintf (f, "\tmflo $t%d\n", current_register_int);
+        }
+        else if(quad->sym1->type == FLOAT)
+            fprintf (f, "\tmul.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
+    }
+    else if(quad->kind == BOP_DIV)
+    {
+        if(quad->sym1->type == INT)
+        {
+            fprintf (f, "\tdiv $t%d, $t%d\n", current_register_int - 2, current_register_int - 1);
+            fprintf (f, "\tmflo $t%d\n", current_register_int);
+        }
+        else if(quad->sym1->type == FLOAT)
+            fprintf (f, "\tdiv.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
+    }
+    else if(quad->kind == BOP_MOD)
+    {
+        if(quad->sym1->type == INT)
+        {
+            fprintf (f, "\tdiv $t%d, $t%d\n", current_register_int - 2, current_register_int - 1);
+            fprintf (f, "\tmfhi $t%d\n", current_register_int);
+        }
+        else if(quad->sym1->type == FLOAT)
+            fprintf (f, "\tdiv.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
+    }
+
+
     /*else if (quad->type == Q_MULT) {
         // stocker le résultat de (op1 * op2) dans un autre registre temp
         if (unsigned_operators == 2)

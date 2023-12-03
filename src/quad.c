@@ -71,6 +71,20 @@ static void quad_dump(Quad *q)
             printf(" * ");
             symbol_dump(q->sym3);
             break;
+        case BOP_DIV:
+            symbol_dump(q->sym1);
+            printf(" := ");
+            symbol_dump(q->sym2);
+            printf(" / ");
+            symbol_dump(q->sym3);
+            break;
+        case BOP_MOD:
+            symbol_dump(q->sym1);
+            printf(" := ");
+            symbol_dump(q->sym2);
+            printf(" %% ");
+            symbol_dump(q->sym3);
+            break;
         case UOP_MINUS:
             symbol_dump(q->sym1);
             printf(" := ");

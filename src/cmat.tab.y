@@ -48,7 +48,7 @@ uint32_t get_float_type(uint32_t type1, uint32_t type2);
 // priorités
 %left '+' '-'
 %left '*' '/'
-%left '^'
+%left '%'
 %right UNARY_OP
 %left '(' ')'
 
@@ -102,12 +102,37 @@ expression :   expression '+' expression
                     gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
                     offset++;
                }
-               | expression '*' expression 
-               | expression '/' expression 
+               | expression '*' expression
+               {
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    gen_quad(code, BOP_MULT, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
+               | expression '/' expression
+               {
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    gen_quad(code, BOP_DIV, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
+               | expression '%' expression
+               {
+                    if($1.ptr->type != INT || $3.ptr->type != INT)
+                    {
+                         printf("Error at line %d : modulo operator can only be applied to integers\n", lineno);
+                         exit(1);
+                    }
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
                | '-' expression %prec UNARY_OP
                {
                     $$.ptr = newtemp(symbol_table, get_float_type($2.ptr->type, INT), offset);
                     gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL);
+               }
+               | '(' expression ')'
+               {
+                    $$.ptr = $2.ptr;
                }
                | ID
                {
