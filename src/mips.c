@@ -11,6 +11,7 @@
 
 __uint32_t current_register_int = 0;
 __uint32_t current_register_float = 0;
+__uint32_t fp_type[MAXFPSIZE];
 
 // Voir code pour modification 
 void gencode_mips_global_variable(FILE * f, SymbolTable * s)
@@ -139,7 +140,7 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
 {
     if(quad->kind == UOP_MINUS)
     {
-        load_operator(f, quad->sym2, NULL);
+        load_operator(f, quad->sym2);
         if(quad->sym1->type == INT)
         {
             fprintf (f, "\tneg $t%d, $t%d\n", current_register_int, current_register_int - 1);
@@ -157,42 +158,39 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
 
 void gencode_arith_binary_op (FILE * f, Quad *quad)
 {
-    __uint32_t unsigned_operators = 0;
+    //////////////////////////////////////////////////////////////
+    // convertir les opérandes en int ou float selon le type du résultat
+    __uint32_t type_change_sym2=0;
+    __uint32_t type_change_sym3=0;
+    if(quad->sym1->type == INT)
+    {
+        type_change_sym2 = convert_float_to_int(quad->sym2);
+        type_change_sym3 = convert_float_to_int(quad->sym3);
+    }
+    else if(quad->sym1->type == FLOAT)
+    {
+        type_change_sym2 = convert_int_to_float(quad->sym2);
+        type_change_sym3 = convert_int_to_float(quad->sym3);
+    }
     
     // récupérer la valeur de op1 dans un registre temp
-    load_operator(f, quad->sym2, &unsigned_operators);
+    load_operator(f, quad->sym2);
     // récupérer la valeur de op2 dans un autre registre temp
-    load_operator(f, quad->sym3, &unsigned_operators);
+    load_operator(f, quad->sym3);
 
     if (quad->kind == BOP_PLUS)
     {
         if(quad->sym1->type == INT)
-        {
-            if(unsigned_operators == 2)
-                fprintf (f, "\taddu ");
-            else
-                fprintf (f, "\tadd ");
-            fprintf (f, "$t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
-        }
+            fprintf (f, "\tadd $t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
         else if(quad->sym1->type == FLOAT)
-        {
             fprintf (f, "\tadd.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
-        }
     }
     else if (quad->kind == BOP_MINUS)
     {
         if(quad->sym1->type == INT)
-        {
-            if(unsigned_operators == 2)
-                fprintf (f, "\tsubu ");
-            else
-                fprintf (f, "\tsub ");
-            fprintf (f, "$t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
-        }
+            fprintf (f, "\tsub $t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
         else if(quad->sym1->type == FLOAT)
-        {
             fprintf (f, "\tsub.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
-        }
     }
     /*else if (quad->type == Q_MULT) {
         // stocker le résultat de (op1 * op2) dans un autre registre temp
@@ -221,6 +219,8 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
             fprintf (f, "\tmfhi $t%zu\n", nb_reg_temp);
     }*/
 
+    //////////////////////////////////////////////////////////////
+    // stocker le résultat dans un registre
     if(quad->sym1->type == INT)
         current_register_int++;
     else if(quad->sym1->type == FLOAT)
@@ -232,36 +232,115 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         current_register_int-=2;
     else if(quad->sym1->type == FLOAT)
         current_register_float-=2;
+
+    //////////////////////////////////////////////////////////////
+    // remettre les types des opérandes à leur type initial
+    if(quad->sym1->type == INT)
+    {
+        if(type_change_sym2)
+            convert_int_to_float(quad->sym2);
+        if(type_change_sym3)
+            convert_int_to_float(quad->sym3);
+    }
+    else if(quad->sym1->type == FLOAT)
+    {
+        if(type_change_sym2)
+            convert_float_to_int(quad->sym2);
+        if(type_change_sym3)
+            convert_float_to_int(quad->sym3);
+    }
+
 }
 
 void gencode_affect (FILE * f, Quad *quad)
 {
-    load_operator(f, quad->sym2, NULL);
+    __uint32_t type_change_sym2=0;
+    if(quad->sym1->type == INT)
+    {
+        type_change_sym2 = convert_float_to_int(quad->sym2);
+        
+        load_operator(f, quad->sym2);
+        store_result (f, quad->sym1, 0);
 
-    store_result (f, quad->sym1, 0);
+        if(type_change_sym2)
+            convert_int_to_float(quad->sym2);
+    }
+    else if(quad->sym1->type == FLOAT)
+    {
+        type_change_sym2 = convert_int_to_float(quad->sym2);
+        
+        load_operator(f, quad->sym2);
+        store_result (f, quad->sym1, 0);
+        
+        if(type_change_sym2)
+            convert_float_to_int(quad->sym2);
+    }   
 }
 
-void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t *unsigned_operator)
+void load_operator (FILE * f, SymbolTableElement *elem)
 {
     // récupérer la valeur de op1 dans un registre temp
     if (elem->class == VARIABLE)
     {
         if(elem->type == INT)
         {
-            fprintf (f, "\tlw $t%d, ", current_register_int);
-            if (elem->attribute.variable.offset == -1)
-                fprintf(f, "%s\n", elem->attribute.variable.name);
+            // Pour charger un int, on le charge dans un registre float puis on le convertit en int
+            if(elem->attribute.variable.offset == -1)
+            {
+                if(fp_type[elem->attribute.variable.offset] == FLOAT)
+                {
+                    fprintf (f, "\tl.s $f%d, %s\n", current_register_float, elem->attribute.variable.name);
+                    fprintf(f, "\tcvt.w.s $f%d, $f%d\n", current_register_float, current_register_float);
+                    fprintf(f, "\tmfc1 $t%d, $f%d\n", current_register_int, current_register_float);
+                }
+                else
+                {
+                    fprintf (f, "\tlw $t%d, %s\n", current_register_int, elem->attribute.variable.name);
+                }
+            }
             else
-                fprintf(f, "%d($fp)\n", -4 * (elem->attribute.variable.offset + 1));   
-            current_register_int++;    
+            {
+                if(fp_type[elem->attribute.variable.offset] == FLOAT)
+                {
+                    fprintf (f, "\tl.s $f%d, %d($fp)\n", current_register_float, -4 * (elem->attribute.variable.offset + 1));
+                    fprintf(f, "\tcvt.w.s $f%d, $f%d\n", current_register_float, current_register_float);
+                    fprintf(f, "\tmfc1 $t%d, $f%d\n", current_register_int, current_register_float);
+                }
+                else
+                {
+                    fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.offset + 1));
+                }
+            }
+            current_register_int++;
         }
         else if (elem->type == FLOAT)
         {
-            fprintf (f, "\tl.s $f%d, ", current_register_float);
-            if (elem->attribute.variable.offset == -1)
-                fprintf(f, "%s\n", elem->attribute.variable.name);
+            if(elem->attribute.variable.offset == -1)
+            {
+                if(fp_type[elem->attribute.variable.offset] == INT)
+                {
+                    fprintf (f, "\tlw $t%d, %s\n", current_register_int, elem->attribute.variable.name);
+                    fprintf(f, "\tmtc1 $t%d, $f%d\n", current_register_int, current_register_float);
+                    fprintf(f, "\tcvt.s.w $f%d, $f%d\n", current_register_float, current_register_float);
+                }
+                else
+                {
+                    fprintf (f, "\tl.s $f%d, %s\n", current_register_float, elem->attribute.variable.name);
+                }
+            }
             else
-                fprintf(f, "%d($fp)\n", -4 * (elem->attribute.variable.offset + 1));
+            {
+                if(fp_type[elem->attribute.variable.offset] == INT)
+                {
+                    fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.offset + 1));
+                    fprintf(f, "\tmtc1 $t%d, $f%d\n", current_register_int, current_register_float);
+                    fprintf(f, "\tcvt.s.w $f%d, $f%d\n", current_register_float, current_register_float);
+                }
+                else
+                {
+                    fprintf (f, "\tl.s $f%d, %d($fp)\n", current_register_float, -4 * (elem->attribute.variable.offset + 1));
+                }
+            }
             current_register_float++;
         }
     }
@@ -316,7 +395,10 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t offset_res)
                     // current_register_int--;
                 }
                 else
-                    fprintf (f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, -4 * (res->attribute.variable.offset + 1));
+                {
+                    fprintf(f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, -4 * (res->attribute.variable.offset + 1));
+                    fp_type[res->attribute.variable.offset] = res->type;
+                }
                 current_register_int--;
             }
             else if(res->type == FLOAT)
@@ -331,7 +413,10 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t offset_res)
                     // current_register_float--;
                 }
                 else
+                {
                     fprintf (f, "\ts.s $f%d, %d($fp)\n", current_register_float - 1, -4 * (res->attribute.variable.offset + 1));
+                    fp_type[res->attribute.variable.offset] = res->type;
+                }
                 current_register_float--;
             }
         }
@@ -349,4 +434,20 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t offset_res)
             current_register_float--;
         }
     }
+}
+
+__uint32_t convert_int_to_float(SymbolTableElement *s)
+{
+    if(s->type == FLOAT)
+        return 0;
+    s->type = FLOAT;
+    return 1;
+}
+
+__uint32_t convert_float_to_int(SymbolTableElement *s)
+{
+    if(s->type == INT)
+        return 0;
+    s->type = INT;
+    return 1;
 }

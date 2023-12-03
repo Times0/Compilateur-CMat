@@ -73,10 +73,9 @@ SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32
 			grow_symbol_table(s);
 
 		l = &((*s)->symbols[(*s)->size]);
-		if (type == INT)
-			l->attribute.constant.int_value = constant.int_value;
-		else if (type == FLOAT)
-			l->attribute.constant.float_value = constant.float_value;
+			
+		l->attribute.constant.int_value = constant.int_value;	
+		l->attribute.constant.float_value = constant.float_value;
 
 		l->class = CONSTANT;
 		l->type = type;

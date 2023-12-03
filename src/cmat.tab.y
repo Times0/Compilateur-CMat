@@ -87,17 +87,6 @@ assign :  ID '=' expression
                     printf("Error variable \"%s\" not declared\n", $1);
                     exit(1);
                }
-               if(id-> type == INT && $3.ptr->type == FLOAT)
-               {
-                    // printf("Warning at line %d : int assigned to float cause loss of precision\n", lineno);
-                    printf("Error at line %d : int assigned to float\n", lineno);
-                    exit(1);
-               }
-               else if(id-> type == FLOAT && $3.ptr->type == INT)
-               {
-                    $3.ptr->type = FLOAT;
-                    $3.ptr->attribute.constant.float_value = $3.ptr->attribute.constant.int_value;
-               }
                gen_quad(code, COPY, id, $3.ptr, NULL);
           }
 
@@ -133,17 +122,18 @@ expression :   expression '+' expression
                { 
                     Constant v;
                     v.int_value = $1;
+                    v.float_value = (float)$1;
                     $$.ptr = insert_constant(&symbol_table, v, INT);
                }
                | FLOAT_CONST
                { 
                     Constant v;
                     v.float_value = $1;
+                    v.int_value = (int)$1;
                     $$.ptr = insert_constant(&symbol_table, v, FLOAT);
                }
           
 %%     
-
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2)
 {

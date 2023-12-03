@@ -20,7 +20,7 @@ typedef struct Param
     __uint32_t param_value;
 }Param;
 
-typedef union Constant
+typedef struct Constant
 {
     __uint32_t int_value;
     float float_value;   

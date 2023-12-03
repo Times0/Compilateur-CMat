@@ -1,13 +1,10 @@
 float a;
-float d; // b banni car opcode de branch
+int d; // b banni car opcode de branch
 
 // a = 1+2+3-4+6;
 // a = -2;
 d = 5;
-a = 5;
-
-//float c;
-//c = 5 + 8 + 9 + 9;
+a = -4-6;
 
 // affectation OK
 // minus unary OK
@@ -20,3 +17,8 @@ a = 5;
 // minus binary OK
 // plus binary OK
 // multiple variable declaration OK
+
+// float = int OK
+// int = float NOT OK
+// addition float + int OK
+// soustraction float - int OK
