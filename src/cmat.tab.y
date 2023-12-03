@@ -7,6 +7,7 @@
 #include "symbol_table.h"
 #include "../include/quad.h"
 
+
 extern FILE *yyin;
 extern FILE *yyout;
 extern int yylex();
@@ -28,7 +29,8 @@ void semantic_warning(char *s);
      __uint32_t int_val;
      float float_val;
 
-     char strval[MAXTOKENLEN];
+     char str_val[MAXTOKENLEN];
+     char string_val[MAXSTRLEN];
     
      struct
      {
@@ -42,14 +44,15 @@ void semantic_warning(char *s);
 %token <int_val> INT_CONST
 %token <float_val> FLOAT_CONST
 %token <type_val> INT FLOAT MATRIX 
-
+%token <string_val> STRING
+%token <str_val>ID
 %token RETURN
-%token <strval>ID
+
 %token ';' '*' '/' '^' '(' ')'
 
 %token '+' '-' 
 // useless
-%token STRING VOID MAIN IF ELSE WHILE FOR LOG_OP OR_OP COMP_OP ASSIGN_OP UNARY_OP GT_OP LE_OP LT_OP NEQ_OP EQ_OP DEC_OP DDOT
+%token VOID MAIN IF ELSE WHILE FOR LOG_OP OR_OP COMP_OP ASSIGN_OP UNARY_OP GT_OP LE_OP LT_OP NEQ_OP EQ_OP DEC_OP DDOT
 %token REl_OP INC_OP GE_OP AND_OP DECR INCR
 
 
@@ -76,6 +79,7 @@ instruction : declaration ';'
             | call ';'
             | return ';'
             | assign ';'
+            /* | expression ';' */
 
 declaration :  type ID
                {
@@ -100,6 +104,18 @@ call : ID '(' expression_list ')'
                     semantic_error("print function can only be applied to integers and floats");
                }
                gen_quad_function(code, CALL_PRINT, NULL, id, $3.ptr_list, $3.size); // changer le null
+          }
+          else if(strcmp($1, "printf") == 0)
+          {
+               if($3.size != id->attribute.function.nb_parameters)
+               {
+                    semantic_error("printf take one argument");
+               }
+               if($3.ptr_list[0]->type != STRING)
+               {
+                    semantic_error("printf function can only be applied to strings");
+               }
+               gen_quad_function(code, CALL_PRINTF, NULL, id, $3.ptr_list, $3.size); // changer le null
           }
           else
           {
@@ -129,7 +145,7 @@ expression_list : expression ',' expression_list
                     $$.capacity = $3.capacity;
                }
                | expression
-               {
+               {     
                     $$.capacity = 4;
                     $$.ptr_list = malloc($$.capacity*sizeof(SymbolTableElement *));
                     if($$.ptr_list == NULL)
@@ -137,8 +153,8 @@ expression_list : expression ',' expression_list
                          printf("malloc failed\n");
                          exit(1);
                     }
-                    $$.ptr_list[$$.size] = $1.ptr;
-                    $$.size++;
+                    $$.ptr_list[0] = $1.ptr;
+                    $$.size = 1;
                }
                | %empty
                {
@@ -258,6 +274,11 @@ expression :   expression '+' expression
                     v.float_value = $1;
                     v.int_value = (int)$1;
                     $$.ptr = insert_constant(&symbol_table, v, FLOAT);
+               }
+               | STRING
+               {
+                    $$.ptr = insert_string(&symbol_table, $1);
+                    $$.ptr->attribute.string.offset = offset+1;
                }
           
 %%     

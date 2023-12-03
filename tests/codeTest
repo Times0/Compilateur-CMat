@@ -1,13 +1,91 @@
-float a;
-int d; // b banni car opcode de branch
+int a;
+float d; // b banni car opcode de branch
 
-a = 1+2+3-4+6;
-a = -2;
-d = 5;
-a = 5.2;
 
+printf("Test des opérations arithmétiques sur int\n");
+
+a = 1;
 print(a);
+printf("\n");
+
+a = -2.5;
+print(a);
+printf("\n");
+
+a = 1 - 2.5;
+print(a);
+printf("\n");
+
+a = 1 + 2.5;
+print(a);
+printf("\n");
+
+a = 3*5;
+print(a);
+printf("\n");
+
+a = 24/6;
+print(a);
+printf("\n");
+
+a = 26%6;
+print(a);
+printf("\n");
+
+printf("Test des opérations arithmétiques sur float\n");
+
+d = 1.9;
 print(d);
+printf("\n");
+
+d = -2.5;
+print(d);
+printf("\n");
+
+d = 1.9 - 2.5;
+print(d);
+printf("\n");
+
+d = 1.9 + 2.5;
+print(d);
+printf("\n");
+
+d = 3.5*5.5;
+print(d);
+printf("\n");
+
+d = 24.5/6.5;
+print(d);
+printf("\n");
+
+d = 26%6;
+print(d);
+printf("\n");
+
+printf("Test des opérations arithmétiques sur int et float\n");
+
+d = 1;
+print(d);
+printf("\n");
+
+a = 1.9;
+print(a);
+printf("\n");
+
+d = 1 + 2.5;
+print(d);
+printf("\n");
+
+d = 2*2.5;
+print(d);
+printf("\n");
+
+d = 2.5/2;
+print(d);
+printf("\n");
+
+printf("Fin des tests\n");
+
 
 // affectation OK
 // minus unary OK

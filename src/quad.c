@@ -148,6 +148,16 @@ static void quad_dump(Quad *q)
             }
             printf(")");
             break;
+        case CALL_PRINTF:
+            printf("printf (");
+            for(int i = q->nb_parameters - 1; i >= 0; i--)
+            {
+                symbol_dump(q->function_parameters[i]);
+                if(i > 0)
+                    printf(", ");
+            }
+            printf(")");
+            break;
         case COPY:
             symbol_dump(q->sym1);
             printf(" = ");

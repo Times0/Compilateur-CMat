@@ -17,7 +17,8 @@ extern __uint32_t lineno;
 
 DIGIT   [0-9]
 ID      [a-zA-Z_][a-zA-Z_0-9]*
-STRING  \"[^\"]*\"
+/* double quotes, escaped characters, double quotes*/
+STRING  \"(?:[^\"]|\\.)*\"  
 INTEGER_CONST   {DIGIT}+
 FLOAT_CONST {DIGIT}*"."{DIGIT}+
 
@@ -49,8 +50,8 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 {ID}            { ret_print("IDENTIFIER");
                   if ( yyleng > MAXTOKENLEN )
                       fprintf(stderr,"Identifier '%s' too long, truncated\n",yytext);
-                  strncpy(yylval.strval,yytext,7);
-                  yylval.strval[MAXTOKENLEN] = '\0';
+                  strncpy(yylval.str_val,yytext,MAXTOKENLEN-1);
+                  yylval.str_val[MAXTOKENLEN] = '\0';
                   return ID;
                 }
 
@@ -82,7 +83,14 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "{"                 { ret_print("LBRACE");          return yytext[0];}
 "}"                 { ret_print("RBRACE");          return yytext[0];}
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
-{STRING}            { ret_print("STRING_LITERAL");  return STRING;}
+{STRING}            { ret_print("STRING");
+                        if ( yyleng > MAXSTRLEN )
+                            fprintf(stderr,"String '%s' too long, truncated\n",yytext);
+                        strncpy(yylval.string_val,yytext,MAXSTRLEN-1);
+                        yylval.string_val[MAXSTRLEN-1] = '"';
+                        yylval.string_val[MAXSTRLEN] = '\0';
+                        return STRING;
+                    }
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }

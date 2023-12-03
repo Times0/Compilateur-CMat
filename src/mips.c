@@ -102,6 +102,9 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case CALL_PRINT:
             gencode_print(f, quad);
             break;
+        case CALL_PRINTF:
+            gencode_print(f, quad);
+            break;
         /*
         case Q_IF:
             gencode_if (f, global_code[quad_num]);
@@ -313,6 +316,59 @@ void gencode_print(FILE *f, Quad *quad)
     }
     else if(quad->kind == CALL_PRINTF)
     {
+        // caractere d'échappement : \n, \t, \\, \"
+        if(quad->function_parameters[0]->type == STRING)
+        {
+            fprintf(f, "\tli $v0, 4\n");
+            fprintf(f, "\tla $a0, %d($fp)\n", -4*quad->function_parameters[0]->attribute.string.offset);
+            __uint32_t str_size = strlen(quad->function_parameters[0]->attribute.string.string)-2;
+            __uint32_t char_ptr = 0;
+
+            for(__uint32_t i = 0; i<str_size; i++)
+            {
+                __uint32_t char_special=0;
+                if(quad->function_parameters[0]->attribute.string.string[i+1] == '\\')
+                {
+                    __uint32_t car;
+                    switch(quad->function_parameters[0]->attribute.string.string[i+2])
+                    {
+                        case 'n':
+                            car = 10;
+                            char_special = 1;
+                            break;
+                        case 't':
+                            car = 9;
+                            char_special = 1;
+                            break;
+                        case '\\':
+                            car = 92;
+                            char_special = 1;
+                            break;
+                        case '"':
+                            car = 34;
+                            char_special = 1;
+                            break;
+                        default:
+                            printf("Error : unknown special character\n");
+                            exit(1);
+                    }
+                    
+                    fprintf(f, "\tli $t%d, %d\n", current_register_int, car);
+                    fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
+                    i++;
+                }
+                else if(!char_special)
+                {
+                    fprintf(f, "\tli $t%d, %d\n", current_register_int, quad->function_parameters[0]->attribute.string.string[i+1]);
+                    fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
+                }
+                char_ptr++;
+            }
+            // caractere de fin de chaine
+            fprintf(f, "\tli $t%d, %d\n", current_register_int, 0);
+            fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
+            fprintf(f, "\tsyscall\n");
+        }
     }
     else if(quad->kind == CALL_PRINTMAT)
     {

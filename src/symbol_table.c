@@ -39,6 +39,7 @@ void grow_symbol_table(SymbolTable **s)
 	}
 }
 
+
 SymbolTableElement *insert_variable(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __int32_t offset)
 {
 	if (class == VARIABLE)
@@ -111,6 +112,53 @@ SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32
 	return l;
 }
 
+SymbolTableElement *insert_string(SymbolTable **s, char *string)
+{
+	SymbolTableElement *l = lookup_string(*s, string);
+	if (l == NULL)
+	{
+		if ((*s)->size == (*s)->capacity)
+			grow_symbol_table(s);
+
+		l = &((*s)->symbols[(*s)->size]);
+		
+		strncpy(l->attribute.string.string, string, MAXSTRLEN);
+		
+		l->class = STR;
+		l->type = STRING;
+		++((*s)->size);
+	}
+	return l;
+}
+
+/* return symbol if found or NULL if not found */
+SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class)
+{
+	if (class == VARIABLE)
+	{
+		__uint32_t i;
+		for (i = 0; i < s->size && strcmp(s->symbols[i].attribute.variable.name, name) != 0; i++)
+			;
+		if (i < s->size)
+			return &(s->symbols[i]);
+		return NULL;
+	}
+}
+
+SymbolTableElement *lookup_function(SymbolTable *s, char *name)
+{
+	__uint32_t i;
+	for (i = 0; i < s->size; i++)
+	{
+		if (s->symbols[i].class == FUNCTION)
+			if (strcmp(s->symbols[i].attribute.function.name, name) == 0)
+				break;
+	}
+	if (i < s->size)
+		return &(s->symbols[i]);
+	return NULL;
+}
+
 /* return symbol if found or NULL if not found */
 SymbolTableElement *lookup_constant(SymbolTable *s, Constant constant, __uint32_t type)
 {
@@ -144,32 +192,18 @@ SymbolTableElement *lookup_constant(SymbolTable *s, Constant constant, __uint32_
 	}
 }
 
-SymbolTableElement *lookup_function(SymbolTable *s, char *name)
+SymbolTableElement *lookup_string(SymbolTable *s, char *string)
 {
 	__uint32_t i;
 	for (i = 0; i < s->size; i++)
 	{
-		if (s->symbols[i].class == FUNCTION)
-			if (strcmp(s->symbols[i].attribute.function.name, name) == 0)
+		if (s->symbols[i].class == STR)
+			if (strcmp(s->symbols[i].attribute.string.string, string) == 0)
 				break;
 	}
 	if (i < s->size)
 		return &(s->symbols[i]);
 	return NULL;
-}
-
-/* return symbol if found or NULL if not found */
-SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class)
-{
-	if (class == VARIABLE)
-	{
-		__uint32_t i;
-		for (i = 0; i < s->size && strcmp(s->symbols[i].attribute.variable.name, name) != 0; i++)
-			;
-		if (i < s->size)
-			return &(s->symbols[i]);
-		return NULL;
-	}
 }
 
 void decr_scope(SymbolTable *s)
@@ -193,8 +227,6 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 	int nb_cst = 0;
 	for (i = 0; i < s->size; ++i)
 	{
-		// if(symbol_table->symbols[i].attribute.name[0] == '\0')
-		// 	continue;
 		SymbolTableElement elem = s->symbols[i];
 
 		if (elem.class == CONSTANT)
@@ -218,6 +250,9 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 		case VOID:
 			typeStr = "void";
 			break;
+		case STRING:
+			typeStr = "string";
+			break;
 		default:
 			typeStr = "undef";
 			break;
@@ -230,6 +265,9 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 			break;
 		case FUNCTION:
 			classStr = "function";
+			break;
+		case STR:
+			classStr = "string";
 			break;
 		}
 
@@ -251,6 +289,9 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 					break;
 				case VOID:
 					fprintf(of, "void*");
+					break;
+				case STRING:
+					fprintf(of, "string");
 					break;
 				}
 				if(j < elem.attribute.function.nb_parameters - 1)
@@ -277,6 +318,9 @@ void symbol_dump(SymbolTableElement *e)
 		else if (e->type == FLOAT)
 			printf("%f", e->attribute.constant.float_value);
 	}
+	else if (e->class == STR)
+		printf("%s", e->attribute.string.string);
+	
 }
 
 void free_symbol_table(SymbolTable *s)
