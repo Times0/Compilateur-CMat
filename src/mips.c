@@ -9,9 +9,10 @@
 //  suivie d'une fonction main
 //////////////////////////
 
-__uint32_t current_register_int = 0;
-__uint32_t current_register_float = 0;
-__uint32_t fp_type[MAXFPSIZE];
+__uint32_t current_register_int = 0;        // registre pour les int
+__uint32_t current_register_float = 0;      // registre pour les float
+__uint32_t fp_type[MAXFPSIZE];              // tableau qui contient le type des variables du stack frame
+__uint32_t label_counter = 0;               // compteur pour les labels
 
 // Voir code pour modification 
 void gencode_mips_global_variable(FILE * f, SymbolTable * s)
@@ -41,6 +42,8 @@ void gencode_mips(QuadTable *code, FILE * f)
     fprintf (f, "main:\n"); // temporaire
     fprintf (f, "\tmove $fp, $sp\n");
 
+    code->main_quad = 0;
+
     // parcours de tous les quads apres le main
     for (size_t i = code->main_quad; i < code->nextquad; i ++)
     {
@@ -51,7 +54,7 @@ void gencode_mips(QuadTable *code, FILE * f)
     }
     
     // fprintf (f, "\tlw $a0, a\n\tli $v0, 1\n\tsyscall\n");
-    fprintf (f, "\tl.s $f12, a\n\tli $v0, 2\n\tsyscall\n");
+    // fprintf (f, "\tl.s $f12, a\n\tli $v0, 2\n\tsyscall\n");
 
     // fin du main et du code
     fprintf (f, "\tli $v0, 10\n\tsyscall\n");
@@ -78,18 +81,16 @@ void gencode_mips_quad(FILE *f, Quad *quad)
     switch(quad->kind)
     {
         case BOP_PLUS:
-            gencode_arith_binary_op(f, quad);
-            break;
         case BOP_MINUS:
-            gencode_arith_binary_op(f, quad);
-            break;
         case BOP_MULT:
-            gencode_arith_binary_op(f, quad);
-            break;
         case BOP_DIV:
+        case BOP_MOD:
             gencode_arith_binary_op(f, quad);
             break;
-        case BOP_MOD:
+        case BOP_OR:
+        case BOP_AND:
+        case BOP_EQ:
+        case BOP_NEQ:
             gencode_arith_binary_op(f, quad);
             break;
         case UOP_MINUS:
@@ -98,12 +99,10 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case COPY:
             gencode_affect(f, quad);
             break;
-        /*case Q_SUB:
-        case Q_MULT:
-        case Q_DIV:
-        case Q_MOD:
-            gencode_arith_binary_op (f, global_code[quad_num]);
+        case CALL_PRINT:
+            gencode_print(f, quad);
             break;
+        /*
         case Q_IF:
             gencode_if (f, global_code[quad_num]);
             break;
@@ -140,7 +139,7 @@ void gencode_mips_quad(FILE *f, Quad *quad)
                 break;*/
                                 
             default:
-                printf ("Error : quad type not recognized\n");
+                printf ("Error : Quad type not recognized\n");
                 break;
         }
 }
@@ -169,6 +168,7 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
 {
     //////////////////////////////////////////////////////////////
     // convertir les opérandes en int ou float selon le type du résultat
+
     __uint32_t type_change_sym2=0;
     __uint32_t type_change_sym3=0;
     if(quad->sym1->type == INT)
@@ -232,34 +232,6 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
             fprintf (f, "\tdiv.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
     }
 
-
-    /*else if (quad->type == Q_MULT) {
-        // stocker le résultat de (op1 * op2) dans un autre registre temp
-        if (unsigned_operators == 2)
-            fprintf (f, "\tmultu ");
-        else
-            fprintf (f, "\tmult ";
-        fprintf (f, "\t$t%zu, $t%zu\n", nb_reg_temp - 2, nb_reg_temp - 1);
-
-        // mult $s,$t ⇐⇒ [Hi ← pref_32($s * $t)] & [Lo ← suff_32($s * $t)]
-        fprintf (f, "\tmflo $t%zu\n", nb_reg_temp);
-    }
-    else if (quad->type == Q_DIV || quad->type == Q_MOD) {
-        // stocker le résultat de (op1 / op2) dans un autre registre temp
-        if (unsigned_operators == 2)
-            fprintf (f, "\tdivu ");
-        else
-            fprintf (f, "\tdiv ");
-        fprintf (f, "$t%zu, $t%zu\n", nb_reg_temp - 2, nb_reg_temp - 1);
-
-        // div $s,$t ⇐⇒ [Hi ← ($s % $t)] & [Lo ← ($s / $t)]
-        if (quad->type == Q_DIV)
-            fprintf (f, "\tmflo $t%zu\n", nb_reg_temp);
-        
-        else if (quad->type == Q_MOD)
-            fprintf (f, "\tmfhi $t%zu\n", nb_reg_temp);
-    }*/
-
     //////////////////////////////////////////////////////////////
     // stocker le résultat dans un registre
     if(quad->sym1->type == INT)
@@ -316,6 +288,35 @@ void gencode_affect (FILE * f, Quad *quad)
         if(type_change_sym2)
             convert_float_to_int(quad->sym2);
     }   
+}
+
+void gencode_print(FILE *f, Quad *quad)
+{
+    if(quad->kind == CALL_PRINT)
+    {
+        if(quad->function_parameters[0]->type == INT)
+        {
+            load_operator(f, quad->function_parameters[0]);
+            fprintf (f, "\tli $v0, 1\n");
+            fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 1);
+            fprintf (f, "\tsyscall\n");
+            current_register_int--;
+        }
+        else if(quad->function_parameters[0]->type == FLOAT)
+        {
+            load_operator(f, quad->function_parameters[0]);
+            fprintf (f, "\tli $v0, 2\n");
+            fprintf (f, "\tmov.s $f12, $f%d\n", current_register_float - 1);
+            fprintf (f, "\tsyscall\n");
+            current_register_float--;
+        }
+    }
+    else if(quad->kind == CALL_PRINTF)
+    {
+    }
+    else if(quad->kind == CALL_PRINTMAT)
+    {
+    }
 }
 
 void load_operator (FILE * f, SymbolTableElement *elem)
@@ -491,4 +492,13 @@ __uint32_t convert_float_to_int(SymbolTableElement *s)
         return 0;
     s->type = INT;
     return 1;
+}
+
+char* generate_label()
+{
+    char* label = (char*)malloc(20);
+    sprintf(label, "Label_%d", label_counter);
+    label_counter++;
+
+    return label;
 }

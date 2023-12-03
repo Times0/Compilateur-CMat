@@ -18,17 +18,25 @@ extern __uint32_t current_scope;
 uint32_t offset = 0;
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
+void semantic_error(char *s);
+void semantic_warning(char *s);
 %}
 
-%union {
+%union
+{
      __uint32_t type_val;
-     __uint64_t int_val;
+     __uint32_t int_val;
      float float_val;
 
-    char strval[MAXTOKENLEN];
-    struct {
-        SymbolTableElement * ptr;
-    } exprval;
+     char strval[MAXTOKENLEN];
+    
+     struct
+     {
+          SymbolTableElement * ptr;
+          SymbolTableElement ** ptr_list;
+          __uint32_t size;
+          __uint32_t capacity;
+     }expr;
 }
 
 %token <int_val> INT_CONST
@@ -46,15 +54,15 @@ uint32_t get_float_type(uint32_t type1, uint32_t type2);
 
 
 // priorités
-%left '+' '-'
-%left '*' '/'
-%left '%'
+%left '+' '-' '*' '/' '%'
+%left EQ_OP NEQ_OP OR_OP AND_OP LT_OP GT_OP LE_OP GE_OP
 %right UNARY_OP
 %left '(' ')'
 
 
 
-%type <exprval> expression
+%type <expr> expression
+%type <expr> expression_list
 %type <type_val> type
 
 %start start
@@ -65,27 +73,87 @@ instruction_list: instruction instruction_list
                 | %empty 
 
 instruction : declaration ';'
+            | call ';'
             | return ';'
             | assign ';'
 
 declaration :  type ID
                {
-                    insert(&symbol_table, $2, $1, VARIABLE, -1);
+                    insert_variable(&symbol_table, $2, $1, VARIABLE, -1);
                }
 
 type : INT  
      | FLOAT
      | MATRIX
 
+call : ID '(' expression_list ')'
+     {
+          SymbolTableElement *id = lookup_function(symbol_table, $1);
+          if(strcmp($1, "print") == 0)
+          {
+               if($3.size != id->attribute.function.nb_parameters)
+               {
+                    semantic_error("print take one argument");
+               }
+               if($3.ptr_list[0]->type != INT && $3.ptr_list[0]->type != FLOAT)
+               {
+                    semantic_error("print function can only be applied to integers and floats");
+               }
+               gen_quad_function(code, CALL_PRINT, NULL, id, $3.ptr_list, $3.size); // changer le null
+          }
+          else
+          {
+               if(id == NULL)
+               {
+                    semantic_error("function not declared");
+               }
+          }
+     }
+
+expression_list : expression ',' expression_list
+               {
+                    if($3.size == $3.capacity)
+                    {
+                         $3.capacity *= 2;
+                         $3.ptr_list = realloc($3.ptr_list, $3.capacity*sizeof(SymbolTableElement *));
+                         if($3.ptr_list == NULL)
+                         {
+                              printf("realloc failed\n");
+                              exit(1);
+                         }
+                    }
+                    $3.ptr_list[$3.size] = $1.ptr;
+                    $3.size++;
+                    $$.ptr_list = $3.ptr_list;
+                    $$.size = $3.size;
+                    $$.capacity = $3.capacity;
+               }
+               | expression
+               {
+                    $$.capacity = 4;
+                    $$.ptr_list = malloc($$.capacity*sizeof(SymbolTableElement *));
+                    if($$.ptr_list == NULL)
+                    {
+                         printf("malloc failed\n");
+                         exit(1);
+                    }
+                    $$.ptr_list[$$.size] = $1.ptr;
+                    $$.size++;
+               }
+               | %empty
+               {
+                    $$.size = 0;
+               }
+
+
 return : RETURN expression
 
 assign :  ID '=' expression
           {    
-               SymbolTableElement *id = lookup_scope(symbol_table, $1, current_scope, VARIABLE);
+               SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
                if(id == NULL)
                {
-                    printf("Error variable \"%s\" not declared\n", $1);
-                    exit(1);
+                    semantic_error("variable not declared");
                }
                gen_quad(code, COPY, id, $3.ptr, NULL);
           }
@@ -118,11 +186,46 @@ expression :   expression '+' expression
                {
                     if($1.ptr->type != INT || $3.ptr->type != INT)
                     {
-                         printf("Error at line %d : modulo operator can only be applied to integers\n", lineno);
-                         exit(1);
+                         semantic_error("modulo operator can only be applied to integers");
                     }
                     $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
                     gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
+               | expression OR_OP expression
+               {
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    gen_quad(code, BOP_OR, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
+               | expression AND_OP expression
+               {
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    gen_quad(code, BOP_AND, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
+               | expression EQ_OP expression
+               {
+                    if($1.ptr->type != $3.ptr->type)
+                    {
+                         semantic_error("\"==\" can only be applied to operands of the same type");
+                    }
+                    if(get_float_type($1.ptr->type, $3.ptr->type) == FLOAT)
+                    {
+                         semantic_warning("\"==\" applied to floating point numbers");
+                    }
+                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    gen_quad(code, BOP_EQ, $$.ptr, $1.ptr, $3.ptr); 
+                    offset++;
+               }
+               | expression NEQ_OP expression
+               {
+                    if($1.ptr->type != $3.ptr->type)
+                    {
+                         semantic_error("comparison operator can only be applied to operands of the same type");
+                    }
+                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    gen_quad(code, BOP_NEQ, $$.ptr, $1.ptr, $3.ptr); 
                     offset++;
                }
                | '-' expression %prec UNARY_OP
@@ -136,11 +239,10 @@ expression :   expression '+' expression
                }
                | ID
                {
-                    $$.ptr = lookup_scope(symbol_table, $1, current_scope, VARIABLE);
+                    $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
                     if($$.ptr == NULL)
                     {
-                         printf("Error at line %d : variable \"%s\" not declared\n", lineno, $1);
-                         exit(1);
+                         semantic_error("variable not declared");
                     }
                }
                | INT_CONST
@@ -163,4 +265,15 @@ expression :   expression '+' expression
 uint32_t get_float_type(uint32_t type1, uint32_t type2)
 {
      return (type1 == FLOAT || type2 == FLOAT)? FLOAT : INT;
+}
+
+void semantic_error(char *s)
+{
+     printf("Error at line %d : %s\n", lineno, s);
+     exit(1);
+}
+
+void semantic_warning(char *s)
+{
+     printf("Warning at line %d : %s\n", lineno, s);
 }

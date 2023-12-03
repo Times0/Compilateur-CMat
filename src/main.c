@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     
     init_symbol_table(&symbol_table);
     code = code_new();
+    insert_function(&symbol_table, "print", VOID, FUNCTION, 1, (uint32_t[]){VOID});
 
     if (lex_only_flag)
     {

@@ -2,20 +2,22 @@
 #include <string.h>
 #include <stdio.h>
 #include "quad.h"
+#include "../include/cmat.tab.h"
 
 QuadTable *code_new()
 {
     QuadTable *r = malloc(sizeof(QuadTable));
     r->capacity = 1024;
-    r->quads = malloc(r->capacity*sizeof(QuadTable));
+    r->quads = malloc(r->capacity*sizeof(Quad));
     r->nextquad = 0;
+    r->main_quad = -1;
     return r;
 }
 
-static void code_grow(QuadTable *c)
+void code_grow(QuadTable *c)
 {
     c->capacity += 1024;
-    c->quads = realloc(c->quads,c->capacity*sizeof(QuadTable));
+    c->quads = realloc(c->quads,c->capacity*sizeof(Quad));
     if(c->quads == NULL) 
     {
       fprintf(stderr,"Error attempting to grow quad list (actual size is %d)\n",c->nextquad);
@@ -33,6 +35,23 @@ void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTab
     q->sym1 = s1;
     q->sym2 = s2;
     q->sym3 = s3;
+    q->function_parameters = NULL;
+    q->nb_parameters = 0;
+    c->nextquad++;
+}
+
+void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters)
+{
+    if(c->nextquad == c->capacity)
+        code_grow(c);
+
+    Quad *q = &(c->quads[c->nextquad]);
+    q->kind = k;
+    q->sym1 = result;
+    q->sym2 = function;
+    q->sym3 = NULL;
+    q->function_parameters = parameters;
+    q->nb_parameters = nb_parameters;
     c->nextquad++;
 }
 
@@ -41,7 +60,7 @@ SymbolTableElement *newtemp(SymbolTable *t, __uint32_t type, __int32_t offset)
     SymbolTableElement *s;
     char name[MAXTOKENLEN];
     sprintf(name,"%%%d",t->temporary);
-    s = insert(&t, name, type, VARIABLE, offset);
+    s = insert_variable(&t, name, type, VARIABLE, offset);
     ++(t->temporary);
     return s;
 }
@@ -85,6 +104,34 @@ static void quad_dump(Quad *q)
             printf(" %% ");
             symbol_dump(q->sym3);
             break;
+        case BOP_OR:
+            symbol_dump(q->sym1);
+            printf(" := ");
+            symbol_dump(q->sym2);
+            printf(" || ");
+            symbol_dump(q->sym3);
+            break;
+        case BOP_AND:
+            symbol_dump(q->sym1);
+            printf(" := ");
+            symbol_dump(q->sym2);
+            printf(" && ");
+            symbol_dump(q->sym3);
+            break;
+        case BOP_EQ:
+            symbol_dump(q->sym1);
+            printf(" := ");
+            symbol_dump(q->sym2);
+            printf(" == ");
+            symbol_dump(q->sym3);
+            break;
+        case BOP_NEQ:
+            symbol_dump(q->sym1);
+            printf(" := ");
+            symbol_dump(q->sym2);
+            printf(" != ");
+            symbol_dump(q->sym3);
+            break;
         case UOP_MINUS:
             symbol_dump(q->sym1);
             printf(" := ");
@@ -92,8 +139,14 @@ static void quad_dump(Quad *q)
             symbol_dump(q->sym2);
             break;
         case CALL_PRINT:
-            printf("print ");
-            symbol_dump(q->sym1);
+            printf("print (");
+            for(int i = q->nb_parameters - 1; i >= 0; i--)
+            {
+                symbol_dump(q->function_parameters[i]);
+                if(i > 0)
+                    printf(", ");
+            }
+            printf(")");
             break;
         case COPY:
             symbol_dump(q->sym1);
