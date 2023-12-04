@@ -2,7 +2,7 @@ int a;
 float d; // b banni car opcode de branch
 
 
-printf("Test des opérations arithmétiques sur int\n");
+/*printf("Test des opérations arithmétiques sur int\n");
 
 a = 1;
 print(a);
@@ -94,7 +94,13 @@ d=1.5;
 print(d);
 printf("\n");
 
-printf("Fin des tests\n");
+printf("Fin des tests\n");*/
+
+a = 0||0;
+print(a);
+printf("\n");
+a = (0 || 1)&&1;
+print(a);
 
 // affectation OK
 // minus unary OK

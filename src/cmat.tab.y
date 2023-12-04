@@ -211,12 +211,22 @@ expression :   expression '+' expression
                }
                | expression OR_OP expression
                {
+                    if($1.ptr->type != INT || $3.ptr->type != INT)
+                    {
+                         semantic_error("\"||\" can only be applied to int");
+                    }
+                    
                     $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
                     gen_quad(code, BOP_OR, $$.ptr, $1.ptr, $3.ptr); 
                     offset++;
                }
                | expression AND_OP expression
                {
+                    if($1.ptr->type != INT || $3.ptr->type != INT)
+                    {
+                         semantic_error("\"||\" can only be applied to int");
+                    }
+                    
                     $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
                     gen_quad(code, BOP_AND, $$.ptr, $1.ptr, $3.ptr); 
                     offset++;

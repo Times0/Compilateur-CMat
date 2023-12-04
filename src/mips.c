@@ -231,6 +231,14 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         else if(quad->sym1->type == FLOAT)
             fprintf (f, "\tdiv.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
     }
+    else if(quad->kind == BOP_OR)
+    {
+        fprintf (f, "\tor $t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
+    }
+    else if(quad->kind == BOP_AND)
+    {
+        fprintf (f, "\tand $t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
+    }
 
     //////////////////////////////////////////////////////////////
     // stocker le résultat dans un registre
