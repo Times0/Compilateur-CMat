@@ -2,6 +2,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
 #include "symbol_table.h"
@@ -19,8 +20,8 @@ extern __uint32_t current_scope;
 uint32_t offset = 0;
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
-void semantic_error(char *s);
-void semantic_warning(char *s);
+void semantic_error(const char *format, ...);
+void semantic_warning(const char *format, ...);
 %}
 
 %union
@@ -52,8 +53,8 @@ void semantic_warning(char *s);
 
 %token '+' '-' 
 // useless
-%token VOID MAIN IF ELSE WHILE FOR LOG_OP OR_OP COMP_OP ASSIGN_OP UNARY_OP GT_OP LE_OP LT_OP NEQ_OP EQ_OP DEC_OP DDOT
-%token REl_OP INC_OP GE_OP AND_OP DECR INCR
+%token VOID MAIN IF ELSE WHILE FOR LOG_OP OR_OP COMP_OP ASSIGN_OP UNARY_OP GT_OP LE_OP LT_OP NEQ_OP EQ_OP DDOT
+%token REl_OP GE_OP AND_OP DECR INCR
 
 
 // priorités
@@ -79,7 +80,7 @@ instruction : declaration ';'
             | call ';'
             | return ';'
             | assign ';'
-            /* | expression ';' */
+            | expression ';'
 
 declaration :  type ID
                {
@@ -101,7 +102,7 @@ call : ID '(' expression_list ')'
                }
                if($3.ptr_list[0]->type != INT && $3.ptr_list[0]->type != FLOAT)
                {
-                    semantic_error("print function can only be applied to integers and floats");
+                    semantic_error("print only takes int or float as argument");
                }
                gen_quad_function(code, CALL_PRINT, NULL, id, $3.ptr_list, $3.size); // changer le null
           }
@@ -113,7 +114,7 @@ call : ID '(' expression_list ')'
                }
                if($3.ptr_list[0]->type != STRING)
                {
-                    semantic_error("printf function can only be applied to strings");
+                    semantic_error("printf only takes string as argument");
                }
                gen_quad_function(code, CALL_PRINTF, NULL, id, $3.ptr_list, $3.size); // changer le null
           }
@@ -121,7 +122,7 @@ call : ID '(' expression_list ')'
           {
                if(id == NULL)
                {
-                    semantic_error("function not declared");
+                    semantic_error("function \"%s\" not declared", $1);
                }
           }
      }
@@ -169,7 +170,7 @@ assign :  ID '=' expression
                SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
                if(id == NULL)
                {
-                    semantic_error("variable not declared");
+                    semantic_error("variable \"%s\" not declared", $1);
                }
                gen_quad(code, COPY, id, $3.ptr, NULL);
           }
@@ -253,12 +254,76 @@ expression :   expression '+' expression
                {
                     $$.ptr = $2.ptr;
                }
+               | ID INCR
+               {
+                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
+                    if(id == NULL)
+                    {
+                         semantic_error("variable \"%s\" not declared", $1);
+                    }
+                    Constant c;
+                    c.int_value = 1;
+                    c.float_value = (float)1;
+                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+                    
+                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    gen_quad(code, BOP_PLUS, id, id, n1); 
+                    offset++;
+               }
+               | INCR ID
+               {
+                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE);
+                    if(id == NULL)
+                    {
+                         semantic_error("variable \"%s\" not declared", $2);
+                    }
+                    Constant c;
+                    c.int_value = 1;
+                    c.float_value = (float)1;
+                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+                    
+                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    gen_quad(code, BOP_PLUS, id, id, n1); 
+                    offset++;
+               }
+               | ID DECR
+               {
+                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
+                    if(id == NULL)
+                    {
+                         semantic_error("variable \"%s\" not declared", $1);
+                    }
+                    Constant c;
+                    c.int_value = 1;
+                    c.float_value = (float)1;
+                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+                    
+                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    gen_quad(code, BOP_MINUS, id, id, n1); 
+                    offset++;
+               }
+               | DECR ID
+               {
+                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE);
+                    if(id == NULL)
+                    {
+                         semantic_error("variable \"%s\" not declared", $2);
+                    }
+                    Constant c;
+                    c.int_value = 1;
+                    c.float_value = (float)1;
+                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+                    
+                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    gen_quad(code, BOP_MINUS, id, id, n1); 
+                    offset++;
+               }
                | ID
                {
                     $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
                     if($$.ptr == NULL)
                     {
-                         semantic_error("variable not declared");
+                         semantic_error("variable \"%s\" not declared", $1);
                     }
                }
                | INT_CONST
@@ -288,13 +353,29 @@ uint32_t get_float_type(uint32_t type1, uint32_t type2)
      return (type1 == FLOAT || type2 == FLOAT)? FLOAT : INT;
 }
 
-void semantic_error(char *s)
+void semantic_error(const char *format, ...)
 {
-     printf("Error at line %d : %s\n", lineno, s);
-     exit(1);
+    printf("Error at line %d : ", lineno);
+    fflush(stdout);
+    
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    fprintf(stderr, "\n");
+    exit(1);
 }
 
-void semantic_warning(char *s)
+void semantic_warning(const char *format, ...)
 {
-     printf("Warning at line %d : %s\n", lineno, s);
+    printf("Warning at line %d : ", lineno);
+    fflush(stdout);
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    fprintf(stderr, "\n");
 }

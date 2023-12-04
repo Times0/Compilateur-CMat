@@ -84,8 +84,17 @@ d = 2.5/2;
 print(d);
 printf("\n");
 
-printf("Fin des tests\n");
+d =1.5;
+d++;
+print(d);
+printf("\n");
 
+d=1.5;
+++d;
+print(d);
+printf("\n");
+
+printf("Fin des tests\n");
 
 // affectation OK
 // minus unary OK

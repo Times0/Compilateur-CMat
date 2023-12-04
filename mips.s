@@ -107,7 +107,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -126,7 +126,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -146,7 +146,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -166,7 +166,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -185,7 +185,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -204,7 +204,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -223,7 +223,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -334,7 +334,7 @@ main:
 	mov.s $f12, $f1
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -351,7 +351,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -369,7 +369,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -387,7 +387,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -405,7 +405,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -423,7 +423,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -444,7 +444,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -569,7 +569,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -583,7 +583,7 @@ main:
 	move $a0, $t0
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -601,7 +601,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -619,7 +619,7 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
@@ -637,14 +637,52 @@ main:
 	mov.s $f12, $f2
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
+	li $t0, 10
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li.s $f2, 1.500000
+	la $t0, d
+	s.s $f2, 0($t0)
+	l.s $f2, d
+	li.s $f3, 1.000000
+	add.s $f4, $f2, $f3
+	la $t0, d
+	s.s $f4, 0($t0)
+	l.s $f2, d
+	li $v0, 2
+	mov.s $f12, $f2
+	syscall
+	li $v0, 4
+	la $a0, -64($fp)
+	li $t0, 10
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li.s $f2, 1.500000
+	la $t0, d
+	s.s $f2, 0($t0)
+	l.s $f2, d
+	li.s $f3, 1.000000
+	add.s $f4, $f2, $f3
+	la $t0, d
+	s.s $f4, 0($t0)
+	l.s $f2, d
+	li $v0, 2
+	mov.s $f12, $f2
+	syscall
+	li $v0, 4
+	la $a0, -64($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
 	sb $t0, 1($a0)
 	syscall
 	li $v0, 4
-	la $a0, -56($fp)
+	la $a0, -64($fp)
 	li $t0, 70
 	sb $t0, 0($a0)
 	li $t0, 105

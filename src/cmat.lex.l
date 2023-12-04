@@ -58,7 +58,7 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 {INTEGER_CONST}     { ret_print("INTEGER_CONST");   yylval.int_val = atoi(yytext); return INT_CONST;}
 {FLOAT_CONST}       { ret_print("FLOAT_CONST");     yylval.float_val = atof(yytext);return FLOAT_CONST;}
 
-"++"                { ret_print("INC_OP");          return INCR;}    
+"++"                { ret_print("INC_OP");          return INCR;}    //ok
 "--"                { ret_print("DEC_OP");          return DECR;}
 ".."                { ret_print("DDOT");            return DDOT;}
 "+"|"-"             { ret_print("ADD_OP");          return yytext[0];}

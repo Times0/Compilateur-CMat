@@ -52,9 +52,6 @@ void gencode_mips(QuadTable *code, FILE * f)
             gencode_mips_quad(f, &(code->quads[i]));
         }
     }
-    
-    // fprintf (f, "\tlw $a0, a\n\tli $v0, 1\n\tsyscall\n");
-    // fprintf (f, "\tl.s $f12, a\n\tli $v0, 2\n\tsyscall\n");
 
     // fin du main et du code
     fprintf (f, "\tli $v0, 10\n\tsyscall\n");
