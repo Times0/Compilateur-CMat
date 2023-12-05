@@ -21,12 +21,13 @@ void gencode_mips_global_variable(FILE * f, SymbolTable * s)
     
     for (__uint32_t i=0 ; i < s->size; i++)
     {
-        if(s->symbols[i].class == VARIABLE && s->symbols[i].attribute.variable.frame_pointer == -1)
+        SymbolTableElement *t = get_symbol(s, i);
+        if(t->class == VARIABLE && t->attribute.variable.frame_pointer == -1)
         {
-            if(s->symbols[i].type == INT)
-                fprintf (f, "\t%s:\t.word 0\n", s->symbols[i].attribute.variable.name);
-            else if(s->symbols[i].type == FLOAT)
-                fprintf (f, "\t%s:\t.float 0.0\n", s->symbols[i].attribute.variable.name);
+            if(t->type == INT)
+                fprintf (f, "\t%s:\t.word 0\n", t->attribute.variable.name);
+            else if(t->type == FLOAT)
+                fprintf (f, "\t%s:\t.float 0.0\n", t->attribute.variable.name);
         }
     }
     fprintf (f, "\n");
@@ -336,6 +337,7 @@ void gencode_print(FILE *f, Quad *quad)
         // caractere d'échappement : \n, \t, \\, \"
         if(quad->function_parameters[0]->type == STRING)
         {
+            printf("string : %s\n", quad->function_parameters[0]->attribute.string.string);
             fprintf(f, "\tli $v0, 4\n");
             fprintf(f, "\tla $a0, %d($fp)\n", -4*quad->function_parameters[0]->attribute.string.frame_pointer);
             __uint32_t str_size = strlen(quad->function_parameters[0]->attribute.string.string)-2;

@@ -25,7 +25,7 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 %%
 
 "/*"                { BEGIN(ML_COMMENT); }
-<ML_COMMENT>"*/"    { BEGIN(INITIAL); lineno++; }
+<ML_COMMENT>"*/"    { BEGIN(INITIAL); }
 <ML_COMMENT>.       { /* consume anything inside multi-line comments */ }
 <ML_COMMENT>\n      { lineno++; /* count lines inside multi-line comments */ }
 

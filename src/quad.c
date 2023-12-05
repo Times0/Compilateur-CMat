@@ -9,28 +9,38 @@ extern __uint32_t current_scope;
 QuadTable *code_new()
 {
     QuadTable *r = malloc(sizeof(QuadTable));
-    r->capacity = 1024;
+    if(r == NULL)
+    {
+        fprintf(stderr, "Error malloc in code_new");
+        exit(1);
+    }
+    r->capacity = 256;
     r->quads = malloc(r->capacity*sizeof(Quad));
+    if(r->quads == NULL)
+    {
+        fprintf(stderr, "Error malloc in code_new");
+        exit(1);
+    }
     r->nextquad = 0;
     r->main_quad = -1;
     return r;
 }
 
-void code_grow(QuadTable *c)
+void code_grow(QuadTable **c)
 {
-    c->capacity += 1024;
-    c->quads = realloc(c->quads,c->capacity*sizeof(Quad));
-    if(c->quads == NULL) 
+    (*c)->capacity += 1024;
+    (*c)->quads = realloc((*c)->quads,(*c)->capacity*sizeof(Quad));
+    if((*c)->quads == NULL) 
     {
-      fprintf(stderr,"Error attempting to grow quad list (actual size is %d)\n",c->nextquad);
-        exit(1);
+        fprintf(stderr,"Error attempting to grow quad list (actual size is %d)\n",(*c)->nextquad);
+            exit(1);
     }
 }
 
 void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3)
 {
     if ( c->nextquad == c->capacity )
-        code_grow(c);
+        code_grow(&c);
 
     Quad *q = &(c->quads[c->nextquad]);
     q->kind = k;
@@ -45,7 +55,7 @@ void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTab
 void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters)
 {
     if(c->nextquad == c->capacity)
-        code_grow(c);
+        code_grow(&c);
 
     Quad *q = &(c->quads[c->nextquad]);
     q->kind = k;
@@ -62,7 +72,7 @@ SymbolTableElement *newtemp(SymbolTable *t, __uint32_t type, __int32_t offset)
     SymbolTableElement *s;
     char name[MAXTOKENLEN];
     sprintf(name,"%%%d",t->temporary);
-    s = insert_variable(&t, name, type, VARIABLE, offset, current_scope);
+    s = insert_variable(t, name, type, VARIABLE, offset, current_scope);
     ++(t->temporary);
     return s;
 }

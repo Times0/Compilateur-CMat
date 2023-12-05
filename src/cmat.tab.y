@@ -39,8 +39,10 @@ void semantic_warning(const char *format, ...);
      {
           SymbolTableElement * ptr;
           SymbolTableElement ** ptr_list;
-          __uint32_t size;
-          __uint32_t capacity;
+          __uint32_t size_ptr_list;
+          __uint32_t capacity_ptr_list;
+          __uint32_t *true_list;
+          __uint32_t *false_list;
      }expr;
 }
 
@@ -87,18 +89,21 @@ instruction : declaration ';'
 
 declaration :  type ID
                {
+                    // printf("d %p\n", symbol_table);
                     SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
                     if(l != NULL)
                     {
                          semantic_error("variable \"%s\" already declared in this scope", $2);
                     }
-                    insert_variable(&symbol_table, $2, $1, VARIABLE, frame_pointer, current_scope);
-                    
-                    if(current_scope != 0)
+                    if(current_scope == 0)
+                         insert_variable(symbol_table, $2, $1, VARIABLE, -1, current_scope);
+                    else
                     {
+                         insert_variable(symbol_table, $2, $1, VARIABLE, frame_pointer, current_scope);
                          frame_pointer++;
                     }
                     // printf("%d\n", frame_pointer);
+                    
                }
 
 type : INT  
@@ -108,9 +113,10 @@ type : INT
 call : ID '(' expression_list ')'
      {
           SymbolTableElement *id = lookup_function(symbol_table, $1);
+
           if(strcmp($1, "print") == 0)
           {
-               if($3.size != id->attribute.function.nb_parameters)
+               if($3.size_ptr_list != id->attribute.function.nb_parameters)
                {
                     semantic_error("print take one argument");
                }
@@ -118,11 +124,11 @@ call : ID '(' expression_list ')'
                {
                     semantic_error("print only takes int or float as argument");
                }
-               gen_quad_function(code, CALL_PRINT, NULL, id, $3.ptr_list, $3.size); // changer le null
+               gen_quad_function(code, CALL_PRINT, NULL, id, $3.ptr_list, $3.size_ptr_list); // changer le null
           }
           else if(strcmp($1, "printf") == 0)
           {
-               if($3.size != id->attribute.function.nb_parameters)
+               if($3.size_ptr_list != id->attribute.function.nb_parameters)
                {
                     semantic_error("printf take one argument");
                }
@@ -130,7 +136,7 @@ call : ID '(' expression_list ')'
                {
                     semantic_error("printf only takes string as argument");
                }
-               gen_quad_function(code, CALL_PRINTF, NULL, id, $3.ptr_list, $3.size); // changer le null
+               gen_quad_function(code, CALL_PRINTF, NULL, id, $3.ptr_list, $3.size_ptr_list); // changer le null
           }
           else
           {
@@ -143,37 +149,37 @@ call : ID '(' expression_list ')'
 
 expression_list : expression ',' expression_list
                {
-                    if($3.size == $3.capacity)
+                    if($3.size_ptr_list == $3.capacity_ptr_list)
                     {
-                         $3.capacity *= 2;
-                         $3.ptr_list = realloc($3.ptr_list, $3.capacity*sizeof(SymbolTableElement *));
+                         $3.capacity_ptr_list *= 2;
+                         $3.ptr_list = realloc($3.ptr_list, $3.capacity_ptr_list*sizeof(SymbolTableElement *));
                          if($3.ptr_list == NULL)
                          {
                               printf("realloc failed\n");
                               exit(1);
                          }
                     }
-                    $3.ptr_list[$3.size] = $1.ptr;
-                    $3.size++;
+                    $3.ptr_list[$3.size_ptr_list] = $1.ptr;
+                    $3.size_ptr_list++;
                     $$.ptr_list = $3.ptr_list;
-                    $$.size = $3.size;
-                    $$.capacity = $3.capacity;
+                    $$.size_ptr_list = $3.size_ptr_list;
+                    $$.capacity_ptr_list = $3.capacity_ptr_list;
                }
                | expression
                {     
-                    $$.capacity = 4;
-                    $$.ptr_list = malloc($$.capacity*sizeof(SymbolTableElement *));
+                    $$.capacity_ptr_list = 4;
+                    $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement *));
                     if($$.ptr_list == NULL)
                     {
                          printf("malloc failed\n");
                          exit(1);
                     }
                     $$.ptr_list[0] = $1.ptr;
-                    $$.size = 1;
+                    $$.size_ptr_list = 1;
                }
                | %empty
                {
-                    $$.size = 0;
+                    $$.size_ptr_list = 0;
                }
 
 
@@ -194,15 +200,14 @@ block : '{'                   {
                                    __uint32_t t = current_scope;
                                    max_scope++; current_scope = max_scope;
                                    add_next_symbol_table(&symbol_table, current_scope, t);
-                                   // printf("debut %d\n", current_scope);
                               } 
         instruction_list      
         '}'                   {
+                                   
                                    // printf("%d\n", frame_pointer);
-                                   frame_pointer -= get_symbol_table_by_scope(symbol_table, current_scope)->size;
+                                   frame_pointer -= get_symbol_table_by_scope(symbol_table, current_scope)->size; // il faut plus que ca pour string et matrice
                                    // printf("%d\n", frame_pointer);
-                                   current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;
-                                   // printf("fin %d\n", current_scope);
+                                   current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 
                               }
      /* | instruction */ // tres smart 
 
@@ -269,7 +274,6 @@ expression :   expression '+' expression
                     {
                          semantic_error("\"||\" can only be applied to int");
                     }
-                    
                     $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_OR, $$.ptr, $1.ptr, $3.ptr); 
                     frame_pointer++;
@@ -417,8 +421,7 @@ expression :   expression '+' expression
                }
                | STRING
                {
-                    $$.ptr = insert_string(&symbol_table, $1);
-                    $$.ptr->attribute.string.frame_pointer = frame_pointer+1;
+                    $$.ptr = insert_string(&symbol_table, $1, frame_pointer);
                }
           
 %%     

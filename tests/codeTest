@@ -1,9 +1,9 @@
 int a;
 float d; // b banni car opcode de branch
 
-
-/*printf("Test des opérations arithmétiques sur int\n");
-
+a=1;
+printf("Test des opérations arithmétiques sur int\n");
+print(a);
 a = 1;
 print(a);
 printf("\n");
@@ -94,25 +94,33 @@ d=1.5;
 print(d);
 printf("\n");
 
-printf("Fin des tests\n");*/
+printf("Fin des tests\n");
 
-/*a = 0||0;
+a = 0||0;
 print(a);
 printf("\n");
 a = 2&&2;
-print(a);*/
+print(a);
 
 a = 4;
 print(a);
 printf("\n");
 
 {
+    float a;
+    int d;
+    a = 6.9;
+    print(a);
+}
+
+
+{
     {
-        float a;
-        int d;
-        a = 6.9;
-        print(a);
-        printf("\n");
+        // float a;
+        // int d;
+        // a = 6.9;
+        // print(a);
+        // printf("\n");
     }
     float e;
 }
@@ -128,11 +136,16 @@ printf("\n");
 }
 
 {
+    float r;
     {
+        int r;
         {
-
+            r =9;
         }
+        print(r);
+        printf("\n");
     }
+    print(r);
 }
 print(a);
 
