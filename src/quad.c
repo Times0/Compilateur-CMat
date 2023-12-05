@@ -4,6 +4,8 @@
 #include "quad.h"
 #include "../include/cmat.tab.h"
 
+extern __uint32_t current_scope;
+
 QuadTable *code_new()
 {
     QuadTable *r = malloc(sizeof(QuadTable));
@@ -60,7 +62,7 @@ SymbolTableElement *newtemp(SymbolTable *t, __uint32_t type, __int32_t offset)
     SymbolTableElement *s;
     char name[MAXTOKENLEN];
     sprintf(name,"%%%d",t->temporary);
-    s = insert_variable(&t, name, type, VARIABLE, offset);
+    s = insert_variable(&t, name, type, VARIABLE, offset, current_scope);
     ++(t->temporary);
     return s;
 }
@@ -136,6 +138,12 @@ static void quad_dump(Quad *q)
             symbol_dump(q->sym1);
             printf(" := ");
             printf("- ");
+            symbol_dump(q->sym2);
+            break;
+        case UOP_NOT:
+            symbol_dump(q->sym1);
+            printf(" := ");
+            printf("! ");
             symbol_dump(q->sym2);
             break;
         case CALL_PRINT:

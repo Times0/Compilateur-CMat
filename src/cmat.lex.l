@@ -58,20 +58,20 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 {INTEGER_CONST}     { ret_print("INTEGER_CONST");   yylval.int_val = atoi(yytext); return INT_CONST;}
 {FLOAT_CONST}       { ret_print("FLOAT_CONST");     yylval.float_val = atof(yytext);return FLOAT_CONST;}
 
-"++"                { ret_print("INC_OP");          return INCR;}    //ok
-"--"                { ret_print("DEC_OP");          return DECR;}
+"++"                { ret_print("INC_OP");          return INCR;}           // ok
+"--"                { ret_print("DEC_OP");          return DECR;}           // ok
 ".."                { ret_print("DDOT");            return DDOT;}
-"+"|"-"             { ret_print("ADD_OP");          return yytext[0];}
-"*"|"/"|"%"         { ret_print("MUL_OP");          return yytext[0];}
-"="                 { ret_print("ASSIGN_OP");       return yytext[0];}
+"+"|"-"             { ret_print("ADD_OP");          return yytext[0];}      // ok
+"*"|"/"|"%"         { ret_print("MUL_OP");          return yytext[0];}      // ok
+"="                 { ret_print("ASSIGN_OP");       return yytext[0];}      // ok
 "=="                { ret_print("EQ_OP");           return EQ_OP;}
 "!="                { ret_print("NEQ_OP");          return NEQ_OP;}
 "<"                 { ret_print("REL_OP");          return LT_OP;}
 "<="                { ret_print("REL_OP");          return LE_OP;}
 ">"                 { ret_print("REL_OP");          return GT_OP;}
 ">="                { ret_print("REL_OP");          return GE_OP;}
-"&&"                { ret_print("LOG_OP");          return AND_OP;}
-"||"                { ret_print("LOG_OP");          return OR_OP;}
+"&&"                { ret_print("LOG_OP");          return AND_OP;}         
+"||"                { ret_print("LOG_OP");          return OR_OP;}          
 "!"                 { ret_print("NOT_OP");          return yytext[0];}
 
 ";"                 { ret_print("SEMI");            return yytext[0];}

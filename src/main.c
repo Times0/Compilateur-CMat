@@ -50,11 +50,9 @@ int main(int argc, char *argv[])
     if (verbose_flag)
         printf("-> Initializing symbol table...\n");
     
-    init_symbol_table(&symbol_table);
+    init_symbol_table(&symbol_table, 0);
+    push_predefined_functions(&symbol_table);
     code = code_new();
-    
-    insert_function(&symbol_table, "print", VOID, FUNCTION, 1, (uint32_t[]){VOID});
-    insert_function(&symbol_table, "printf", VOID, FUNCTION, 1, (uint32_t[]){STRING});
 
     if (lex_only_flag)
     {

@@ -3,13 +3,13 @@
 #include <stdlib.h>
 #include "../include/cmat.tab.h"
 
-__uint32_t current_scope = 0;
-__uint32_t lineno = 1;
+extern __uint32_t current_scope;
+extern __uint32_t lineno;
 
 SymbolTable *symbol_table;
 struct code *code;
 
-void init_symbol_table(SymbolTable **s)
+void init_symbol_table(SymbolTable **s, __uint32_t scope)
 {
 	*s = malloc(sizeof(SymbolTable));
 	if (*s == NULL)
@@ -21,6 +21,9 @@ void init_symbol_table(SymbolTable **s)
 	(*s)->temporary = 0;
 	(*s)->size = 0;
 	(*s)->capacity = SYMBOLTABLE_INITIIAL_SIZE;
+	(*s)->scope = scope;
+	(*s)->next = NULL;
+	(*s)->previous = NULL;
 	if ((*s)->symbols == NULL)
 	{
 		perror("Error malloc in init_symbol_table\n");
@@ -39,29 +42,87 @@ void grow_symbol_table(SymbolTable **s)
 	}
 }
 
-
-SymbolTableElement *insert_variable(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __int32_t offset)
+void push_predefined_functions(SymbolTable **s)
 {
-	if (class == VARIABLE)
-	{
-		SymbolTableElement *l = lookup_variable(*s, name, current_scope, VARIABLE);
+	insert_function(&symbol_table, "print", VOID, FUNCTION, 1, (__uint32_t[]){VOID});
+    insert_function(&symbol_table, "printf", VOID, FUNCTION, 1, (__uint32_t[]){STRING});
+}
 
-		/* if variable not yet exists in the table insert_variable it */
-		if (l == NULL)
-		{
-			if ((*s)->size >= (*s)->capacity)
-			{
-				grow_symbol_table(s);
-			}
-			l = &((*s)->symbols[(*s)->size]);
-			strncpy(l->attribute.variable.name, name, MAXTOKENLEN);
-			l->attribute.variable.offset = offset;
-			l->class = VARIABLE;
-			l->type = type;
-			(*s)->size++;
-		}
-		return l;
+SymbolTable* add_next_symbol_table(SymbolTable **s, __uint32_t scope, __uint32_t parent_symbol_table_scope)
+{
+;	SymbolTable *tmp = *s;
+	
+	SymbolTable *new;
+	init_symbol_table(&new, scope);
+	
+	while(tmp->next != NULL)
+		tmp = tmp->next;
+	
+	new->previous = get_symbol_table_by_scope(*s, parent_symbol_table_scope);
+	tmp->next = new;
+
+	return new;
+}
+
+SymbolTable *get_last_symbol_table(SymbolTable *s)
+{
+	SymbolTable *tmp = s;
+	
+	while(tmp->next != NULL)
+		tmp = tmp->next;
+	
+	return tmp;
+}
+
+SymbolTable *get_symbol_table_by_scope(SymbolTable *s, __uint32_t scope)
+{
+	SymbolTable *tmp = s;
+	
+	while(tmp != NULL && tmp->scope != scope)
+		tmp = tmp->next;
+	
+	return tmp;
+}
+
+void remove_last_symbol_table(SymbolTable *s)
+{
+	SymbolTable *tmp = get_last_symbol_table(s);
+	
+	tmp->previous->next = NULL;
+	free_symbol_table(tmp);
+	
+}
+
+SymbolTableElement *insert_variable(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __int32_t frame_pointer, __uint32_t scope)
+{
+	SymbolTableElement *l = lookup_variable(*s, name, scope, VARIABLE, 1);
+
+	SymbolTable *tmp = *s;
+
+	while(tmp != NULL && tmp->scope != scope)
+	{
+		tmp = tmp->next;
 	}
+
+	// if not found, insert
+	if (l == NULL)
+	{
+		if (tmp->size >= tmp->capacity)
+			grow_symbol_table(&tmp);
+
+		l = &(tmp->symbols[tmp->size]);
+	}
+		
+	strncpy(l->attribute.variable.name, name, MAXTOKENLEN);
+	if(scope == 0)
+		l->attribute.variable.frame_pointer = -1;
+	else
+		l->attribute.variable.frame_pointer = frame_pointer;
+	l->class = VARIABLE;
+	l->type = type;
+	tmp->size++;
+
+	return l;
 }
 
 SymbolTableElement *insert_function(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type)
@@ -132,17 +193,35 @@ SymbolTableElement *insert_string(SymbolTable **s, char *string)
 }
 
 /* return symbol if found or NULL if not found */
-SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class)
+SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class, __uint32_t exact_scope)
 {
-	if (class == VARIABLE)
+		
+	SymbolTable *tmp = s;
+
+	// on cherche la table de symbole qui correspond au scope
+	while(tmp != NULL && tmp->scope != scope)
+		tmp = tmp->next;
+	
+
+	if(tmp == NULL)
+		return NULL;
+
+	// on parcourt les tables de symboles en remontant dans les scopes jusqu'a trouver la variable
+	while(tmp != NULL)
 	{
 		__uint32_t i;
-		for (i = 0; i < s->size && strcmp(s->symbols[i].attribute.variable.name, name) != 0; i++)
-			;
-		if (i < s->size)
-			return &(s->symbols[i]);
-		return NULL;
+		for (i = 0; i < tmp->size && strcmp(tmp->symbols[i].attribute.variable.name, name) != 0; i++);
+			
+		if (i < tmp->size)
+			return &(tmp->symbols[i]);
+		
+		if(exact_scope == 1)
+			break; // on s'arrete si on veut trouver la variable dans le scope courant (pour les variables globales
+
+		tmp = tmp->previous;
 	}
+
+	return NULL;
 }
 
 SymbolTableElement *lookup_function(SymbolTable *s, char *name)
@@ -223,8 +302,10 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 	__uint32_t i;
 	fprintf(of, "-------------- ----------- ---------- ---------------\n");
 	fprintf(of, "     Name         Class       Type       arguments   \n");
+	fprintf(of, "                                          or scope   \n");
 	fprintf(of, "-------------- ----------- ---------- ---------------\n");
-	int nb_cst = 0;
+	__uint32_t nb_cst = 0;
+	__uint32_t nb_str = 0;
 	for (i = 0; i < s->size; ++i)
 	{
 		SymbolTableElement elem = s->symbols[i];
@@ -232,6 +313,11 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 		if (elem.class == CONSTANT)
 		{
 			nb_cst++;
+			continue;
+		}
+		else if (elem.class == STR)
+		{
+			nb_str++;
 			continue;
 		}
 
@@ -266,9 +352,6 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 		case FUNCTION:
 			classStr = "function";
 			break;
-		case STR:
-			classStr = "string";
-			break;
 		}
 
 		if(elem.class == FUNCTION)
@@ -299,12 +382,13 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 			}
 			fprintf(of, ")\n");
 		}
-		else
+		else if(elem.attribute.variable.name[0] != '%')
 			fprintf(of, "%-14s %-11s %-10s\n", elem.attribute.variable.name, classStr, typeStr);
 	}
 
 	fprintf(of, "-------------- ----------- ----------\n");
 	fprintf(of, "Number of constants: %d\n", nb_cst);
+	fprintf(of, "Number of strings: %d\n", nb_str);
 }
 
 void symbol_dump(SymbolTableElement *e)

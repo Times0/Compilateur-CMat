@@ -96,11 +96,48 @@ printf("\n");
 
 printf("Fin des tests\n");*/
 
-a = 0||0;
+/*a = 0||0;
 print(a);
 printf("\n");
-a = (0 || 1)&&1;
+a = 2&&2;
+print(a);*/
+
+a = 4;
 print(a);
+printf("\n");
+
+{
+    {
+        float a;
+        int d;
+        a = 6.9;
+        print(a);
+        printf("\n");
+    }
+    float e;
+}
+
+{
+    {
+        float a;
+    }
+}
+
+{
+
+}
+
+{
+    {
+        {
+
+        }
+    }
+}
+print(a);
+
+a = 3;
+a = 4;
 
 // affectation OK
 // minus unary OK

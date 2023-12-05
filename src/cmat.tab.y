@@ -15,9 +15,11 @@ extern int yylex();
 extern int yyerror(char *s);
 extern QuadTable *code;
 extern SymbolTable *symbol_table;
-extern __uint32_t lineno;
-extern __uint32_t current_scope;
-uint32_t offset = 0;
+ __uint32_t current_scope = 0;
+ __uint32_t max_scope = 0;
+ SymbolTable *next_symbol_table = NULL;
+ __uint32_t lineno = 1;
+uint32_t frame_pointer = 0;
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
 void semantic_error(const char *format, ...);
@@ -81,10 +83,22 @@ instruction : declaration ';'
             | return ';'
             | assign ';'
             | expression ';'
+            | block
 
 declaration :  type ID
                {
-                    insert_variable(&symbol_table, $2, $1, VARIABLE, -1);
+                    SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
+                    if(l != NULL)
+                    {
+                         semantic_error("variable \"%s\" already declared in this scope", $2);
+                    }
+                    insert_variable(&symbol_table, $2, $1, VARIABLE, frame_pointer, current_scope);
+                    
+                    if(current_scope != 0)
+                    {
+                         frame_pointer++;
+                    }
+                    // printf("%d\n", frame_pointer);
                }
 
 type : INT  
@@ -163,11 +177,12 @@ expression_list : expression ',' expression_list
                }
 
 
+
 return : RETURN expression
 
 assign :  ID '=' expression
           {    
-               SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
+               SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
                if(id == NULL)
                {
                     semantic_error("variable \"%s\" not declared", $1);
@@ -175,29 +190,68 @@ assign :  ID '=' expression
                gen_quad(code, COPY, id, $3.ptr, NULL);
           }
 
+block : '{'                   {
+                                   __uint32_t t = current_scope;
+                                   max_scope++; current_scope = max_scope;
+                                   add_next_symbol_table(&symbol_table, current_scope, t);
+                                   // printf("debut %d\n", current_scope);
+                              } 
+        instruction_list      
+        '}'                   {
+                                   // printf("%d\n", frame_pointer);
+                                   frame_pointer -= get_symbol_table_by_scope(symbol_table, current_scope)->size;
+                                   // printf("%d\n", frame_pointer);
+                                   current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;
+                                   // printf("fin %d\n", current_scope);
+                              }
+     /* | instruction */ // tres smart 
+
+/*statement : IF '(' expression ')' M block
+
+} M {
+
+                                quadop_free(logical_operation (global_code[$8-2]->res, global_code[$8-1]->res, Q_SUP, frame_pointer, pile_prog));
+                                global_code_pop($8+2);
+                                
+                        } block {
+                                
+                                $$ = init_decaf_struct ();
+                                complete ($10->next, next_quad);
+                                quadop_t * temp_3 = new_temp(TYPE_INT,frame_pointer,pile_prog);
+                                frame_pointer +=1;
+                                temp_3=gencode_expr (Q_ADD, global_code[$8-2]->res, init_quadop_cst(1, TYPE_INT),TYPE_INT, frame_pointer, pile_prog);
+                                frame_pointer +=1;
+                                gencode(init_quad (Q_AFFECT, temp_3, NULL, global_code[$8-2]->res));
+                                gencode(init_quad (Q_GOTO, init_quadop_goto_quad_num($8), NULL, NULL));
+                                $$->next = create_list ($8 + 1);
+                                if ($10->special_flag == NOT_EMPTY)
+                                        concat($$->next, $10->special_next);   
+                        }
+*/
+
 expression :   expression '+' expression     
                { 
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | expression '-' expression 
                {
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | expression '*' expression
                {
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_MULT, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | expression '/' expression
                {
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_DIV, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | expression '%' expression
                {
@@ -205,9 +259,9 @@ expression :   expression '+' expression
                     {
                          semantic_error("modulo operator can only be applied to integers");
                     }
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | expression OR_OP expression
                {
@@ -216,20 +270,31 @@ expression :   expression '+' expression
                          semantic_error("\"||\" can only be applied to int");
                     }
                     
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_OR, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | expression AND_OP expression
                {
                     if($1.ptr->type != INT || $3.ptr->type != INT)
                     {
-                         semantic_error("\"||\" can only be applied to int");
+                         semantic_error("\"&&\" can only be applied to int");
                     }
                     
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), offset);
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
                     gen_quad(code, BOP_AND, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
+               }
+               | '!' expression %prec UNARY_OP
+               {
+                    if($2.ptr->type != INT)
+                    {
+                         semantic_error("\"!\" can only be applied to int");
+                    }
+
+                    $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
+                    gen_quad(code, UOP_NOT, $$.ptr, $2.ptr, NULL); 
+                    frame_pointer++;
                }
                | expression EQ_OP expression
                {
@@ -241,9 +306,9 @@ expression :   expression '+' expression
                     {
                          semantic_warning("\"==\" applied to floating point numbers");
                     }
-                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    $$.ptr = newtemp(symbol_table, INT, frame_pointer);
                     gen_quad(code, BOP_EQ, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | expression NEQ_OP expression
                {
@@ -251,13 +316,13 @@ expression :   expression '+' expression
                     {
                          semantic_error("comparison operator can only be applied to operands of the same type");
                     }
-                    $$.ptr = newtemp(symbol_table, INT, offset);
+                    $$.ptr = newtemp(symbol_table, INT, frame_pointer);
                     gen_quad(code, BOP_NEQ, $$.ptr, $1.ptr, $3.ptr); 
-                    offset++;
+                    frame_pointer++;
                }
                | '-' expression %prec UNARY_OP
                {
-                    $$.ptr = newtemp(symbol_table, get_float_type($2.ptr->type, INT), offset);
+                    $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
                     gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL);
                }
                | '(' expression ')'
@@ -266,7 +331,7 @@ expression :   expression '+' expression
                }
                | ID INCR
                {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
+                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
                     if(id == NULL)
                     {
                          semantic_error("variable \"%s\" not declared", $1);
@@ -276,13 +341,13 @@ expression :   expression '+' expression
                     c.float_value = (float)1;
                     SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
                     
-                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
                     gen_quad(code, BOP_PLUS, id, id, n1); 
-                    offset++;
+                    frame_pointer++;
                }
                | INCR ID
                {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE);
+                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
                     if(id == NULL)
                     {
                          semantic_error("variable \"%s\" not declared", $2);
@@ -292,13 +357,13 @@ expression :   expression '+' expression
                     c.float_value = (float)1;
                     SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
                     
-                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
                     gen_quad(code, BOP_PLUS, id, id, n1); 
-                    offset++;
+                    frame_pointer++;
                }
                | ID DECR
                {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
+                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
                     if(id == NULL)
                     {
                          semantic_error("variable \"%s\" not declared", $1);
@@ -308,13 +373,13 @@ expression :   expression '+' expression
                     c.float_value = (float)1;
                     SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
                     
-                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
                     gen_quad(code, BOP_MINUS, id, id, n1); 
-                    offset++;
+                    frame_pointer++;
                }
                | DECR ID
                {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE);
+                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
                     if(id == NULL)
                     {
                          semantic_error("variable \"%s\" not declared", $2);
@@ -324,13 +389,13 @@ expression :   expression '+' expression
                     c.float_value = (float)1;
                     SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
                     
-                    $$.ptr = newtemp(symbol_table, id->type, offset);
+                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
                     gen_quad(code, BOP_MINUS, id, id, n1); 
-                    offset++;
+                    frame_pointer++;
                }
                | ID
                {
-                    $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE);
+                    $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
                     if($$.ptr == NULL)
                     {
                          semantic_error("variable \"%s\" not declared", $1);
@@ -353,7 +418,7 @@ expression :   expression '+' expression
                | STRING
                {
                     $$.ptr = insert_string(&symbol_table, $1);
-                    $$.ptr->attribute.string.offset = offset+1;
+                    $$.ptr->attribute.string.frame_pointer = frame_pointer+1;
                }
           
 %%     
