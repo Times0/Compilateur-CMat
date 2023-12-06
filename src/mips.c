@@ -8,13 +8,14 @@
 //  On suppose que le programme est une suite de declarations de fonctions
 //  suivie d'une fonction main
 //////////////////////////
+extern __uint32_t lineno;
+
 
 __uint32_t current_register_int = 0;        // registre pour les int
 __uint32_t current_register_float = 0;      // registre pour les float
 __uint32_t fp_type[MAXFPSIZE];              // tableau qui contient le type des variables du stack frame
-__uint32_t label_counter = 0;               // compteur pour les labels
 
-// Voir code pour modification 
+
 void gencode_mips_global_variable(FILE * f, SymbolTable * s)
 {
     fprintf (f, ".data\n");
@@ -32,7 +33,6 @@ void gencode_mips_global_variable(FILE * f, SymbolTable * s)
     }
     fprintf (f, "\n");
 }
-
 
 void gencode_mips(QuadTable *code, FILE * f)
 {
@@ -55,6 +55,9 @@ void gencode_mips(QuadTable *code, FILE * f)
     }
 
     // fin du main et du code
+    char *ll = generate_label_with_nb(code->nextquad);
+    fprintf (f, "\n%s:\n", ll);
+    free(ll);
     fprintf (f, "\tli $v0, 10\n\tsyscall\n");
 
     // parcours de tous les quads avant le main
@@ -69,12 +72,10 @@ void gencode_mips(QuadTable *code, FILE * f)
 
 void gencode_mips_quad(FILE *f, Quad *quad)
 {
-    /*if (global_code[quad_num]->brenched == TRUE)
+    if (quad->is_branched)
     {
-        char * label = new_label_quad_num (quad_num);
-        fprintf (f, "\n%s:\n", label);
-        free (label);
-    }*/
+        fprintf (f, "\n%s:\n", quad->branch_label);
+    }
         
     switch(quad->kind)
     {
@@ -97,14 +98,19 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case UOP_NOT:
             gencode_arith_unary_op(f, quad);
             break;
-        case COPY:
+        case K_COPY:
             gencode_affect(f, quad);
             break;
-        case CALL_PRINT:
+        case K_CALL_PRINT:
             gencode_print(f, quad);
             break;
-        case CALL_PRINTF:
+        case K_CALL_PRINTF:
             gencode_print(f, quad);
+        case K_GOTO:
+            gencode_goto(f, quad);
+            break;
+        case K_IF:
+            gencode_goto(f, quad);
             break;
         /*
         case Q_IF:
@@ -117,9 +123,6 @@ void gencode_mips_quad(FILE *f, Quad *quad)
                     fprintf (f, "\tb %d_label:\n", goto_quad_num);
             }
             break;
-            case Q_AFFECT:
-                gencode_affect (f, global_code[quad_num]);
-                break;
             case Q_SUP:
             case Q_INF:
             case Q_SUP_EQ:
@@ -313,7 +316,7 @@ void gencode_affect (FILE * f, Quad *quad)
 
 void gencode_print(FILE *f, Quad *quad)
 {
-    if(quad->kind == CALL_PRINT)
+    if(quad->kind == K_CALL_PRINT)
     {
         if(quad->function_parameters[0]->type == INT)
         {
@@ -332,12 +335,11 @@ void gencode_print(FILE *f, Quad *quad)
             current_register_float--;
         }
     }
-    else if(quad->kind == CALL_PRINTF)
+    else if(quad->kind == K_CALL_PRINTF)
     {
         // caractere d'échappement : \n, \t, \\, \"
         if(quad->function_parameters[0]->type == STRING)
         {
-            printf("string : %s\n", quad->function_parameters[0]->attribute.string.string);
             fprintf(f, "\tli $v0, 4\n");
             fprintf(f, "\tla $a0, %d($fp)\n", -4*quad->function_parameters[0]->attribute.string.frame_pointer);
             __uint32_t str_size = strlen(quad->function_parameters[0]->attribute.string.string)-2;
@@ -368,7 +370,7 @@ void gencode_print(FILE *f, Quad *quad)
                             char_special = 1;
                             break;
                         default:
-                            printf("Error : unknown special character\n");
+                            printf("Error at line %d : unknown special character\n", lineno);
                             exit(1);
                     }
                     
@@ -389,8 +391,22 @@ void gencode_print(FILE *f, Quad *quad)
             fprintf(f, "\tsyscall\n");
         }
     }
-    else if(quad->kind == CALL_PRINTMAT)
+    else if(quad->kind == K_CALL_PRINTMAT)
     {
+    }
+}
+
+void gencode_goto(FILE *f, Quad *quad)
+{
+    if(quad->kind == K_GOTO)
+    {
+        fprintf(f, "\tj %s\n", quad->branch_label);
+    }
+    else if(quad->kind == K_IF)
+    {
+        load_operator(f, quad->sym2);
+        fprintf(f, "\tbne $t%d, $zero, %s\n", current_register_int - 1, quad->branch_label);
+        current_register_int--;
     }
 }
 
@@ -570,11 +586,4 @@ __uint32_t convert_float_to_int(SymbolTableElement *s)
     return 1;
 }
 
-char* generate_label()
-{
-    char* label = (char*)malloc(20);
-    sprintf(label, "Label_%d", label_counter);
-    label_counter++;
 
-    return label;
-}

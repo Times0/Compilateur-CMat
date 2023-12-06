@@ -91,6 +91,8 @@ SymbolTableElement *lookup_function(SymbolTable *s, char *name);
 SymbolTableElement *lookup_constant(SymbolTable *s, Constant  constant, __uint32_t type);
 SymbolTableElement *lookup_string(SymbolTable *s, char *string);
 
+SymbolTableElement *newtemp(SymbolTable * t, __uint32_t type, __int32_t offset);
+
 void symbol_dump(SymbolTableElement *);
 void symbol_table_dump(SymbolTable *s, FILE *of);
 void free_symbol_table(SymbolTable *s);

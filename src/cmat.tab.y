@@ -19,7 +19,8 @@ extern SymbolTable *symbol_table;
  __uint32_t max_scope = 0;
  SymbolTable *next_symbol_table = NULL;
  __uint32_t lineno = 1;
-uint32_t frame_pointer = 0;
+__uint32_t frame_pointer = 0;
+__uint32_t logical_expression_flag = 0;
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
 void semantic_error(const char *format, ...);
@@ -41,8 +42,9 @@ void semantic_warning(const char *format, ...);
           SymbolTableElement ** ptr_list;
           __uint32_t size_ptr_list;
           __uint32_t capacity_ptr_list;
-          __uint32_t *true_list;
-          __uint32_t *false_list;
+          __uint32_t *true_list;        // liste des indices quads à compléter pour le vrai
+          __uint32_t *false_list;       // liste des indices quads à compléter pour le faux
+          __uint32_t *next_list;        // liste des indices quads à compléter pour le suivant ?
      }expr;
 }
 
@@ -70,26 +72,46 @@ void semantic_warning(const char *format, ...);
 
 
 %type <expr> expression
-%type <expr> expression_list
+%type <expr> parameter
+%type <expr> parameter_list
+%type <expr> statement
+%type <expr> block
+%type <expr> instruction
+%type <expr> instruction_list
+%type <expr> call
+%type <expr> assign
+%type <expr> declaration
 %type <type_val> type
+%type <int_val> M
 
 %start start
 %%
 start: instruction_list
 
-instruction_list: instruction instruction_list
-                | %empty 
+instruction_list: instruction_list M instruction {complete_list($3.next_list, code->nextquad); $$.next_list = $1.next_list;}
+                | instruction { $$.next_list = $1.next_list; }
 
-instruction : declaration ';'
-            | call ';'
-            | return ';'
-            | assign ';'
-            | expression ';'
+
+instruction : declaration ';'     { $$.next_list = create_list(-1); }
+            | call ';'             { $$.next_list = create_list(-1); }
+            | assign ';'          { $$.next_list = create_list(-1); }
+            | expression ';'     { $$.next_list = create_list(-1); }
+            | statement          
             | block
+
+
+M : %empty { $$ = code->nextquad; }
+
+statement : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block //S
+          {
+               complete_list($4.true_list, $7);
+               $$.next_list = concat_list($4.false_list, $8.next_list);
+               // $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
+               // gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+          }
 
 declaration :  type ID
                {
-                    // printf("d %p\n", symbol_table);
                     SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
                     if(l != NULL)
                     {
@@ -101,16 +123,14 @@ declaration :  type ID
                     {
                          insert_variable(symbol_table, $2, $1, VARIABLE, frame_pointer, current_scope);
                          frame_pointer++;
-                    }
-                    // printf("%d\n", frame_pointer);
-                    
+                    }     
                }
 
 type : INT  
      | FLOAT
      | MATRIX
 
-call : ID '(' expression_list ')'
+call : ID '(' parameter_list ')'
      {
           SymbolTableElement *id = lookup_function(symbol_table, $1);
 
@@ -124,7 +144,7 @@ call : ID '(' expression_list ')'
                {
                     semantic_error("print only takes int or float as argument");
                }
-               gen_quad_function(code, CALL_PRINT, NULL, id, $3.ptr_list, $3.size_ptr_list); // changer le null
+               gen_quad_function(code, K_CALL_PRINT, NULL, id, $3.ptr_list, $3.size_ptr_list); // changer le null
           }
           else if(strcmp($1, "printf") == 0)
           {
@@ -136,7 +156,7 @@ call : ID '(' expression_list ')'
                {
                     semantic_error("printf only takes string as argument");
                }
-               gen_quad_function(code, CALL_PRINTF, NULL, id, $3.ptr_list, $3.size_ptr_list); // changer le null
+               gen_quad_function(code, K_CALL_PRINTF, NULL, id, $3.ptr_list, $3.size_ptr_list); // changer le null
           }
           else
           {
@@ -147,7 +167,16 @@ call : ID '(' expression_list ')'
           }
      }
 
-expression_list : expression ',' expression_list
+parameter : expression
+          {
+               $$.ptr = $1.ptr;
+          }
+          | STRING
+          {
+               $$.ptr = insert_string(&symbol_table, $1, frame_pointer);
+          }
+
+parameter_list : parameter ',' parameter_list
                {
                     if($3.size_ptr_list == $3.capacity_ptr_list)
                     {
@@ -165,7 +194,7 @@ expression_list : expression ',' expression_list
                     $$.size_ptr_list = $3.size_ptr_list;
                     $$.capacity_ptr_list = $3.capacity_ptr_list;
                }
-               | expression
+               | parameter
                {     
                     $$.capacity_ptr_list = 4;
                     $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement *));
@@ -184,7 +213,7 @@ expression_list : expression ',' expression_list
 
 
 
-return : RETURN expression
+/* return : RETURN expression */
 
 assign :  ID '=' expression
           {    
@@ -193,7 +222,7 @@ assign :  ID '=' expression
                {
                     semantic_error("variable \"%s\" not declared", $1);
                }
-               gen_quad(code, COPY, id, $3.ptr, NULL);
+               gen_quad(code, K_COPY, id, $3.ptr, NULL);
           }
 
 block : '{'                   {
@@ -203,36 +232,14 @@ block : '{'                   {
                               } 
         instruction_list      
         '}'                   {
+                                   $$.next_list = $3.next_list;
                                    
-                                   // printf("%d\n", frame_pointer);
                                    frame_pointer -= get_symbol_table_by_scope(symbol_table, current_scope)->size; // il faut plus que ca pour string et matrice
-                                   // printf("%d\n", frame_pointer);
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 
                               }
      /* | instruction */ // tres smart 
 
-/*statement : IF '(' expression ')' M block
 
-} M {
-
-                                quadop_free(logical_operation (global_code[$8-2]->res, global_code[$8-1]->res, Q_SUP, frame_pointer, pile_prog));
-                                global_code_pop($8+2);
-                                
-                        } block {
-                                
-                                $$ = init_decaf_struct ();
-                                complete ($10->next, next_quad);
-                                quadop_t * temp_3 = new_temp(TYPE_INT,frame_pointer,pile_prog);
-                                frame_pointer +=1;
-                                temp_3=gencode_expr (Q_ADD, global_code[$8-2]->res, init_quadop_cst(1, TYPE_INT),TYPE_INT, frame_pointer, pile_prog);
-                                frame_pointer +=1;
-                                gencode(init_quad (Q_AFFECT, temp_3, NULL, global_code[$8-2]->res));
-                                gencode(init_quad (Q_GOTO, init_quadop_goto_quad_num($8), NULL, NULL));
-                                $$->next = create_list ($8 + 1);
-                                if ($10->special_flag == NOT_EMPTY)
-                                        concat($$->next, $10->special_next);   
-                        }
-*/
 
 expression :   expression '+' expression     
                { 
@@ -268,40 +275,54 @@ expression :   expression '+' expression
                     gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
                     frame_pointer++;
                }
-               | expression OR_OP expression
+               | expression OR_OP M expression
                {
-                    if($1.ptr->type != INT || $3.ptr->type != INT)
+                    if(logical_expression_flag == 1)
                     {
-                         semantic_error("\"||\" can only be applied to int");
+                         complete_list($1.false_list, $3);
+                         $$.false_list = $4.false_list;
+                         $$.true_list = concat_list($1.true_list, $4.true_list);
                     }
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_OR, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
+                    else // supprimer dans mips
+                    {
+                         semantic_warning("\"||\" used outside of a condition");
+                         $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $4.ptr->type), frame_pointer);
+                         gen_quad(code, BOP_OR, $$.ptr, $1.ptr, $4.ptr); 
+                         frame_pointer++;
+                    }
                }
-               | expression AND_OP expression
+               | expression AND_OP M expression
                {
-                    if($1.ptr->type != INT || $3.ptr->type != INT)
+                    if(logical_expression_flag == 1)
                     {
-                         semantic_error("\"&&\" can only be applied to int");
+                         complete_list($1.true_list, $3);
+                         $$.true_list = $4.true_list;
+                         $$.false_list = concat_list($1.false_list, $4.false_list);
                     }
-                    
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_AND, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
+                    else
+                    {
+                         $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $4.ptr->type), frame_pointer);
+                         gen_quad(code, BOP_AND, $$.ptr, $1.ptr, $4.ptr); 
+                         frame_pointer++;
+                    }
                }
                | '!' expression %prec UNARY_OP
                {
-                    if($2.ptr->type != INT)
+                    if(logical_expression_flag == 1)
                     {
-                         semantic_error("\"!\" can only be applied to int");
+                         $$.true_list = $2.false_list;
+                         $$.false_list = $2.true_list;
                     }
-
-                    $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
-                    gen_quad(code, UOP_NOT, $$.ptr, $2.ptr, NULL); 
-                    frame_pointer++;
+                    else
+                    {
+                         $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
+                         gen_quad(code, UOP_NOT, $$.ptr, $2.ptr, NULL); 
+                         frame_pointer++;
+                    }
                }
                | expression EQ_OP expression
                {
+
                     if($1.ptr->type != $3.ptr->type)
                     {
                          semantic_error("\"==\" can only be applied to operands of the same type");
@@ -331,7 +352,15 @@ expression :   expression '+' expression
                }
                | '(' expression ')'
                {
-                    $$.ptr = $2.ptr;
+                    if(logical_expression_flag == 1)
+                    {
+                         $$.true_list = $2.true_list;
+                         $$.false_list = $2.false_list;
+                    }
+                    else
+                    {
+                         $$.ptr = $2.ptr;
+                    }
                }
                | ID INCR
                {
@@ -404,6 +433,14 @@ expression :   expression '+' expression
                     {
                          semantic_error("variable \"%s\" not declared", $1);
                     }
+
+                    if(logical_expression_flag == 1)
+                    {
+                         $$.true_list = create_list(code->nextquad);
+                         $$.false_list = create_list(code->nextquad+1);
+                         gen_quad_goto(code, K_IF, $$.ptr, NULL, NULL);
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                    }
                }
                | INT_CONST
                { 
@@ -418,10 +455,6 @@ expression :   expression '+' expression
                     v.float_value = $1;
                     v.int_value = (int)$1;
                     $$.ptr = insert_constant(&symbol_table, v, FLOAT);
-               }
-               | STRING
-               {
-                    $$.ptr = insert_string(&symbol_table, $1, frame_pointer);
                }
           
 %%     

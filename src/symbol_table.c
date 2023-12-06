@@ -7,7 +7,6 @@ extern __uint32_t current_scope;
 extern __uint32_t lineno;
 
 SymbolTable *symbol_table;
-struct code *code;
 
 void init_symbol_table(SymbolTable **s, __uint32_t scope)
 {
@@ -416,6 +415,16 @@ void symbol_dump(SymbolTableElement *e)
 	else if (e->class == STR)
 		printf("%s", e->attribute.string.string);
 	
+}
+
+SymbolTableElement *newtemp(SymbolTable *t, __uint32_t type, __int32_t offset)
+{
+    SymbolTableElement *s;
+    char name[MAXTOKENLEN];
+    sprintf(name,"%%%d",t->temporary);
+    s = insert_variable(t, name, type, VARIABLE, offset, current_scope);
+    ++(t->temporary);
+    return s;
 }
 
 void free_symbol_table(SymbolTable *s)
