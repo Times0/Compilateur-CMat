@@ -10,7 +10,43 @@ print(1);
 printf("\n");*/
 int main()
 {
-    int a;
+    int r;
+    int c;
+    r = 1;
+    c = 0;
+    if(2 < 1)
+    {
+        printf("<");
+    }
+    if(2 <= 1)
+    {
+        printf("<=");
+    }
+    if(2 > 1)
+    {
+        printf(">");
+    }
+    if(2 >= 1)
+    {
+        printf(">=");
+    }
+    if(2 == 2)
+    {
+        printf("==");
+    }
+    /*if(r || c)
+    {
+        printf("||");
+    }*/
+    // if((1!=1 && 1 < 2) || (2!=2))
+    if(((1!=1) || (1 > 2))&&r)
+    {
+        printf("!=");
+    }
+    int t;
+    t=1;
+}
+    /*int a;
     int c;
     int r;
     a=2;
@@ -48,24 +84,6 @@ int main()
     printf("\n");
     print(r);
     printf("\n");
-/*if(a)
-{
-    /*if(e)
-    {
-        print(3);
-        print(3);
-    }
-    print(2);
-    print(2);
-}*/
-
-/*if(a)
-{
-    if(a)
-    {
-        print(2);
-    }
-}*/
 
     float d;
     a=a+2;

@@ -35,6 +35,8 @@ void push_predefined_functions(SymbolTable **s)
 {
 	insert_function(&symbol_table, "print", VOID, FUNCTION, 1, (__uint32_t[]){VOID});
     insert_function(&symbol_table, "printf", VOID, FUNCTION, 1, (__uint32_t[]){STRING});
+	insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = 0.0f}, INT);
+	insert_constant(&symbol_table, (Constant){.int_value = 1, .float_value = 1.0f}, INT);
 }
 
 SymbolTable* add_next_symbol_table(SymbolTable **s, __uint32_t scope, __uint32_t parent_symbol_table_scope)

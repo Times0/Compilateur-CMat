@@ -5,8 +5,8 @@
 /* QUADRUPLETS ET CODE */
 
 typedef struct Quad {
-  enum quad_kind {BOP_PLUS, BOP_MINUS, BOP_MULT, BOP_DIV, BOP_MOD, BOP_EQ, BOP_NEQ, UOP_MINUS, K_COPY, 
-                  K_CALL_PRINT, K_CALL_PRINTF, K_CALL_PRINTMAT, K_CALL, K_GOTO, K_IF} kind;
+  enum quad_kind {BOP_PLUS, BOP_MINUS, BOP_MULT, BOP_DIV, BOP_MOD, UOP_MINUS, K_COPY, 
+                  K_CALL_PRINT, K_CALL_PRINTF, K_CALL_PRINTMAT, K_CALL, K_GOTO, K_IF, K_IFNOT, K_IFLT, K_IFGT, K_IFLE, K_IFGE} kind;
   SymbolTableElement *sym1; // result
   SymbolTableElement *sym2; // operand 1 or function 
   SymbolTableElement *sym3; // operand 2 or NULL

@@ -254,20 +254,6 @@ void quad_dump(Quad *q)
             printf(" %% ");
             symbol_dump(q->sym3);
             break;
-        case BOP_EQ:
-            symbol_dump(q->sym1);
-            printf(" := ");
-            symbol_dump(q->sym2);
-            printf(" == ");
-            symbol_dump(q->sym3);
-            break;
-        case BOP_NEQ:
-            symbol_dump(q->sym1);
-            printf(" := ");
-            symbol_dump(q->sym2);
-            printf(" != ");
-            symbol_dump(q->sym3);
-            break;
         case UOP_MINUS:
             symbol_dump(q->sym1);
             printf(" := ");
@@ -305,6 +291,43 @@ void quad_dump(Quad *q)
         case K_IF:
             printf("if ");
             symbol_dump(q->sym2);
+            printf(" == ");
+            symbol_dump(q->sym3);
+            printf(" goto %s", q->branch_label);
+            break;
+        case K_IFNOT:
+            printf("if ");
+            symbol_dump(q->sym2);
+            printf(" != ");
+            symbol_dump(q->sym3);
+            printf(" goto %s", q->branch_label);
+            break;
+        case K_IFLT:
+            printf("if ");
+            symbol_dump(q->sym2);
+            printf(" < ");
+            symbol_dump(q->sym3);
+            printf(" goto %s", q->branch_label);
+            break;
+        case K_IFGT:
+            printf("if ");
+            symbol_dump(q->sym2);
+            printf(" > ");
+            symbol_dump(q->sym3);
+            printf(" goto %s", q->branch_label);
+            break;
+        case K_IFLE:
+            printf("if ");
+            symbol_dump(q->sym2);
+            printf(" <= ");
+            symbol_dump(q->sym3);
+            printf(" goto %s", q->branch_label);
+            break;
+        case K_IFGE:
+            printf("if ");
+            symbol_dump(q->sym2);
+            printf(" >= ");
+            symbol_dump(q->sym3);
             printf(" goto %s", q->branch_label);
             break;
         default:

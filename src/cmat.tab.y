@@ -53,19 +53,21 @@ void semantic_warning(const char *format, ...);
 %token <type_val> INT FLOAT MATRIX 
 %token <string_val> STRING
 %token <str_val>ID
-%token RETURN
+%token <int_val> GT_OP GE_OP LT_OP LE_OP EQ_OP NEQ_OP
+
 
 %token ';' '*' '/' '^' '(' ')'
 
 %token '+' '-' 
 // useless
-%token VOID MAIN IF ELSE WHILE FOR LOG_OP OR_OP COMP_OP ASSIGN_OP UNARY_OP GT_OP LE_OP LT_OP NEQ_OP EQ_OP DDOT
-%token REl_OP GE_OP AND_OP DECR INCR
+%token VOID MAIN IF ELSE WHILE FOR OR_OP UNARY_OP  DDOT
+%token  AND_OP DECR INCR
+%token RETURN
 
 
 // priorités
 %left '+' '-' '*' '/' '%'
-%left EQ_OP NEQ_OP OR_OP AND_OP LT_OP GT_OP LE_OP GE_OP
+%left EQ_OP NEQ_OP LT_OP GT_OP LE_OP GE_OP '!'
 %right UNARY_OP
 %left '(' ')'
 
@@ -78,6 +80,7 @@ void semantic_warning(const char *format, ...);
 %type <expr> block
 %type <expr> instruction
 %type <expr> instruction_list
+%type <expr> declaration_function
 %type <expr> call
 %type <expr> assign
 %type <expr> declaration
@@ -111,7 +114,7 @@ statement : IF '(' {logical_expression_flag++;} expression ')' {logical_expressi
                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
           }
 
-declaration_function : type MAIN '(' ')' block
+declaration_function : type MAIN '(' ')' block {$$.ptr = NULL;}
 
 declaration :  type ID
                {
@@ -245,18 +248,17 @@ block : '{'                   {
      /* | instruction */ // tres smart 
 
 
-
-expression :   expression '+' expression     
-               { 
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
-               | expression '-' expression 
+expression :   '(' expression ')'
                {
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
+                    if(logical_expression_flag == 1)
+                    {
+                         $$.true_list = $2.true_list;
+                         $$.false_list = $2.false_list;
+                    }
+                    else
+                    {
+                         $$.ptr = $2.ptr;
+                    }
                }
                | expression '*' expression
                {
@@ -280,73 +282,120 @@ expression :   expression '+' expression
                     gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
                     frame_pointer++;
                }
-               | expression OR_OP M expression    // supprimer le type de quad BOP_OR , etc
-               {
-                    if(logical_expression_flag == 1)
-                    {
-                         complete_list($1.false_list, $3);
-                         $$.false_list = $4.false_list;
-                         $$.true_list = concat_list($1.true_list, $4.true_list);
-                    }
-               }
-               | expression AND_OP M expression
-               {
-                    if(logical_expression_flag == 1)
-                    {
-                         complete_list($1.true_list, $3);
-                         $$.true_list = $4.true_list;
-                         $$.false_list = concat_list($1.false_list, $4.false_list);
-                    }
-               }
-               | '!' expression %prec UNARY_OP
-               {
-                    if(logical_expression_flag == 1)
-                    {
-                         $$.true_list = $2.false_list;
-                         $$.false_list = $2.true_list;
-                    }
-               }
-               | expression EQ_OP expression
-               {
-
-                    if($1.ptr->type != $3.ptr->type)
-                    {
-                         semantic_error("\"==\" can only be applied to operands of the same type");
-                    }
-                    if(get_float_type($1.ptr->type, $3.ptr->type) == FLOAT)
-                    {
-                         semantic_warning("\"==\" applied to floating point numbers");
-                    }
-                    $$.ptr = newtemp(symbol_table, INT, frame_pointer);
-                    gen_quad(code, BOP_EQ, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
-               | expression NEQ_OP expression
-               {
-                    if($1.ptr->type != $3.ptr->type)
-                    {
-                         semantic_error("comparison operator can only be applied to operands of the same type");
-                    }
-                    $$.ptr = newtemp(symbol_table, INT, frame_pointer);
-                    gen_quad(code, BOP_NEQ, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
                | '-' expression %prec UNARY_OP
                {
                     $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
                     gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL);
                }
-               | '(' expression ')'
+               | expression '+' expression     
+               { 
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
+                    gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
+                    frame_pointer++;
+               }
+               | expression '-' expression 
                {
-                    if(logical_expression_flag == 1)
+                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
+                    gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
+                    frame_pointer++;
+               }
+               | '!' expression %prec UNARY_OP
+               {
+                    if(logical_expression_flag == 0)
                     {
-                         $$.true_list = $2.true_list;
-                         $$.false_list = $2.false_list;
+                         semantic_error("\"!\" can only be applied to logical expressions");
                     }
-                    else
+                    $$.true_list = $2.false_list;
+                    $$.false_list = $2.true_list;
+               }
+               | expression EQ_OP expression
+               {
+                    if(logical_expression_flag == 0)
                     {
-                         $$.ptr = $2.ptr;
+                         semantic_error("comparison operator can only be applied to logical expressions");
                     }
+                    $$.true_list = create_list(code->nextquad);
+                    $$.false_list = create_list(code->nextquad+1);
+                    gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, NULL);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+               }  
+               | expression NEQ_OP expression
+               {
+                    if(logical_expression_flag == 0)
+                    {
+                         semantic_error("comparison operator can only be applied to logical expressions");
+                    }
+                    $$.true_list = create_list(code->nextquad);
+                    $$.false_list = create_list(code->nextquad+1);
+                    gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, NULL);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+               }
+               | expression LT_OP expression
+               {
+                    if(logical_expression_flag == 0)
+                    {
+                         semantic_error("comparison operator can only be applied to logical expressions");
+                    }
+                    $$.true_list = create_list(code->nextquad);
+                    $$.false_list = create_list(code->nextquad+1);
+                    gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, NULL);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+               }
+               | expression GT_OP expression
+               {
+                    if(logical_expression_flag == 0)
+                    {
+                         semantic_error("comparison operator can only be applied to logical expressions");
+                    }
+                    $$.true_list = create_list(code->nextquad);
+                    $$.false_list = create_list(code->nextquad+1);
+                    printf("Gen op_gt %p with %d\n", $$.true_list, $$.true_list[0]);
+                    gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, NULL);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+               }
+               | expression LE_OP expression
+               {
+                    if(logical_expression_flag == 0)
+                    {
+                         semantic_error("comparison operator can only be applied to logical expressions");
+                    }
+                    $$.true_list = create_list(code->nextquad);
+                    $$.false_list = create_list(code->nextquad+1);
+                    gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, NULL);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+               }
+               | expression GE_OP expression
+               {
+                    if(logical_expression_flag == 0)
+                    {
+                         semantic_error("comparison operator can only be applied to logical expressions");
+                    }
+                    $$.true_list = create_list(code->nextquad);
+                    $$.false_list = create_list(code->nextquad+1);
+                    gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, NULL);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+               }
+               | expression AND_OP M expression
+               {
+                    if(logical_expression_flag == 0)
+                    {
+                         semantic_error("\"&&\" can only be applied to logical expressions");
+                    }
+                    
+                    complete_list($1.true_list, $3);
+                    $$.true_list = $4.true_list;
+                    $$.false_list = concat_list($1.false_list, $4.false_list);
+               }
+               | expression OR_OP M expression
+               {
+                    if(logical_expression_flag == 0)
+                    {
+                         semantic_error("\"||\" can only be applied to logical expressions");
+                    }
+                    complete_list($1.false_list, $3);
+                    $$.false_list = $4.false_list;
+                    $$.true_list = concat_list($1.true_list, $4.true_list);
+                    
                }
                | ID INCR
                {
@@ -424,7 +473,7 @@ expression :   expression '+' expression
                     {
                          $$.true_list = create_list(code->nextquad);
                          $$.false_list = create_list(code->nextquad+1);
-                         gen_quad_goto(code, K_IF, $$.ptr, NULL, NULL);
+                         gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), NULL);
                          gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
                     }
                }

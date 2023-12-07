@@ -83,10 +83,6 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case BOP_MOD:
             gencode_arith_binary_op(f, quad);
             break;
-        case BOP_EQ:
-        case BOP_NEQ:
-            
-            break;
         case UOP_MINUS:
             gencode_arith_unary_op(f, quad);
             break;
@@ -98,10 +94,14 @@ void gencode_mips_quad(FILE *f, Quad *quad)
             break;
         case K_CALL_PRINTF:
             gencode_print(f, quad);
-        case K_GOTO:
-            gencode_goto(f, quad);
             break;
+        case K_GOTO:
         case K_IF:
+        case K_IFNOT:
+        case K_IFLT:
+        case K_IFGT:
+        case K_IFLE:
+        case K_IFGE:
             gencode_goto(f, quad);
             break;
         /*
@@ -378,11 +378,25 @@ void gencode_goto(FILE *f, Quad *quad)
     {
         fprintf(f, "\tj %s\n", quad->branch_label);
     }
-    else if(quad->kind == K_IF)
+    else
     {
         load_operator(f, quad->sym2);
-        fprintf(f, "\tbne $t%d, $zero, %s\n", current_register_int - 1, quad->branch_label);
-        current_register_int--;
+        load_operator(f, quad->sym3);
+        
+        if(quad->kind == K_IF)
+            fprintf(f, "\tbeq $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+        else if(quad->kind == K_IFNOT)
+            fprintf(f, "\tbne $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+        else if(quad->kind == K_IFLT)
+            fprintf(f, "\tblt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+        else if(quad->kind == K_IFGT)
+            fprintf(f, "\tbgt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+        else if(quad->kind == K_IFLE)
+            fprintf(f, "\tble $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+        else if(quad->kind == K_IFGE)
+            fprintf(f, "\tbge $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+
+        current_register_int-=2;
     }
 }
 
