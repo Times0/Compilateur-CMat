@@ -15,14 +15,21 @@ int main()
     int r;
     a=1;
     c=1;
-    r=1;
+    r=0;
 
     if(a)
     {
+        int t;
         if(c)
         {
+            if(r)
+            {
+                print(5);
+                print(5);
+            }
             print(3);
             print(3);
+            t = 8;
         }
         if(r)
         {
@@ -31,7 +38,9 @@ int main()
         }
         print(1);
         print(1);
+        print(t);
     }
+    
 }
 /*if(a)
 {

@@ -134,13 +134,13 @@ __uint32_t *create_list(__uint32_t i)
 __uint32_t *concat_list(__uint32_t *l1, __uint32_t *l2)
 {
     __uint32_t size1 = 0;
-    // if(l1 == NULL)
-    //     l1 = create_list(-1);
+    if(l1 == NULL)
+        l1 = create_list(-1);
     while(l1[size1] != -1)
         size1++;
     __uint32_t size2 = 0;
-    // if(l2 == NULL)
-    //     l2 = create_list(-1);
+    if(l2 == NULL)
+        l2 = create_list(-1);
     while(l2[size2] != -1)
         size2++;
 

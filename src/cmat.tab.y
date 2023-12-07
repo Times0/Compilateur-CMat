@@ -92,13 +92,13 @@ instruction_list: instruction_list M instruction   { complete_list($1.next_list,
                 | instruction                      { $$.next_list = $1.next_list; }
 
 
-instruction : declaration ';'    { $$.next_list = create_list(-1); }
+instruction : declaration ';'    
             | declaration_function
-            | call ';'           { $$.next_list = create_list(-1); }
-            | assign ';'         { $$.next_list = create_list(-1); }
-            | expression ';'      { $$.next_list = create_list(-1); }
-            | statement            //{ $$.next_list = $1.next_list; }
-            | block                //{ $$.next_list = $1.next_list; }
+            | call ';'           
+            | assign ';'         
+            | expression ';'     
+            | statement            
+            | block                
 
 
 M : %empty { $$ = code->nextquad; }
@@ -220,7 +220,10 @@ parameter_list : parameter ',' parameter_list
 
 assign :  ID '=' expression
           {    
+               printf("current_scope : %d\n", current_scope);
                SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
+               printf("%p\n", id);
+               
                if(id == NULL)
                {
                     semantic_error("variable \"%s\" not declared", $1);

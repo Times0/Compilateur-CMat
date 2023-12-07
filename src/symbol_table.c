@@ -215,13 +215,28 @@ SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope
 	// on parcourt les tables de symboles en remontant dans les scopes jusqu'a trouver la variable
 	while(tmp != NULL)
 	{
+		printf("scope: %d\n", tmp->scope);
 		__uint32_t i;
 		SymbolTableElement *l = tmp->first_symbol;
-		for (i = 0; i < tmp->size && strcmp(l->attribute.variable.name, name) != 0; i++) 
+
+		for (i = 0; i < tmp->size; i++)
+		{
+			// on doit verifier le type car il ya des constantes, des strings et des fonctions dans la table des symboles de cscope 0
+			if(l->class == VARIABLE)
+			{
+				if(strcmp(l->attribute.variable.name, name) == 0)
+					break;
+			}
 			l = l->next;
 			
+		} 
+			
+			
 		if (i < tmp->size)
+		{
+			printf("found in scope %d with size %d\n", tmp->scope, tmp->size);
 			return l;
+		}
 		
 		if(exact_scope == 1)
 			break; // on s'arrete si on veut trouver la variable dans le scope courant (pour les variables globales
