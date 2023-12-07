@@ -182,18 +182,20 @@ void complete_list(__uint32_t *l, __uint32_t i)
     }
     if(l[0] == -1)
     {
-        printf("complete -1\n");
+        printf("complete -1 with %d\n", i);
         return;
     }
+
     code->quads[i].is_branched = 1;
-    code->quads[i].branch_label = generate_label_with_nb(i);
+    code->quads[i].label = generate_label_with_nb(i);
 
     printf("complete list %d with %d\n", l[0], i);
     __uint32_t j = 0;
     
     while(l[j] != -1)
     {
-        code->quads[l[j]].branch_label = generate_label_with_nb(i);
+        if(code->quads[l[j]].branch_label == NULL)
+            code->quads[l[j]].branch_label = generate_label_with_nb(i);
         j++;
     }   
 }

@@ -74,7 +74,7 @@ void gencode_mips_quad(FILE *f, Quad *quad)
 {
     if (quad->is_branched)
     {
-        fprintf (f, "\n%s:\n", quad->branch_label);
+        fprintf (f, "\n%s:\n", quad->label);
     }
         
     switch(quad->kind)
@@ -525,7 +525,6 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t frame_pointer_r
                     fprintf (f, "\tla $t%d, %s\n", current_register_int, res->attribute.variable.name);
                     // save the value in this address
                     fprintf (f, "\tsw $t%d, 0($t%d)\n", current_register_int - 1, current_register_int);
-
                     // current_register_int--;
                 }
                 else

@@ -13,8 +13,10 @@ typedef struct Quad {
   SymbolTableElement **function_parameters;
   __uint32_t nb_parameters;
 
-  __uint32_t is_branched;
   char *branch_label;
+  __uint32_t is_branched;
+  char *label;
+  
 }Quad;
 
 typedef struct QuadTable{

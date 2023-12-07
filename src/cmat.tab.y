@@ -88,27 +88,30 @@ void semantic_warning(const char *format, ...);
 %%
 start: instruction_list
 
-instruction_list: instruction_list M instruction {complete_list($3.next_list, code->nextquad); $$.next_list = $1.next_list;}
-                | instruction { $$.next_list = $1.next_list; }
+instruction_list: instruction_list M instruction   { complete_list($1.next_list, $2); $$.next_list = $3.next_list; }
+                | instruction                      { $$.next_list = $1.next_list; }
 
 
-instruction : declaration ';'     { $$.next_list = create_list(-1); }
-            | call ';'             { $$.next_list = create_list(-1); }
-            | assign ';'          { $$.next_list = create_list(-1); }
-            | expression ';'     { $$.next_list = create_list(-1); }
-            | statement          
-            | block
+instruction : declaration ';'    { $$.next_list = create_list(-1); }
+            | declaration_function
+            | call ';'           { $$.next_list = create_list(-1); }
+            | assign ';'         { $$.next_list = create_list(-1); }
+            | expression ';'      { $$.next_list = create_list(-1); }
+            | statement            //{ $$.next_list = $1.next_list; }
+            | block                //{ $$.next_list = $1.next_list; }
 
 
 M : %empty { $$ = code->nextquad; }
 
-statement : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block //S
+statement : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block
           {
                complete_list($4.true_list, $7);
                $$.next_list = concat_list($4.false_list, $8.next_list);
-               // $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
-               // gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+               $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
+               gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
           }
+
+declaration_function : type MAIN '(' ')' block
 
 declaration :  type ID
                {
@@ -150,7 +153,7 @@ call : ID '(' parameter_list ')'
           {
                if($3.size_ptr_list != id->attribute.function.nb_parameters)
                {
-                    semantic_error("printf take one argument");
+                    semantic_error("printf takes one argument");
                }
                if($3.ptr_list[0]->type != STRING)
                {
@@ -233,6 +236,7 @@ block : '{'                   {
         instruction_list      
         '}'                   {
                                    $$.next_list = $3.next_list;
+                                   complete_list($3.next_list, code->nextquad);
                                    
                                    frame_pointer -= get_symbol_table_by_scope(symbol_table, current_scope)->size; // il faut plus que ca pour string et matrice
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 

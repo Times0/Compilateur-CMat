@@ -1,22 +1,53 @@
 .data
-	a:	.word 0
-	d:	.float 0.0
 
 .globl main
 .text
 main:
 	move $fp, $sp
 	li $t0, 1
-	la $t1, a
-	sw $t0, 0($t1)
-	li $t0, 2
-	li $t1, 2
-	or $t2, $t0, $t1
-	sw $t2, -4($fp)
+	sw $t0, -4($fp)
+	li $t0, 1
+	sw $t0, -8($fp)
+	li $t0, 1
+	sw $t0, -12($fp)
 	lw $t0, -4($fp)
-	la $t1, a
-	sw $t0, 0($t1)
-	lw $t0, a
+	bne $t0, $zero, Label_5
+	j Label_18
+
+Label_5:
+	lw $t0, -8($fp)
+	bne $t0, $zero, Label_7
+	j Label_10
+
+Label_7:
+	li $t0, 3
+	li $v0, 1
+	move $a0, $t0
+	syscall
+	li $t0, 3
+	li $v0, 1
+	move $a0, $t0
+	syscall
+	j Label_10
+
+Label_10:
+	lw $t0, -12($fp)
+	bne $t0, $zero, Label_12
+	j Label_15
+
+Label_12:
+	li $t0, 4
+	li $v0, 1
+	move $a0, $t0
+	syscall
+	li $t0, 4
+	li $v0, 1
+	move $a0, $t0
+	syscall
+	j Label_15
+
+Label_15:
+	li $t0, 1
 	li $v0, 1
 	move $a0, $t0
 	syscall
@@ -24,30 +55,8 @@ main:
 	li $v0, 1
 	move $a0, $t0
 	syscall
-	li $v0, 4
-	la $a0, -4($fp)
-	li $t0, 10
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 1
-	la $t1, a
-	sw $t0, 0($t1)
-	lw $t0, a
-	bne $t0, $zero, Label_9
-	j Label_11
+	j Label_18
 
-Label_9:
-	li $t0, 2
-	li $v0, 1
-	move $a0, $t0
-	syscall
-	li $t0, 2
-	li $v0, 1
-	move $a0, $t0
-	syscall
-
-Label_11:
+Label_18:
 	li $v0, 10
 	syscall
