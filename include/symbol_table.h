@@ -67,7 +67,7 @@ typedef struct SymbolTable
     __uint32_t size;      // number of elements in the table  
     __uint32_t scope;     // scope of the table
     __uint32_t nb_variable;   // Number of frame pointer in the table
-    SymbolTableElement *first_symbol;
+    SymbolTableElement *first_symbol;  
 
     struct SymbolTable *next;       // liste chainée des tables de symboles
     struct SymbolTable *previous;   // permet de remonter dans la table des symboles en respectant les scopes
@@ -83,8 +83,8 @@ SymbolTableElement *get_symbol(SymbolTable *s, __uint32_t i);
 
 SymbolTableElement *insert_variable(SymbolTable *s, char *name, __uint32_t type, __uint32_t class, __int32_t frame_pointer, __uint32_t scope);
 SymbolTableElement *insert_function(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type);
-SymbolTableElement* insert_constant(SymbolTable **s, Constant constant, __uint32_t type);
-SymbolTableElement *insert_string(SymbolTable **s, char *string, __uint32_t frame_pointer);
+SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32_t type);
+SymbolTableElement *insert_string(SymbolTable *s, char *string, __uint32_t frame_pointer, __uint32_t scope);
 
 SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class, __uint32_t exact_scope);
 SymbolTableElement *lookup_function(SymbolTable *s, char *name);

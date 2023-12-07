@@ -5,7 +5,7 @@
 /* QUADRUPLETS ET CODE */
 
 typedef struct Quad {
-  enum quad_kind {BOP_PLUS, BOP_MINUS, BOP_MULT, BOP_DIV, BOP_MOD, BOP_OR, BOP_AND, BOP_EQ, BOP_NEQ, UOP_MINUS, UOP_NOT, K_COPY, 
+  enum quad_kind {BOP_PLUS, BOP_MINUS, BOP_MULT, BOP_DIV, BOP_MOD, BOP_EQ, BOP_NEQ, UOP_MINUS, K_COPY, 
                   K_CALL_PRINT, K_CALL_PRINTF, K_CALL_PRINTMAT, K_CALL, K_GOTO, K_IF} kind;
   SymbolTableElement *sym1; // result
   SymbolTableElement *sym2; // operand 1 or function 
@@ -35,9 +35,9 @@ void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, Symb
 char* generate_label();
 char *generate_label_with_nb(__uint32_t nb);
 
-__uint32_t *create_list(__uint32_t i);
-__uint32_t *concat_list(__uint32_t *l1, __uint32_t *l2);
-void complete_list(__uint32_t *l, __uint32_t i);
+__int32_t *create_list(__int32_t i);
+__int32_t *concat_list(__int32_t *l1, __int32_t *l2);
+void complete_list(__int32_t *l, __int32_t i);
 
 void code_dump(QuadTable * c);
 

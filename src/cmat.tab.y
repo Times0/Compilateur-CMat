@@ -42,9 +42,9 @@ void semantic_warning(const char *format, ...);
           SymbolTableElement ** ptr_list;
           __uint32_t size_ptr_list;
           __uint32_t capacity_ptr_list;
-          __uint32_t *true_list;        // liste des indices quads à compléter pour le vrai
-          __uint32_t *false_list;       // liste des indices quads à compléter pour le faux
-          __uint32_t *next_list;        // liste des indices quads à compléter pour le suivant ?
+          __int32_t *true_list;        // liste des indices quads à compléter pour le vrai
+          __int32_t *false_list;       // liste des indices quads à compléter pour le faux
+          __int32_t *next_list;        // liste des indices quads à compléter pour le suivant ?
      }expr;
 }
 
@@ -92,12 +92,12 @@ instruction_list: instruction_list M instruction   { complete_list($1.next_list,
                 | instruction                      { $$.next_list = $1.next_list; }
 
 
-instruction : declaration ';'    
+instruction : declaration ';'           { $$.next_list = create_list(-1);}
             | declaration_function
-            | call ';'           
-            | assign ';'         
-            | expression ';'     
-            | statement            
+            | call ';'                  { $$.next_list = create_list(-1);}
+            | assign ';'                { $$.next_list = create_list(-1);}
+            | expression ';'            { $$.next_list = create_list(-1);}
+            | statement                 
             | block                
 
 
@@ -136,7 +136,6 @@ type : INT
 call : ID '(' parameter_list ')'
      {
           SymbolTableElement *id = lookup_function(symbol_table, $1);
-
           if(strcmp($1, "print") == 0)
           {
                if($3.size_ptr_list != id->attribute.function.nb_parameters)
@@ -157,7 +156,7 @@ call : ID '(' parameter_list ')'
                }
                if($3.ptr_list[0]->type != STRING)
                {
-                    semantic_error("printf only takes string as argument");
+                    semantic_error("printf only takes one string as argument");
                }
                gen_quad_function(code, K_CALL_PRINTF, NULL, id, $3.ptr_list, $3.size_ptr_list); // changer le null
           }
@@ -176,7 +175,8 @@ parameter : expression
           }
           | STRING
           {
-               $$.ptr = insert_string(&symbol_table, $1, frame_pointer);
+               $$.ptr = insert_string(symbol_table, $1, frame_pointer, current_scope);
+               // on ne modifie pas frame_pointer car on ne stocke pas les strings dans la pile
           }
 
 parameter_list : parameter ',' parameter_list
@@ -239,7 +239,7 @@ block : '{'                   {
                                    $$.next_list = $3.next_list;
                                    complete_list($3.next_list, code->nextquad);
                                    
-                                   frame_pointer -= get_symbol_table_by_scope(symbol_table, current_scope)->size; // il faut plus que ca pour string et matrice
+                                   frame_pointer -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable; // il faut plus que ca pour matrice
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 
                               }
      /* | instruction */ // tres smart 

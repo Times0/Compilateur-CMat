@@ -104,9 +104,9 @@ SymbolTableElement *insert_variable(SymbolTable *s, char *name, __uint32_t type,
 		s->nb_variable++;
 
 		s = tmp;
-		return l;
+		
 	}
-	return NULL;
+	return l;
 }
 
 SymbolTableElement *insert_function(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type)
@@ -166,28 +166,23 @@ SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32
 	return l;
 }
 
-SymbolTableElement *insert_string(SymbolTable **s, char *string, __uint32_t frame_pointer)
+SymbolTableElement *insert_string(SymbolTable *s, char *string, __uint32_t frame_pointer, __uint32_t scope)
 {
-	SymbolTableElement *l = lookup_string(*s, string);
+	// SymbolTableElement *l = lookup_string(s, string);
+	SymbolTableElement* l = malloc(sizeof(SymbolTableElement));
 	if (l == NULL)
 	{
-		l = malloc(sizeof(SymbolTableElement));
-		if (l == NULL)
-		{
-			perror("Error malloc in insert_string\n");
-			exit(1);
-		}
-		get_symbol(*s, (*s)->size-1)->next = l;
-		l->next = NULL;
-		
-		strncpy(l->attribute.string.string, string, MAXSTRLEN);
-		l->attribute.string.frame_pointer = frame_pointer;
-		l->class = STR;
-		l->type = STRING;
-		++((*s)->size);
-
-		(*s)->nb_variable += strlen(string);
+		perror("Error malloc in insert_string\n");
+		exit(1);
 	}
+	get_symbol(s, (s)->size-1)->next = l;
+	l->next = NULL;
+	
+	strncpy(l->attribute.string.string, string, MAXSTRLEN);
+	l->attribute.string.frame_pointer = frame_pointer + strlen(string) + 1; // Car l'offset sur a0 va dans les positifs et ecrase les variables dans la stack
+	l->class = STR;
+	l->type = STRING;
+	s->size++;
 	return l;
 }
 

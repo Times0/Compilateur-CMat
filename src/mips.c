@@ -55,9 +55,6 @@ void gencode_mips(QuadTable *code, FILE * f)
     }
 
     // fin du main et du code
-    char *ll = generate_label_with_nb(code->nextquad);
-    fprintf (f, "\n%s:\n", ll);
-    free(ll);
     fprintf (f, "\tli $v0, 10\n\tsyscall\n");
 
     // parcours de tous les quads avant le main
@@ -72,7 +69,7 @@ void gencode_mips(QuadTable *code, FILE * f)
 
 void gencode_mips_quad(FILE *f, Quad *quad)
 {
-    if (quad->is_branched)
+    if(quad->is_branched)
     {
         fprintf (f, "\n%s:\n", quad->label);
     }
@@ -86,16 +83,11 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case BOP_MOD:
             gencode_arith_binary_op(f, quad);
             break;
-        case BOP_OR:
-        case BOP_AND:
         case BOP_EQ:
         case BOP_NEQ:
-            gencode_arith_binary_op(f, quad);
+            
             break;
         case UOP_MINUS:
-            gencode_arith_unary_op(f, quad);
-            break;
-        case UOP_NOT:
             gencode_arith_unary_op(f, quad);
             break;
         case K_COPY:
@@ -169,15 +161,6 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
         store_result(f, quad->sym1, 0);
         return;
     }
-    else if(quad->kind == UOP_NOT)
-    {
-        load_operator(f, quad->sym2);
-
-        fprintf (f, "\tnor $t%d, $t%d, $zero\n", current_register_int, current_register_int - 1);
-        current_register_int++;
-        store_result(f, quad->sym1, 0);
-        return;
-    }
 }
 
 void gencode_arith_binary_op (FILE * f, Quad *quad)
@@ -247,14 +230,7 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         else if(quad->sym1->type == FLOAT)
             fprintf (f, "\tdiv.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
     }
-    else if(quad->kind == BOP_OR)
-    {
-        fprintf (f, "\tor $t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
-    }
-    else if(quad->kind == BOP_AND)
-    {
-        fprintf (f, "\tand $t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
-    }
+    
 
     //////////////////////////////////////////////////////////////
     // stocker le résultat dans un registre
@@ -341,7 +317,7 @@ void gencode_print(FILE *f, Quad *quad)
         if(quad->function_parameters[0]->type == STRING)
         {
             fprintf(f, "\tli $v0, 4\n");
-            fprintf(f, "\tla $a0, %d($fp)\n", -4*quad->function_parameters[0]->attribute.string.frame_pointer);
+            fprintf(f, "\tla $a0, %d($fp)\n", -4*(quad->function_parameters[0]->attribute.string.frame_pointer+1));
             __uint32_t str_size = strlen(quad->function_parameters[0]->attribute.string.string)-2;
             __uint32_t char_ptr = 0;
 

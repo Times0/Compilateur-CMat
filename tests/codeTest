@@ -13,9 +13,9 @@ int main()
     int a;
     int c;
     int r;
-    a=1;
+    a=2;
     c=0;
-    r=1;
+    r=2;
 
     if(a)
     {
@@ -29,7 +29,7 @@ int main()
             }
             print(3);
             print(3);
-            t = 8;
+            t = 9;
         }
         if(r)
         {
@@ -38,10 +38,16 @@ int main()
         }
         print(1);
         print(1);
-        print(t);
+        // print(t);
+        print(r);
     }
-    
-}
+    printf("\n");
+    print(a);
+    printf("\n");
+    print(c);
+    printf("\n");
+    print(r);
+    printf("\n");
 /*if(a)
 {
     /*if(e)
@@ -59,117 +65,105 @@ int main()
     {
         print(2);
     }
+}*/
+
+    float d;
+    a=a+2;
+    printf("Test des opérations arithmétiques sur int\n");
+    print(a);
+    printf("\n");
+    a = 1;
+    print(a);
+    printf("\n");
+
+    a = -2.5;
+    print(a);
+    printf("\n");
+
+    a = 1 - 2.5;
+    print(a);
+    printf("\n");
+
+    a = 1 + 2.5;
+    print(a);
+    printf("\n");
+
+    a = 3*5;
+    print(a);
+    printf("\n");
+
+    a = 24/6;
+    print(a);
+    printf("\n");
+
+    a = 26%6;
+    print(a);
+    printf("\n");
+
+    printf("Test des opérations arithmétiques sur float\n");
+
+    d = 1.9;
+    print(d);
+    printf("\n");
+
+    d = -2.5;
+    print(d);
+    printf("\n");
+
+    d = 1.9 - 2.5;
+    print(d);
+    printf("\n");
+
+    d = 1.9 + 2.5;
+    print(d);
+    printf("\n");
+
+    d = 3.5*5.5;
+    print(d);
+    printf("\n");
+
+    d = 24.5/6.5;
+    print(d);
+    printf("\n");
+
+    d = 26%6;
+    print(d);
+    printf("\n");
+
+    printf("Test des opérations arithmétiques sur int et float\n");
+
+    d = 1;
+    print(d);
+    printf("\n");
+
+    a = 1.9;
+    print(a);
+    printf("\n");
+
+    d = 1 + 2.5;
+    print(d);
+    printf("\n");
+
+    d = 2*2.5;
+    print(d);
+    printf("\n");
+
+    d = 2.5/2;
+    print(d);
+    printf("\n");
+
+    d =1.5;
+    d++;
+    print(d);
+    printf("\n");
+
+    d=1.5;
+    ++d;
+    print(d);
+    printf("\n");
+
+    printf("Fin des tests\n");
 }
-
-/*if(1)
-{
-    print(3);
-}
-
-a=a+2;
-printf("Test des opérations arithmétiques sur int\n");
-print(a);
-a = 1;
-print(a);
-printf("\n");
-
-a = -2.5;
-print(a);
-printf("\n");
-
-a = 1 - 2.5;
-print(a);
-printf("\n");
-
-a = 1 + 2.5;
-print(a);
-printf("\n");
-
-a = 3*5;
-print(a);
-printf("\n");
-
-a = 24/6;
-print(a);
-printf("\n");
-
-a = 26%6;
-print(a);
-printf("\n");
-
-printf("Test des opérations arithmétiques sur float\n");
-
-d = 1.9;
-print(d);
-printf("\n");
-
-d = -2.5;
-print(d);
-printf("\n");
-
-d = 1.9 - 2.5;
-print(d);
-printf("\n");
-
-d = 1.9 + 2.5;
-print(d);
-printf("\n");
-
-d = 3.5*5.5;
-print(d);
-printf("\n");
-
-d = 24.5/6.5;
-print(d);
-printf("\n");
-
-d = 26%6;
-print(d);
-printf("\n");
-
-printf("Test des opérations arithmétiques sur int et float\n");
-
-d = 1;
-print(d);
-printf("\n");
-
-a = 1.9;
-print(a);
-printf("\n");
-
-d = 1 + 2.5;
-print(d);
-printf("\n");
-
-d = 2*2.5;
-print(d);
-printf("\n");
-
-d = 2.5/2;
-print(d);
-printf("\n");
-
-d =1.5;
-d++;
-print(d);
-printf("\n");
-
-d=1.5;
-++d;
-print(d);
-printf("\n");
-
-printf("Fin des tests\n");
-
-a = 0||1;
-print(a);
-printf("\n");
-a = 2&&2;
-print(a);
-
-a = 4;
-print(a);
-printf("\n");
 
 /*{
     float a;

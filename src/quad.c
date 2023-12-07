@@ -50,7 +50,6 @@ void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTab
     q->sym3 = s3;
     q->function_parameters = NULL;
     q->nb_parameters = 0;
-    q->is_branched = 0;
     q->branch_label = NULL;
     c->nextquad++;
 }
@@ -69,6 +68,7 @@ void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, Symb
     q->nb_parameters = 0;
     q->is_branched = 0;
     q->branch_label = label;
+    q->label = NULL;
     c->nextquad++;
 }
 
@@ -86,6 +86,7 @@ void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * resu
     q->nb_parameters = nb_parameters;
     q->is_branched = 0;
     q->branch_label = NULL;
+    q->label = NULL;
     c->nextquad++;
 }
 
@@ -117,9 +118,21 @@ char *generate_label_with_nb(__uint32_t nb)
 }
 
 // create a list with one element and a sentinel
-__uint32_t *create_list(__uint32_t i)
+__int32_t *create_list(__int32_t i)
 {
-    __uint32_t *r = malloc(2*sizeof(__uint32_t));
+    if(i == -1)
+    {
+        __int32_t *r = malloc(sizeof(__int32_t));
+        if(r == NULL)
+        {
+            fprintf(stderr, "Error malloc in create_list");
+            exit(1);
+        }
+        r[0] = -1;
+        return r;
+    }
+    
+    __int32_t *r = malloc(2*sizeof(__int32_t));
     if(r == NULL)
     {
         fprintf(stderr, "Error malloc in create_list");
@@ -131,33 +144,33 @@ __uint32_t *create_list(__uint32_t i)
     return r;
 }
 
-__uint32_t *concat_list(__uint32_t *l1, __uint32_t *l2)
+__int32_t *concat_list(__int32_t *l1, __int32_t *l2)
 {
-    __uint32_t size1 = 0;
+    __int32_t size1 = 0;
     if(l1 == NULL)
         l1 = create_list(-1);
     while(l1[size1] != -1)
         size1++;
-    __uint32_t size2 = 0;
+    __int32_t size2 = 0;
     if(l2 == NULL)
         l2 = create_list(-1);
     while(l2[size2] != -1)
         size2++;
 
-    __uint32_t *r = malloc(size1+size2+1);
+    __int32_t *r = malloc(size1+size2+1);
     if(r == NULL)
     {
         fprintf(stderr, "Error malloc in concat_list");
         exit(1);
     }
 
-    __uint32_t i = 0;
+    __int32_t i = 0;
     while(l1[i] != -1)
     {
         r[i] = l1[i];
         i++;
     }
-    __uint32_t j = 0;
+    __int32_t j = 0;
     while(l2[j] != -1)
     {
         r[i+j] = l2[j];
@@ -173,8 +186,9 @@ __uint32_t *concat_list(__uint32_t *l1, __uint32_t *l2)
     return r;
 }
 
-void complete_list(__uint32_t *l, __uint32_t i)
+void complete_list(__int32_t *l, __int32_t i)
 {
+    // printf("complete list %p with %d\n", l, i);
     if(l == NULL)
     {
         // printf("comple nul\n");
@@ -188,9 +202,10 @@ void complete_list(__uint32_t *l, __uint32_t i)
 
     code->quads[i].is_branched = 1;
     code->quads[i].label = generate_label_with_nb(i);
+    printf("%d is branched\n", i);
 
     // printf("complete list %d with %d\n", l[0], i);
-    __uint32_t j = 0;
+    __int32_t j = 0;
     
     while(l[j] != -1)
     {
@@ -239,20 +254,6 @@ void quad_dump(Quad *q)
             printf(" %% ");
             symbol_dump(q->sym3);
             break;
-        case BOP_OR:
-            symbol_dump(q->sym1);
-            printf(" := ");
-            symbol_dump(q->sym2);
-            printf(" || ");
-            symbol_dump(q->sym3);
-            break;
-        case BOP_AND:
-            symbol_dump(q->sym1);
-            printf(" := ");
-            symbol_dump(q->sym2);
-            printf(" && ");
-            symbol_dump(q->sym3);
-            break;
         case BOP_EQ:
             symbol_dump(q->sym1);
             printf(" := ");
@@ -271,12 +272,6 @@ void quad_dump(Quad *q)
             symbol_dump(q->sym1);
             printf(" := ");
             printf("- ");
-            symbol_dump(q->sym2);
-            break;
-        case UOP_NOT:
-            symbol_dump(q->sym1);
-            printf(" := ");
-            printf("! ");
             symbol_dump(q->sym2);
             break;
         case K_CALL_PRINT:
