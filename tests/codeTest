@@ -14,13 +14,13 @@ int main()
     int c;
     int r;
     a=1;
-    c=1;
-    r=0;
+    c=0;
+    r=1;
 
     if(a)
     {
         int t;
-        if(c)
+        if((r && c) || c)
         {
             if(r)
             {

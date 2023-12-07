@@ -127,7 +127,7 @@ __uint32_t *create_list(__uint32_t i)
     }
     r[0] = i;
     r[1] = -1;
-    printf("create list %d\n", i);
+    // printf("create list %d\n", i);
     return r;
 }
 
@@ -165,7 +165,7 @@ __uint32_t *concat_list(__uint32_t *l1, __uint32_t *l2)
     }
     r[i+j] = -1;
 
-    printf("concat list %d %d\n", size1, size2);
+    // printf("concat list %d %d\n", size1, size2);
 
 
     free(l1);
@@ -177,19 +177,19 @@ void complete_list(__uint32_t *l, __uint32_t i)
 {
     if(l == NULL)
     {
-        printf("comple nul\n");
+        // printf("comple nul\n");
         return;
     }
     if(l[0] == -1)
     {
-        printf("complete -1 with %d\n", i);
+        // printf("complete -1 with %d\n", i);
         return;
     }
 
     code->quads[i].is_branched = 1;
     code->quads[i].label = generate_label_with_nb(i);
 
-    printf("complete list %d with %d\n", l[0], i);
+    // printf("complete list %d with %d\n", l[0], i);
     __uint32_t j = 0;
     
     while(l[j] != -1)

@@ -220,9 +220,7 @@ parameter_list : parameter ',' parameter_list
 
 assign :  ID '=' expression
           {    
-               printf("current_scope : %d\n", current_scope);
                SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-               printf("%p\n", id);
                
                if(id == NULL)
                {
@@ -282,20 +280,13 @@ expression :   expression '+' expression
                     gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
                     frame_pointer++;
                }
-               | expression OR_OP M expression
+               | expression OR_OP M expression    // supprimer le type de quad BOP_OR , etc
                {
                     if(logical_expression_flag == 1)
                     {
                          complete_list($1.false_list, $3);
                          $$.false_list = $4.false_list;
                          $$.true_list = concat_list($1.true_list, $4.true_list);
-                    }
-                    else // supprimer dans mips
-                    {
-                         semantic_warning("\"||\" used outside of a condition");
-                         $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $4.ptr->type), frame_pointer);
-                         gen_quad(code, BOP_OR, $$.ptr, $1.ptr, $4.ptr); 
-                         frame_pointer++;
                     }
                }
                | expression AND_OP M expression
@@ -306,12 +297,6 @@ expression :   expression '+' expression
                          $$.true_list = $4.true_list;
                          $$.false_list = concat_list($1.false_list, $4.false_list);
                     }
-                    else
-                    {
-                         $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $4.ptr->type), frame_pointer);
-                         gen_quad(code, BOP_AND, $$.ptr, $1.ptr, $4.ptr); 
-                         frame_pointer++;
-                    }
                }
                | '!' expression %prec UNARY_OP
                {
@@ -319,12 +304,6 @@ expression :   expression '+' expression
                     {
                          $$.true_list = $2.false_list;
                          $$.false_list = $2.true_list;
-                    }
-                    else
-                    {
-                         $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
-                         gen_quad(code, UOP_NOT, $$.ptr, $2.ptr, NULL); 
-                         frame_pointer++;
                     }
                }
                | expression EQ_OP expression
