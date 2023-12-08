@@ -384,26 +384,87 @@ void gencode_goto(FILE *f, Quad *quad)
     }
     else
     {
+        __uint32_t type_change_sym2=0;
+        __uint32_t type_change_sym3=0;
+        if(quad->sym2->type == FLOAT || quad->sym3->type == FLOAT)
+        {
+            type_change_sym2 = convert_int_to_float(quad->sym2);
+            type_change_sym3 = convert_int_to_float(quad->sym3);
+        }
+        else
+        {
+            type_change_sym2 = convert_float_to_int(quad->sym2);
+            type_change_sym3 = convert_float_to_int(quad->sym3);
+        }
+        
         load_operator(f, quad->sym2);
         load_operator(f, quad->sym3);
 
         char *l = generate_label_with_nb(quad->branch_label);
         
         if(quad->kind == K_IF)
-            fprintf(f, "\tbeq $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+        {
+            if(quad->sym2->type == INT)
+                fprintf(f, "\tbeq $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+            else if(quad->sym2->type == FLOAT)
+                fprintf(f, "\tc.eq.s $f%d, $f%d\n\tbc1t %s\n", current_register_float - 2, current_register_float-1, l);
+        }
         else if(quad->kind == K_IFNOT)
-            fprintf(f, "\tbne $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+        {
+            if(quad->sym2->type == INT)
+                fprintf(f, "\tbne $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+            else if(quad->sym2->type == FLOAT)
+                fprintf(f, "\tc.eq.s $f%d, $f%d\n\tbc1f %s\n", current_register_float - 2, current_register_float-1, l);
+        }
         else if(quad->kind == K_IFLT)
-            fprintf(f, "\tblt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+        {
+            if(quad->sym2->type == INT)
+                fprintf(f, "\tblt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+            else if(quad->sym2->type == FLOAT)
+                fprintf(f, "\tc.lt.s $f%d, $f%d\n\tbc1t %s\n", current_register_float - 2, current_register_float-1, l);
+        }
         else if(quad->kind == K_IFGT)
-            fprintf(f, "\tbgt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+        {
+            if(quad->sym2->type == INT)
+                fprintf(f, "\tbgt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+            else if(quad->sym2->type == FLOAT)
+                fprintf(f, "\tc.lt.s $f%d, $f%d\n\tbc1f %s\n", current_register_float - 2, current_register_float-1, l);
+        }
         else if(quad->kind == K_IFLE)
-            fprintf(f, "\tble $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+        {
+            if(quad->sym2->type == INT)
+                fprintf(f, "\tble $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+            else if(quad->sym2->type == FLOAT)
+                fprintf(f, "\tc.le.s $f%d, $f%d\n\tbc1t %s\n", current_register_float - 2, current_register_float-1, l);
+        }
         else if(quad->kind == K_IFGE)
-            fprintf(f, "\tbge $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
-
-        current_register_int-=2;
+        {
+            if(quad->sym2->type == INT)
+                fprintf(f, "\tbge $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
+            else if(quad->sym2->type == FLOAT)
+                fprintf(f, "\tc.le.s $f%d, $f%d\n\tbc1f %s\n", current_register_float - 2, current_register_float-1, l);
+        }
+        
+        if(quad->sym2->type == INT)
+            current_register_int-=2;
+        else if(quad->sym2->type == FLOAT)
+            current_register_float-=2;
         free(l);
+
+        if(quad->sym2->type == FLOAT || quad->sym3->type == FLOAT)
+        {
+            if(type_change_sym2)
+                convert_float_to_int(quad->sym2);
+            if(type_change_sym3)
+                convert_float_to_int(quad->sym3);
+        }
+        else
+        {
+            if(type_change_sym2)
+                convert_int_to_float(quad->sym2);
+            if(type_change_sym3)
+                convert_int_to_float(quad->sym3);
+        }
     }
 }
 

@@ -25,6 +25,7 @@ typedef struct Variable
 {
     __int32_t frame_pointer;
     char name[MAXTOKENLEN];
+    __uint32_t size[2]; // only used for matrix
 }Variable;
 
 typedef struct Function
@@ -51,11 +52,7 @@ typedef struct SymbolTableElement
         Constant constant;
         Function function;
         String string;
-        /*union array
-        {
-            __uint32_t size1;
-            __uint32_t size2;
-        };*/
+
     }attribute;
     struct SymbolTableElement *next;
 

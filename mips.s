@@ -72,6 +72,23 @@ Label_12:
 	j Label_10
 
 Label_18:
+	li.s $f0, 0.900000
+	li.s $f1, 1.000000
+	c.le.s $f0, $f1
+	bc1f Label_20
+	j Label_22
+
+Label_20:
+	li $v0, 4
+	la $a0, -48($fp)
+	li $t0, 62
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	j Label_22
+
+Label_22:
 	li $t0, 1
 	sw $t0, -32($fp)
 	li $v0, 10
