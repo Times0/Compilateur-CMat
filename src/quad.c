@@ -7,6 +7,9 @@
 __uint32_t label_counter = 0;     // compteur pour les labels
 QuadTable *code;
 
+// il est important d'initialiser les labels a -1 car on va les modifier avant que le quad soit crée.
+// cela peut causer de segfault si on essaye de completer un quad alors qu'on est en limite de capacité
+
 QuadTable *code_new()
 {
     QuadTable *r = malloc(sizeof(QuadTable));
@@ -16,12 +19,23 @@ QuadTable *code_new()
         exit(1);
     }
     r->capacity = 256;
-    r->quads = malloc(r->capacity*sizeof(Quad));
+    r->quads = calloc(r->capacity,sizeof(Quad));
     if(r->quads == NULL)
     {
         fprintf(stderr, "Error malloc in code_new");
         exit(1);
     }
+    for(int i = 0; i < r->capacity; i++)
+    {
+        r->quads[i].sym1 = NULL;
+        r->quads[i].sym2 = NULL;
+        r->quads[i].sym3 = NULL;
+        r->quads[i].function_parameters = NULL;
+        r->quads[i].nb_parameters = 0;
+        r->quads[i].branch_label = -1;
+        r->quads[i].label = -1;
+    }
+    
     r->nextquad = 0;
     r->main_quad = -1;
     return r;
@@ -36,6 +50,17 @@ void code_grow(QuadTable **c)
         fprintf(stderr,"Error attempting to grow quad list (actual size is %d)\n",(*c)->nextquad);
             exit(1);
     }
+
+    for(int i = (*c)->nextquad; i < (*c)->capacity; i++)
+    {
+        (*c)->quads[i].sym1 = NULL;
+        (*c)->quads[i].sym2 = NULL;
+        (*c)->quads[i].sym3 = NULL;
+        (*c)->quads[i].function_parameters = NULL;
+        (*c)->quads[i].nb_parameters = 0;
+        (*c)->quads[i].branch_label = -1;
+        (*c)->quads[i].label = -1;
+    }
 }
 
 void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3)
@@ -48,27 +73,19 @@ void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTab
     q->sym1 = s1;
     q->sym2 = s2;
     q->sym3 = s3;
-    q->function_parameters = NULL;
-    q->nb_parameters = 0;
-    q->branch_label = NULL;
     c->nextquad++;
 }
 
-void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, char *label)
+void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, __int32_t label)
 {
     if ( c->nextquad == c->capacity )
         code_grow(&c);
 
     Quad *q = &(c->quads[c->nextquad]);
     q->kind = k;
-    q->sym1 = NULL;
     q->sym2 = s1;
     q->sym3 = s2;
-    q->function_parameters = NULL;
-    q->nb_parameters = 0;
-    q->is_branched = 0;
     q->branch_label = label;
-    q->label = NULL;
     c->nextquad++;
 }
 
@@ -81,12 +98,8 @@ void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * resu
     q->kind = k;
     q->sym1 = result;
     q->sym2 = function;
-    q->sym3 = NULL;
     q->function_parameters = parameters;
     q->nb_parameters = nb_parameters;
-    q->is_branched = 0;
-    q->branch_label = NULL;
-    q->label = NULL;
     c->nextquad++;
 }
 
@@ -200,23 +213,27 @@ void complete_list(__int32_t *l, __int32_t i)
         return;
     }
 
-    code->quads[i].is_branched = 1;
-    code->quads[i].label = generate_label_with_nb(i);
-    printf("%d is branched\n", i);
+    code->quads[i].label = i;
+    printf("complete list %d with %d\n", l[0], i);
+
 
     // printf("complete list %d with %d\n", l[0], i);
     __int32_t j = 0;
     
     while(l[j] != -1)
     {
-        if(code->quads[l[j]].branch_label == NULL)
-            code->quads[l[j]].branch_label = generate_label_with_nb(i);
+        if(code->quads[l[j]].branch_label == -1)
+            code->quads[l[j]].branch_label = i;
         j++;
     }   
 }
 
 void quad_dump(Quad *q)
 {
+    char *l = NULL;
+    if(q->branch_label != -1)
+        l = generate_label_with_nb(q->branch_label);
+
     switch ( q->kind )
     {
         case BOP_PLUS:
@@ -286,54 +303,56 @@ void quad_dump(Quad *q)
             symbol_dump(q->sym2);
             break;
         case K_GOTO:
-            printf("goto %s", q->branch_label);
+            printf("goto %s", l);
             break;
         case K_IF:
             printf("if ");
             symbol_dump(q->sym2);
             printf(" == ");
             symbol_dump(q->sym3);
-            printf(" goto %s", q->branch_label);
+            printf(" goto %s", l);
             break;
         case K_IFNOT:
             printf("if ");
             symbol_dump(q->sym2);
             printf(" != ");
             symbol_dump(q->sym3);
-            printf(" goto %s", q->branch_label);
+            printf(" goto %s", l);
             break;
         case K_IFLT:
             printf("if ");
             symbol_dump(q->sym2);
             printf(" < ");
             symbol_dump(q->sym3);
-            printf(" goto %s", q->branch_label);
+            printf(" goto %s", l);
             break;
         case K_IFGT:
             printf("if ");
             symbol_dump(q->sym2);
             printf(" > ");
             symbol_dump(q->sym3);
-            printf(" goto %s", q->branch_label);
+            printf(" goto %s", l);
             break;
         case K_IFLE:
             printf("if ");
             symbol_dump(q->sym2);
             printf(" <= ");
             symbol_dump(q->sym3);
-            printf(" goto %s", q->branch_label);
+            printf(" goto %s", l);
             break;
         case K_IFGE:
             printf("if ");
             symbol_dump(q->sym2);
             printf(" >= ");
             symbol_dump(q->sym3);
-            printf(" goto %s", q->branch_label);
+            printf(" goto %s", l);
             break;
         default:
             printf("BUG\n");
             break;
     }
+    if(l != NULL)
+        free(l);
 }
 
 void code_dump(QuadTable *c)

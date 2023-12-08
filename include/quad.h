@@ -13,9 +13,8 @@ typedef struct Quad {
   SymbolTableElement **function_parameters;
   __uint32_t nb_parameters;
 
-  char *branch_label;
-  __uint32_t is_branched;
-  char *label;
+  __int32_t branch_label;
+  __int32_t label;      // tell if the quad is preceded by a label, we store a number to facilitate the generation of the label
   
 }Quad;
 
@@ -30,7 +29,7 @@ QuadTable *code_new();
 
 void gen_quad(QuadTable * c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3);
 void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters);
-void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, char *label);
+void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, __int32_t label);
 
 char* generate_label();
 char *generate_label_with_nb(__uint32_t nb);

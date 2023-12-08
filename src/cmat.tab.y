@@ -85,14 +85,17 @@ void semantic_warning(const char *format, ...);
 %type <expr> statement_if
 %type <expr> statement_else
 %type <expr> statement_while
+%type <expr> statement_for
 %type <expr> block
 %type <expr> id_or_const
 %type <expr> instruction
 %type <expr> instruction_list
 %type <expr> declaration_function
+%type <expr> declaration_affectation
 %type <expr> call
 %type <expr> assign
 %type <expr> declaration
+%type <expr> declaration_or_assign
 %type <type_val> type
 %type <expr> M
 %type <expr> N
@@ -116,10 +119,11 @@ instruction : declaration ';'           { $$.next_list = create_list(-1);}
 
 M : %empty { $$.quad = code->nextquad; }
 
-N : %empty { $$.next_list = create_list(code->nextquad); gen_quad_goto(code, K_GOTO, NULL, NULL, NULL); $$.quad = code->nextquad; }
+N : %empty { $$.next_list = create_list(code->nextquad); gen_quad_goto(code, K_GOTO, NULL, NULL, -1); $$.quad = code->nextquad; }
 
 statement : statement_if
           | statement_while
+          | statement_for
 
 statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block statement_else
              {
@@ -129,7 +133,7 @@ statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expre
                          complete_list($4.true_list, $7.quad);
                          $$.next_list = concat_list($4.false_list, $8.next_list);
                          $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
-                         gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                     }
                     else
                     {
@@ -137,7 +141,7 @@ statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expre
                          complete_list($4.false_list, $9.quad);
                          $$.next_list = concat_list($8.next_list, $9.next_list);
                          $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
-                         gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                     }
              }
 
@@ -159,22 +163,68 @@ statement_else : ELSE N statement_if
 statement_while : WHILE M '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block
                 {
                     complete_list($5.true_list, $8.quad);
-                    char *label = generate_label_with_nb($2.quad);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, label);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad);
                     
                     // on ajoute un label pour le while, on regenere un label (meme si inutile) pour faciliter le free 
-                    code->quads[$2.quad].is_branched = 1;
-                    label = generate_label_with_nb($2.quad);
-                    code->quads[$2.quad].label = label;
+                    code->quads[$2.quad].label = $2.quad;
 
                     complete_list($9.next_list, $2.quad);
-                    $$.next_list = $5.false_list;
-                    
+                    $$.next_list = $5.false_list;   
                 }
+
+statement_for : FOR M '(' {logical_expression_flag++;} declaration_or_assign ';' expression ';' M expression ')' {logical_expression_flag--;} M block
+               {
+                    // NULL
+                    /*complete_list($7.true_list, $13.quad);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad+1);  // +1 pour l'initialisation
+                    
+                    // on ajoute un label pour le for, on regenere un label (meme si inutile) pour faciliter le free 
+                    code->quads[$2.quad].label = $2.quad;
+
+                    complete_list($14.next_list, $2.quad);
+                    $$.next_list = $7.false_list;
+
+                    Quad *q = malloc(sizeof(Quad)*($9.quad-$2.quad-1));
+                    if(q == NULL)
+                    {
+                         printf("malloc failed in for\n");
+                         exit(1);
+                    }
+                    // on copie les quads de la condition
+                    for(int i = $2.quad+1; i < $9.quad; i++)
+                    {
+                         q[i-$2.quad-1] = code->quads[i];
+                         printf("%d\t%d\n", q[i-$2.quad-1].label, q[i-$2.quad-1].branch_label);
+
+                         /*if(q[i-$2.quad-1].label != -1 && q[i-$2.quad-1].kind != K_GOTO)
+                         {
+                              q[i-$2.quad-1].label += $13.quad-$9.quad;
+                         }
+                         if(q[i-$2.quad-1].branch_label != -1 && q[i-$2.quad-1].kind != K_GOTO)
+                         {
+                              q[i-$2.quad-1].branch_label += $13.quad-$9.quad;
+                         }
+     
+                    }
+                    // on les remplace par les quads de l'expression finale
+                    for(int i = $9.quad; i < $13.quad; i++)
+                    {
+                         code->quads[i+$2.quad-$9.quad+1] = code->quads[i];
+                    }
+                    // on reecrit les quads de la condition
+                    for(int i = $2.quad+1+($13.quad-$9.quad); i < $13.quad; i++)
+                    {
+                         code->quads[i] = q[i-$2.quad-1-($13.quad-$9.quad)];
+                    }
+                    // 13 20 17 20 11 */
+               }
+
+declaration_or_assign : declaration
+                      | assign
 
 declaration_function : type MAIN '(' ')' block {$$.ptr = NULL;}
 
-declaration :  type ID
+declaration :  type ID declaration_affectation
                {
                     SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
                     if(l != NULL)
@@ -187,8 +237,22 @@ declaration :  type ID
                     {
                          insert_variable(symbol_table, $2, $1, VARIABLE, frame_pointer, current_scope);
                          frame_pointer++;
-                    }     
+                    }
+                    // set a la valeur par initiale
+                    if($3.ptr != NULL)
+                    {
+                         gen_quad(code, K_COPY, lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0), $3.ptr, NULL);
+                    }
                }
+
+declaration_affectation : '=' expression
+                        {
+                              $$.ptr = $2.ptr;
+                        }
+                        | %empty
+                        {
+                              $$.ptr = NULL;
+                        }
 
 type : INT  
      | FLOAT
@@ -402,8 +466,8 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 }
                                 $$.true_list = create_list(code->nextquad);
                                 $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, NULL);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                                gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, -1);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                            }  
                            | id_or_const NEQ_OP id_or_const
                            {
@@ -413,8 +477,8 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 }
                                 $$.true_list = create_list(code->nextquad);
                                 $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, NULL);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                                gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, -1);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                            }
                            | id_or_const LT_OP id_or_const
                            {
@@ -424,8 +488,8 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 }
                                 $$.true_list = create_list(code->nextquad);
                                 $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, NULL);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                                gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, -1);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                            }
                            | id_or_const GT_OP id_or_const
                            {
@@ -436,8 +500,8 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 $$.true_list = create_list(code->nextquad);
                                 $$.false_list = create_list(code->nextquad+1);
                                 printf("Gen op_gt %p with %d\n", $$.true_list, $$.true_list[0]);
-                                gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, NULL);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                                gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, -1);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                            }
                            | id_or_const LE_OP id_or_const
                            {
@@ -447,8 +511,8 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 }
                                 $$.true_list = create_list(code->nextquad);
                                 $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, NULL);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                                gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, -1);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                            }
                            | id_or_const GE_OP id_or_const
                            {
@@ -458,8 +522,8 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 }
                                 $$.true_list = create_list(code->nextquad);
                                 $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, NULL);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                                gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, -1);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                            }
                            | primary_expression
 
@@ -476,8 +540,8 @@ primary_expression : ID
                          {
                               $$.true_list = create_list(code->nextquad);
                               $$.false_list = create_list(code->nextquad+1);
-                              gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), NULL);
-                              gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                              gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), -1);
+                              gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                          }
                     }
                     | INT_CONST

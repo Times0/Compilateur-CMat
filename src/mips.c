@@ -69,9 +69,11 @@ void gencode_mips(QuadTable *code, FILE * f)
 
 void gencode_mips_quad(FILE *f, Quad *quad)
 {
-    if(quad->is_branched)
+    if(quad->label != -1)
     {
-        fprintf (f, "\n%s:\n", quad->label);
+        char *l = generate_label_with_nb(quad->label);
+        fprintf (f, "\n%s:\n", l);
+        free(l);
     }
         
     switch(quad->kind)
@@ -376,27 +378,32 @@ void gencode_goto(FILE *f, Quad *quad)
 {
     if(quad->kind == K_GOTO)
     {
-        fprintf(f, "\tj %s\n", quad->branch_label);
+        char *l = generate_label_with_nb(quad->branch_label);
+        fprintf(f, "\tj %s\n", l);
+        free(l);
     }
     else
     {
         load_operator(f, quad->sym2);
         load_operator(f, quad->sym3);
+
+        char *l = generate_label_with_nb(quad->branch_label);
         
         if(quad->kind == K_IF)
-            fprintf(f, "\tbeq $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+            fprintf(f, "\tbeq $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
         else if(quad->kind == K_IFNOT)
-            fprintf(f, "\tbne $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+            fprintf(f, "\tbne $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
         else if(quad->kind == K_IFLT)
-            fprintf(f, "\tblt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+            fprintf(f, "\tblt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
         else if(quad->kind == K_IFGT)
-            fprintf(f, "\tbgt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+            fprintf(f, "\tbgt $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
         else if(quad->kind == K_IFLE)
-            fprintf(f, "\tble $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+            fprintf(f, "\tble $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
         else if(quad->kind == K_IFGE)
-            fprintf(f, "\tbge $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, quad->branch_label);
+            fprintf(f, "\tbge $t%d, $t%d, %s\n", current_register_int - 2, current_register_int-1, l);
 
         current_register_int-=2;
+        free(l);
     }
 }
 

@@ -4,6 +4,12 @@
 .text
 main:
 	move $fp, $sp
+	li $t0, 9
+	sw $t0, -4($fp)
+	lw $t0, -4($fp)
+	li $v0, 1
+	move $a0, $t0
+	syscall
 	li $t0, 3
 	sw $t0, -4($fp)
 	li $t0, 0
@@ -35,13 +41,13 @@ main:
 	move $a0, $t0
 	syscall
 
-Label_8:
-	lw $t0, -8($fp)
-	li $t1, 3
-	blt $t0, $t1, Label_10
-	j Label_16
-
 Label_10:
+	lw $t0, -8($fp)
+	li $t1, 5
+	blt $t0, $t1, Label_12
+	j Label_18
+
+Label_12:
 	lw $t0, -8($fp)
 	li $v0, 1
 	move $a0, $t0
@@ -63,9 +69,9 @@ Label_10:
 	li $t1, 1
 	add $t2, $t0, $t1
 	sw $t2, -4($fp)
-	j Label_8
+	j Label_10
 
-Label_16:
+Label_18:
 	li $t0, 1
 	sw $t0, -32($fp)
 	li $v0, 10
