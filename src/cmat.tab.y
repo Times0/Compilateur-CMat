@@ -81,9 +81,12 @@ void semantic_warning(const char *format, ...);
 %type <expr> additive_expression
 %type <expr> parameter
 %type <expr> parameter_list
+%type <expr> statement
 %type <expr> statement_if
 %type <expr> statement_else
+%type <expr> statement_while
 %type <expr> block
+%type <expr> id_or_const
 %type <expr> instruction
 %type <expr> instruction_list
 %type <expr> declaration_function
@@ -107,13 +110,16 @@ instruction : declaration ';'           { $$.next_list = create_list(-1);}
             | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
             | expression ';'            { $$.next_list = create_list(-1);}
-            | statement_if                 
+            | statement                 
             | block                
 
 
 M : %empty { $$.quad = code->nextquad; }
 
 N : %empty { $$.next_list = create_list(code->nextquad); gen_quad_goto(code, K_GOTO, NULL, NULL, NULL); $$.quad = code->nextquad; }
+
+statement : statement_if
+          | statement_while
 
 statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block statement_else
              {
@@ -149,6 +155,22 @@ statement_else : ELSE N statement_if
                {
                     $$.ptr = NULL;
                }
+
+statement_while : WHILE M '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block
+                {
+                    complete_list($5.true_list, $8.quad);
+                    char *label = generate_label_with_nb($2.quad);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, label);
+                    
+                    // on ajoute un label pour le while, on regenere un label (meme si inutile) pour faciliter le free 
+                    code->quads[$2.quad].is_branched = 1;
+                    label = generate_label_with_nb($2.quad);
+                    code->quads[$2.quad].label = label;
+
+                    complete_list($9.next_list, $2.quad);
+                    $$.next_list = $5.false_list;
+                    
+                }
 
 declaration_function : type MAIN '(' ')' block {$$.ptr = NULL;}
 
@@ -327,6 +349,29 @@ additive_expression : multiplicative_expresssion
                          $$.true_list = concat_list($1.true_list, $4.true_list);
                     }
 
+id_or_const : ID
+            {
+               $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
+               if($$.ptr == NULL)
+               {
+                    semantic_error("variable \"%s\" not declared", $1);
+               }
+            }
+            | INT_CONST
+            {
+               Constant v;
+               v.int_value = $1;
+               v.float_value = (float)$1;
+               $$.ptr = insert_constant(&symbol_table, v, INT);
+            }
+            | FLOAT_CONST
+            {
+               Constant v;
+               v.float_value = $1;
+               v.int_value = (int)$1;
+               $$.ptr = insert_constant(&symbol_table, v, FLOAT);
+            }
+
 multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                            {
                                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
@@ -349,7 +394,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                               gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
                               frame_pointer++;
                            }
-                           | multiplicative_expresssion EQ_OP primary_expression
+                           | id_or_const EQ_OP id_or_const
                            {
                                 if(logical_expression_flag == 0)
                                 {
@@ -360,7 +405,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, NULL);
                                 gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
                            }  
-                           | multiplicative_expresssion NEQ_OP primary_expression
+                           | id_or_const NEQ_OP id_or_const
                            {
                                 if(logical_expression_flag == 0)
                                 {
@@ -371,7 +416,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, NULL);
                                 gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
                            }
-                           | multiplicative_expresssion LT_OP primary_expression
+                           | id_or_const LT_OP id_or_const
                            {
                                 if(logical_expression_flag == 0)
                                 {
@@ -382,7 +427,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, NULL);
                                 gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
                            }
-                           | multiplicative_expresssion GT_OP primary_expression
+                           | id_or_const GT_OP id_or_const
                            {
                                 if(logical_expression_flag == 0)
                                 {
@@ -394,7 +439,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, NULL);
                                 gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
                            }
-                           | multiplicative_expresssion LE_OP primary_expression
+                           | id_or_const LE_OP id_or_const
                            {
                                 if(logical_expression_flag == 0)
                                 {
@@ -405,7 +450,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, NULL);
                                 gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
                            }
-                           | multiplicative_expresssion GE_OP primary_expression
+                           | id_or_const GE_OP id_or_const
                            {
                                 if(logical_expression_flag == 0)
                                 {

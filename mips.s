@@ -4,7 +4,7 @@
 .text
 main:
 	move $fp, $sp
-	li $t0, 1
+	li $t0, 3
 	sw $t0, -4($fp)
 	li $t0, 0
 	sw $t0, -8($fp)
@@ -34,36 +34,39 @@ main:
 	li $v0, 1
 	move $a0, $t0
 	syscall
-	li $t0, 2
-	li $t1, 1
+
+Label_8:
+	lw $t0, -8($fp)
+	li $t1, 3
 	blt $t0, $t1, Label_10
-	j Label_12
+	j Label_16
 
 Label_10:
+	lw $t0, -8($fp)
+	li $v0, 1
+	move $a0, $t0
+	syscall
 	li $v0, 4
-	la $a0, -48($fp)
-	li $t0, 60
+	la $a0, -52($fp)
+	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
 	sb $t0, 1($a0)
 	syscall
-	j Label_17
-
-Label_12:
-	li $t0, 2
+	lw $t0, -8($fp)
+	li $t1, 2
+	add $t2, $t0, $t1
+	sw $t2, -32($fp)
+	lw $t0, -32($fp)
+	sw $t0, -8($fp)
+	lw $t0, -4($fp)
 	li $t1, 1
-	bgt $t0, $t1, Label_14
-	j Label_17
+	add $t2, $t0, $t1
+	sw $t2, -4($fp)
+	j Label_8
 
-Label_14:
-	li $v0, 4
-	la $a0, -48($fp)
-	li $t0, 62
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	j Label_17
-	j Label_17
+Label_16:
+	li $t0, 1
+	sw $t0, -32($fp)
 	li $v0, 10
 	syscall

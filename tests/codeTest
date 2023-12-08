@@ -12,10 +12,19 @@ int main()
 {
     int r;
     int c;
-    r = 1;
+    r = 3;
     c = 0;
     print(1+2*9+4*2+7);
-    if(2 < 1)
+
+    while(c < 3)
+    {
+        print(c);
+        printf("\n");
+        c=c+2;
+        r++;
+    }
+
+    /*if(r < 1)
     {
         printf("<");
     }
@@ -23,6 +32,12 @@ int main()
     {
         printf(">");
     }
+    else
+    {
+        printf("=");
+    }*/
+    int t;
+    t=1;
     /*if(2 <= 1)
     {
         printf("<=");
