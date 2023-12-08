@@ -1,4 +1,5 @@
 %define api.header.include {"../include/cmat.tab.h"}
+/* %glr-parser */
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +13,7 @@
 extern FILE *yyin;
 extern FILE *yyout;
 extern int yylex();
-extern int yyerror(char *s);
+extern int yyerror(const char *s);
 extern QuadTable *code;
 extern SymbolTable *symbol_table;
  __uint32_t current_scope = 0;
@@ -69,11 +70,14 @@ void semantic_warning(const char *format, ...);
 %left '+' '-' '*' '/' '%'
 %left EQ_OP NEQ_OP LT_OP GT_OP LE_OP GE_OP '!'
 %right UNARY_OP
-%left '(' ')'
+%left '(' ')' OR_OP AND_OP
 
 
 
 %type <expr> expression
+%type <expr> primary_expression
+%type <expr> multiplicative_expresssion
+%type <expr> additive_expression
 %type <expr> parameter
 %type <expr> parameter_list
 %type <expr> statement
@@ -184,7 +188,7 @@ parameter : expression
 
 parameter_list : parameter ',' parameter_list
                {
-                    if($3.size_ptr_list == $3.capacity_ptr_list)
+                    /*if($3.size_ptr_list == $3.capacity_ptr_list)
                     {
                          $3.capacity_ptr_list *= 2;
                          $3.ptr_list = realloc($3.ptr_list, $3.capacity_ptr_list*sizeof(SymbolTableElement *));
@@ -198,7 +202,7 @@ parameter_list : parameter ',' parameter_list
                     $3.size_ptr_list++;
                     $$.ptr_list = $3.ptr_list;
                     $$.size_ptr_list = $3.size_ptr_list;
-                    $$.capacity_ptr_list = $3.capacity_ptr_list;
+                    $$.capacity_ptr_list = $3.capacity_ptr_list;*/
                }
                | parameter
                {     
@@ -248,249 +252,263 @@ block : '{'                   {
      /* | instruction */ // tres smart 
 
 
-expression :   '(' expression ')'
-               {
-                    if(logical_expression_flag == 1)
+additive_expression : multiplicative_expresssion
                     {
-                         $$.true_list = $2.true_list;
-                         $$.false_list = $2.false_list;
+                         $$.ptr = $1.ptr;
+
+                         if(logical_expression_flag == 1)
+                         {
+                              $$.true_list = $1.true_list;
+                              $$.false_list = $1.false_list;
+                         }
                     }
-                    else
-                    {
-                         $$.ptr = $2.ptr;
+                    | additive_expression '+' multiplicative_expresssion
+                    { 
+                         $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
+                         gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
+                         frame_pointer++;
                     }
-               }
-               | expression '*' expression
-               {
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_MULT, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
-               | expression '/' expression
-               {
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_DIV, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
-               | expression '%' expression
-               {
-                    if($1.ptr->type != INT || $3.ptr->type != INT)
+                    | additive_expression '-' multiplicative_expresssion
                     {
-                         semantic_error("modulo operator can only be applied to integers");
+                         $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
+                         gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
+                         frame_pointer++;
                     }
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
-               | '-' expression %prec UNARY_OP
-               {
-                    $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
-                    gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL);
-               }
-               | expression '+' expression     
-               { 
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
-               | expression '-' expression 
-               {
-                    $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
-                    gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr); 
-                    frame_pointer++;
-               }
-               | '!' expression %prec UNARY_OP
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("\"!\" can only be applied to logical expressions");
+                    | additive_expression AND_OP M multiplicative_expresssion
+                    { 
+                         if(logical_expression_flag == 0)
+                         {
+                              semantic_error("\"&&\" can only be applied to logical expressions");
+                         }
+                         complete_list($1.true_list, $3);
+                         $$.true_list = $4.true_list;
+                         $$.false_list = concat_list($1.false_list, $4.false_list);
                     }
-                    $$.true_list = $2.false_list;
-                    $$.false_list = $2.true_list;
-               }
-               | expression EQ_OP expression
-               {
-                    if(logical_expression_flag == 0)
+                    | additive_expression OR_OP M multiplicative_expresssion
                     {
-                         semantic_error("comparison operator can only be applied to logical expressions");
-                    }
-                    $$.true_list = create_list(code->nextquad);
-                    $$.false_list = create_list(code->nextquad+1);
-                    gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, NULL);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
-               }  
-               | expression NEQ_OP expression
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("comparison operator can only be applied to logical expressions");
-                    }
-                    $$.true_list = create_list(code->nextquad);
-                    $$.false_list = create_list(code->nextquad+1);
-                    gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, NULL);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
-               }
-               | expression LT_OP expression
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("comparison operator can only be applied to logical expressions");
-                    }
-                    $$.true_list = create_list(code->nextquad);
-                    $$.false_list = create_list(code->nextquad+1);
-                    gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, NULL);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
-               }
-               | expression GT_OP expression
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("comparison operator can only be applied to logical expressions");
-                    }
-                    $$.true_list = create_list(code->nextquad);
-                    $$.false_list = create_list(code->nextquad+1);
-                    printf("Gen op_gt %p with %d\n", $$.true_list, $$.true_list[0]);
-                    gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, NULL);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
-               }
-               | expression LE_OP expression
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("comparison operator can only be applied to logical expressions");
-                    }
-                    $$.true_list = create_list(code->nextquad);
-                    $$.false_list = create_list(code->nextquad+1);
-                    gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, NULL);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
-               }
-               | expression GE_OP expression
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("comparison operator can only be applied to logical expressions");
-                    }
-                    $$.true_list = create_list(code->nextquad);
-                    $$.false_list = create_list(code->nextquad+1);
-                    gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, NULL);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
-               }
-               | expression AND_OP M expression
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("\"&&\" can only be applied to logical expressions");
-                    }
-                    
-                    complete_list($1.true_list, $3);
-                    $$.true_list = $4.true_list;
-                    $$.false_list = concat_list($1.false_list, $4.false_list);
-               }
-               | expression OR_OP M expression
-               {
-                    if(logical_expression_flag == 0)
-                    {
-                         semantic_error("\"||\" can only be applied to logical expressions");
-                    }
-                    complete_list($1.false_list, $3);
-                    $$.false_list = $4.false_list;
-                    $$.true_list = concat_list($1.true_list, $4.true_list);
-                    
-               }
-               | ID INCR
-               {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-                    if(id == NULL)
-                    {
-                         semantic_error("variable \"%s\" not declared", $1);
-                    }
-                    Constant c;
-                    c.int_value = 1;
-                    c.float_value = (float)1;
-                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
-                    
-                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
-                    gen_quad(code, BOP_PLUS, id, id, n1); 
-                    frame_pointer++;
-               }
-               | INCR ID
-               {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
-                    if(id == NULL)
-                    {
-                         semantic_error("variable \"%s\" not declared", $2);
-                    }
-                    Constant c;
-                    c.int_value = 1;
-                    c.float_value = (float)1;
-                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
-                    
-                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
-                    gen_quad(code, BOP_PLUS, id, id, n1); 
-                    frame_pointer++;
-               }
-               | ID DECR
-               {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-                    if(id == NULL)
-                    {
-                         semantic_error("variable \"%s\" not declared", $1);
-                    }
-                    Constant c;
-                    c.int_value = 1;
-                    c.float_value = (float)1;
-                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
-                    
-                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
-                    gen_quad(code, BOP_MINUS, id, id, n1); 
-                    frame_pointer++;
-               }
-               | DECR ID
-               {
-                    SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
-                    if(id == NULL)
-                    {
-                         semantic_error("variable \"%s\" not declared", $2);
-                    }
-                    Constant c;
-                    c.int_value = 1;
-                    c.float_value = (float)1;
-                    SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
-                    
-                    $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
-                    gen_quad(code, BOP_MINUS, id, id, n1); 
-                    frame_pointer++;
-               }
-               | ID
-               {
-                    $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-                    if($$.ptr == NULL)
-                    {
-                         semantic_error("variable \"%s\" not declared", $1);
+                         if(logical_expression_flag == 0)
+                         {
+                              semantic_error("\"||\" can only be applied to logical expressions");
+                         }
+                         complete_list($1.false_list, $3);
+                         $$.false_list = $4.false_list;
+                         $$.true_list = concat_list($1.true_list, $4.true_list);
                     }
 
-                    if(logical_expression_flag == 1)
+multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
+                           {
+                                   $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
+                                   gen_quad(code, BOP_MULT, $$.ptr, $1.ptr, $3.ptr); 
+                                   frame_pointer++;
+                           }
+                           | multiplicative_expresssion '/' primary_expression
+                           {
+                                   $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
+                                   gen_quad(code, BOP_DIV, $$.ptr, $1.ptr, $3.ptr); 
+                                   frame_pointer++;
+                           }
+                           | multiplicative_expresssion '%' primary_expression
+                           {
+                              if($1.ptr->type != INT || $3.ptr->type != INT)
+                              {
+                                   semantic_error("modulo operator can only be applied to integers");
+                              }
+                              $$.ptr = newtemp(symbol_table, get_float_type($1.ptr->type, $3.ptr->type), frame_pointer);
+                              gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr); 
+                              frame_pointer++;
+                           }
+                           | multiplicative_expresssion EQ_OP primary_expression
+                           {
+                                if(logical_expression_flag == 0)
+                                {
+                                     semantic_error("comparison operator can only be applied to logical expressions");
+                                }
+                                $$.true_list = create_list(code->nextquad);
+                                $$.false_list = create_list(code->nextquad+1);
+                                gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, NULL);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                           }  
+                           | multiplicative_expresssion NEQ_OP primary_expression
+                           {
+                                if(logical_expression_flag == 0)
+                                {
+                                     semantic_error("comparison operator can only be applied to logical expressions");
+                                }
+                                $$.true_list = create_list(code->nextquad);
+                                $$.false_list = create_list(code->nextquad+1);
+                                gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, NULL);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                           }
+                           | multiplicative_expresssion LT_OP primary_expression
+                           {
+                                if(logical_expression_flag == 0)
+                                {
+                                     semantic_error("comparison operator can only be applied to logical expressions");
+                                }
+                                $$.true_list = create_list(code->nextquad);
+                                $$.false_list = create_list(code->nextquad+1);
+                                gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, NULL);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                           }
+                           | multiplicative_expresssion GT_OP primary_expression
+                           {
+                                if(logical_expression_flag == 0)
+                                {
+                                     semantic_error("comparison operator can only be applied to logical expressions");
+                                }
+                                $$.true_list = create_list(code->nextquad);
+                                $$.false_list = create_list(code->nextquad+1);
+                                printf("Gen op_gt %p with %d\n", $$.true_list, $$.true_list[0]);
+                                gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, NULL);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                           }
+                           | multiplicative_expresssion LE_OP primary_expression
+                           {
+                                if(logical_expression_flag == 0)
+                                {
+                                     semantic_error("comparison operator can only be applied to logical expressions");
+                                }
+                                $$.true_list = create_list(code->nextquad);
+                                $$.false_list = create_list(code->nextquad+1);
+                                gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, NULL);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                           }
+                           | multiplicative_expresssion GE_OP primary_expression
+                           {
+                                if(logical_expression_flag == 0)
+                                {
+                                     semantic_error("comparison operator can only be applied to logical expressions");
+                                }
+                                $$.true_list = create_list(code->nextquad);
+                                $$.false_list = create_list(code->nextquad+1);
+                                gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, NULL);
+                                gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                           }
+                           | primary_expression
+
+
+primary_expression : ID
                     {
-                         $$.true_list = create_list(code->nextquad);
-                         $$.false_list = create_list(code->nextquad+1);
-                         gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), NULL);
-                         gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                         $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
+                         if($$.ptr == NULL)
+                         {
+                              semantic_error("variable \"%s\" not declared", $1);
+                         }
+
+                         if(logical_expression_flag == 1)
+                         {
+                              $$.true_list = create_list(code->nextquad);
+                              $$.false_list = create_list(code->nextquad+1);
+                              gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), NULL);
+                              gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                         }
                     }
-               }
-               | INT_CONST
-               { 
-                    Constant v;
-                    v.int_value = $1;
-                    v.float_value = (float)$1;
-                    $$.ptr = insert_constant(&symbol_table, v, INT);
-               }
-               | FLOAT_CONST
-               { 
-                    Constant v;
-                    v.float_value = $1;
-                    v.int_value = (int)$1;
-                    $$.ptr = insert_constant(&symbol_table, v, FLOAT);
-               }
+                    | INT_CONST
+                    {
+                         Constant v;
+                         v.int_value = $1;
+                         v.float_value = (float)$1;
+                         $$.ptr = insert_constant(&symbol_table, v, INT);
+                    }
+                    | FLOAT_CONST
+                    { 
+                         Constant v;
+                         v.float_value = $1;
+                         v.int_value = (int)$1;
+                         $$.ptr = insert_constant(&symbol_table, v, FLOAT);
+                    }
+                    | ID INCR
+                    {
+                         SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
+                         if(id == NULL)
+                         {
+                              semantic_error("variable \"%s\" not declared", $1);
+                         }
+                         Constant c;
+                         c.int_value = 1;
+                         c.float_value = (float)1;
+                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+
+                         $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
+                         gen_quad(code, BOP_PLUS, id, id, n1); 
+                         frame_pointer++;
+                    }
+                    | INCR ID
+                    {
+                         SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
+                         if(id == NULL)
+                         {
+                              semantic_error("variable \"%s\" not declared", $2);
+                         }
+                         Constant c;
+                         c.int_value = 1;
+                         c.float_value = (float)1;
+                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+
+                         $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
+                         gen_quad(code, BOP_PLUS, id, id, n1); 
+                         frame_pointer++;
+                    }
+                    | ID DECR
+                    {
+                         SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
+                         if(id == NULL)
+                         {
+                              semantic_error("variable \"%s\" not declared", $1);
+                         }
+                         Constant c;
+                         c.int_value = 1;
+                         c.float_value = (float)1;
+                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+
+                         $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
+                         gen_quad(code, BOP_MINUS, id, id, n1); 
+                         frame_pointer++;
+                    }
+                    | DECR ID
+                    {
+                         SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
+                         if(id == NULL)
+                         {
+                              semantic_error("variable \"%s\" not declared", $2);
+                         }
+                         Constant c;
+                         c.int_value = 1;
+                         c.float_value = (float)1;
+                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+
+                         $$.ptr = newtemp(symbol_table, id->type, frame_pointer);
+                         gen_quad(code, BOP_MINUS, id, id, n1); 
+                         frame_pointer++;
+                    }
+                    | '(' expression ')'
+                    {
+                         if(logical_expression_flag == 1)
+                         {
+                              $$.true_list = $2.true_list;
+                              $$.false_list = $2.false_list;
+                         }
+                         else
+                         {
+                              $$.ptr = $2.ptr;
+                         }
+                    }
+
+expression :  additive_expression
+           | '-' expression %prec UNARY_OP
+           {
+                $$.ptr = newtemp(symbol_table, $2.ptr->type, frame_pointer);
+                gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL);
+           }
+           | '!' expression %prec UNARY_OP
+           {
+                if(logical_expression_flag == 0)
+                {
+                     semantic_error("\"!\" can only be applied to logical expressions");
+                }
+                $$.true_list = $2.false_list;
+                $$.false_list = $2.true_list;
+           }
           
 %%     
 

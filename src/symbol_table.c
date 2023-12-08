@@ -74,7 +74,7 @@ SymbolTable *get_symbol_table_by_scope(SymbolTable *s, __uint32_t scope)
 	return tmp;
 }
 
-SymbolTableElement *insert_variable(SymbolTable *s, char *name, __uint32_t type, __uint32_t class, __int32_t frame_pointer, __uint32_t scope)
+SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __int32_t frame_pointer, __uint32_t scope)
 {
 	SymbolTableElement *l = lookup_variable(s, name, scope, VARIABLE, 1);
 
@@ -111,7 +111,7 @@ SymbolTableElement *insert_variable(SymbolTable *s, char *name, __uint32_t type,
 	return l;
 }
 
-SymbolTableElement *insert_function(SymbolTable **s, char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type)
+SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type)
 {
 	SymbolTableElement *l = lookup_function(*s, name);
 	if (l == NULL)
@@ -168,7 +168,7 @@ SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32
 	return l;
 }
 
-SymbolTableElement *insert_string(SymbolTable *s, char *string, __uint32_t frame_pointer, __uint32_t scope)
+SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t frame_pointer, __uint32_t scope)
 {
 	// SymbolTableElement *l = lookup_string(s, string);
 	SymbolTableElement* l = malloc(sizeof(SymbolTableElement));
@@ -197,7 +197,7 @@ SymbolTableElement *get_symbol(SymbolTable *s, __uint32_t i)
 }
 
 /* return symbol if found or NULL if not found */
-SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope, __uint32_t class, __uint32_t exact_scope)
+SymbolTableElement *lookup_variable(SymbolTable *s, const char *name, __uint32_t scope, __uint32_t class, __uint32_t exact_scope)
 {
 	SymbolTable *tmp = s;
 
@@ -240,7 +240,7 @@ SymbolTableElement *lookup_variable(SymbolTable *s, char *name, __uint32_t scope
 	return NULL;
 }
 
-SymbolTableElement *lookup_function(SymbolTable *s, char *name)
+SymbolTableElement *lookup_function(SymbolTable *s, const char *name)
 {
 	__uint32_t i;
 	SymbolTableElement *l = s->first_symbol;
