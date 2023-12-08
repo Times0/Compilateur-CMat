@@ -46,6 +46,7 @@ void semantic_warning(const char *format, ...);
           __int32_t *true_list;        // liste des indices quads à compléter pour le vrai
           __int32_t *false_list;       // liste des indices quads à compléter pour le faux
           __int32_t *next_list;        // liste des indices quads à compléter pour le suivant ?
+          __uint32_t quad;
      }expr;
 }
 
@@ -80,7 +81,8 @@ void semantic_warning(const char *format, ...);
 %type <expr> additive_expression
 %type <expr> parameter
 %type <expr> parameter_list
-%type <expr> statement
+%type <expr> statement_if
+%type <expr> statement_else
 %type <expr> block
 %type <expr> instruction
 %type <expr> instruction_list
@@ -89,13 +91,14 @@ void semantic_warning(const char *format, ...);
 %type <expr> assign
 %type <expr> declaration
 %type <type_val> type
-%type <int_val> M
+%type <expr> M
+%type <expr> N
 
 %start start
 %%
 start: instruction_list
 
-instruction_list: instruction_list M instruction   { complete_list($1.next_list, $2); $$.next_list = $3.next_list; }
+instruction_list: instruction_list M instruction   { complete_list($1.next_list, $2.quad); $$.next_list = $3.next_list; }
                 | instruction                      { $$.next_list = $1.next_list; }
 
 
@@ -104,19 +107,48 @@ instruction : declaration ';'           { $$.next_list = create_list(-1);}
             | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
             | expression ';'            { $$.next_list = create_list(-1);}
-            | statement                 
+            | statement_if                 
             | block                
 
 
-M : %empty { $$ = code->nextquad; }
+M : %empty { $$.quad = code->nextquad; }
 
-statement : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block
-          {
-               complete_list($4.true_list, $7);
-               $$.next_list = concat_list($4.false_list, $8.next_list);
-               $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
-               gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
-          }
+N : %empty { $$.next_list = create_list(code->nextquad); gen_quad_goto(code, K_GOTO, NULL, NULL, NULL); $$.quad = code->nextquad; }
+
+statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block statement_else
+             {
+                    // si pas de else
+                    if($9.ptr == NULL)
+                    {
+                         complete_list($4.true_list, $7.quad);
+                         $$.next_list = concat_list($4.false_list, $8.next_list);
+                         $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                    }
+                    else
+                    {
+                         complete_list($4.true_list, $7.quad);
+                         complete_list($4.false_list, $9.quad);
+                         $$.next_list = concat_list($8.next_list, $9.next_list);
+                         $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, NULL);
+                    }
+             }
+
+statement_else : ELSE N statement_if
+               {
+                    $$.next_list = concat_list($2.next_list, $3.next_list);
+                    $$.quad = $2.quad;
+               }
+               | ELSE N block
+               {
+                    $$.next_list = concat_list($2.next_list, $3.next_list);
+                    $$.quad = $2.quad;
+               }
+               | %empty
+               {
+                    $$.ptr = NULL;
+               }
 
 declaration_function : type MAIN '(' ')' block {$$.ptr = NULL;}
 
@@ -280,7 +312,7 @@ additive_expression : multiplicative_expresssion
                          {
                               semantic_error("\"&&\" can only be applied to logical expressions");
                          }
-                         complete_list($1.true_list, $3);
+                         complete_list($1.true_list, $3.quad);
                          $$.true_list = $4.true_list;
                          $$.false_list = concat_list($1.false_list, $4.false_list);
                     }
@@ -290,7 +322,7 @@ additive_expression : multiplicative_expresssion
                          {
                               semantic_error("\"||\" can only be applied to logical expressions");
                          }
-                         complete_list($1.false_list, $3);
+                         complete_list($1.false_list, $3.quad);
                          $$.false_list = $4.false_list;
                          $$.true_list = concat_list($1.true_list, $4.true_list);
                     }
@@ -504,7 +536,7 @@ expression :  additive_expression
            {
                 if(logical_expression_flag == 0)
                 {
-                     semantic_error("\"!\" can only be applied to logical expressions");
+                    semantic_error("\"!\" can only be applied to logical expressions");
                 }
                 $$.true_list = $2.false_list;
                 $$.false_list = $2.true_list;
