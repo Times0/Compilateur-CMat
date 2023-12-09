@@ -63,7 +63,7 @@ void code_grow(QuadTable **c)
     }
 }
 
-void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3)
+void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3, __uint32_t by_adress[3])
 {
     if ( c->nextquad == c->capacity )
         code_grow(&c);
@@ -73,6 +73,10 @@ void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTab
     q->sym1 = s1;
     q->sym2 = s2;
     q->sym3 = s3;
+    q->by_adress[0] = by_adress[0];
+    q->by_adress[1] = by_adress[1];
+    q->by_adress[2] = by_adress[2];
+    
     c->nextquad++;
 }
 
@@ -89,7 +93,7 @@ void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, Symb
     c->nextquad++;
 }
 
-void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters)
+void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters, __uint32_t *by_address)
 {
     if(c->nextquad == c->capacity)
         code_grow(&c);
@@ -100,6 +104,7 @@ void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * resu
     q->sym2 = function;
     q->function_parameters = parameters;
     q->nb_parameters = nb_parameters;
+    q->by_address_list = by_address;
     c->nextquad++;
 }
 
@@ -237,51 +242,51 @@ void quad_dump(Quad *q)
     switch ( q->kind )
     {
         case BOP_PLUS:
-            symbol_dump(q->sym1);
+            symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" + ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             break;
         case BOP_MINUS:
-            symbol_dump(q->sym1);
+            symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" - ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             break;
         case BOP_MULT:
-            symbol_dump(q->sym1);
+            symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" * ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             break;
         case BOP_DIV:
-            symbol_dump(q->sym1);
+            symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" / ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             break;
         case BOP_MOD:
-            symbol_dump(q->sym1);
+            symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" %% ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             break;
         case UOP_MINUS:
-            symbol_dump(q->sym1);
+            symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
             printf("- ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             break;
         case K_CALL_PRINT:
             printf("print (");
             for(int i = q->nb_parameters - 1; i >= 0; i--)
             {
-                symbol_dump(q->function_parameters[i]);
+                symbol_dump(q->function_parameters[i], q->by_address_list[i]);
                 if(i > 0)
                     printf(", ");
             }
@@ -291,60 +296,60 @@ void quad_dump(Quad *q)
             printf("printf (");
             for(int i = q->nb_parameters - 1; i >= 0; i--)
             {
-                symbol_dump(q->function_parameters[i]);
+                symbol_dump(q->function_parameters[i], q->by_address_list[i]);
                 if(i > 0)
                     printf(", ");
             }
             printf(")");
             break;
         case K_COPY:
-            symbol_dump(q->sym1);
+            symbol_dump(q->sym1, q->by_adress[0]);
             printf(" = ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             break;
         case K_GOTO:
             printf("goto %s", l);
             break;
         case K_IF:
             printf("if ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" == ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             printf(" goto %s", l);
             break;
         case K_IFNOT:
             printf("if ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" != ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             printf(" goto %s", l);
             break;
         case K_IFLT:
             printf("if ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" < ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             printf(" goto %s", l);
             break;
         case K_IFGT:
             printf("if ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" > ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             printf(" goto %s", l);
             break;
         case K_IFLE:
             printf("if ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" <= ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             printf(" goto %s", l);
             break;
         case K_IFGE:
             printf("if ");
-            symbol_dump(q->sym2);
+            symbol_dump(q->sym2, 0);
             printf(" >= ");
-            symbol_dump(q->sym3);
+            symbol_dump(q->sym3, 0);
             printf(" goto %s", l);
             break;
         default:

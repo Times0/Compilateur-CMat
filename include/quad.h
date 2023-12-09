@@ -10,8 +10,12 @@ typedef struct Quad {
   SymbolTableElement *sym1; // result
   SymbolTableElement *sym2; // operand 1 or function 
   SymbolTableElement *sym3; // operand 2 or NULL
+
+  __uint32_t by_adress[3]; //used for arrays to tell if the value is store by adress, one for each operand
+
   SymbolTableElement **function_parameters;
   __uint32_t nb_parameters;
+  __uint32_t *by_address_list;   //used for functions to tell if the parameter is passed by adress
 
   __int32_t branch_label;
   __int32_t label;      // tell if the quad is preceded by a label, we store a number to facilitate the generation of the label
@@ -27,8 +31,8 @@ typedef struct QuadTable{
 
 QuadTable *code_new();
 
-void gen_quad(QuadTable * c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3);
-void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters);
+void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3, __uint32_t by_adress[3]);
+void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters, __uint32_t *by_address);
 void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, __int32_t label);
 
 char* generate_label();
@@ -39,6 +43,7 @@ __int32_t *concat_list(__int32_t *l1, __int32_t *l2);
 void complete_list(__int32_t *l, __int32_t i);
 
 void code_dump(QuadTable * c);
+void quad_dump(Quad *q);
 
 void code_free(QuadTable * c);
 

@@ -23,9 +23,8 @@ typedef struct Constant
 
 typedef struct Variable
 {
-    __int32_t frame_pointer;
+    __int32_t adress;
     char name[MAXTOKENLEN];
-    __uint32_t size[2]; // only used for matrix
 }Variable;
 
 typedef struct Function
@@ -33,18 +32,26 @@ typedef struct Function
     char name[MAXTOKENLEN];
     __uint32_t nb_parameters;
     __uint32_t *parameters_type;
+    __uint32_t *by_adress;
 }Function;
 
 typedef struct String
 {
     char string[MAXSTRLEN];
-    __uint32_t frame_pointer;
+    __uint32_t adress;
 }String;
+
+typedef struct Array
+{
+    __int32_t adress;
+    char name[MAXTOKENLEN];
+    __uint32_t size[2];
+}Array;
 
 // struct that represents a list node
 typedef struct SymbolTableElement
 {
-    enum {VARIABLE, CONSTANT, FUNCTION, STR} class;
+    enum {VARIABLE, ARRAY, CONSTANT, FUNCTION, STR} class;
     __uint32_t type;
 
     union Attribute{
@@ -52,6 +59,7 @@ typedef struct SymbolTableElement
         Constant constant;
         Function function;
         String string;
+        Array array;
 
     }attribute;
     struct SymbolTableElement *next;
@@ -78,19 +86,19 @@ void push_predefined_functions(SymbolTable **s);
 SymbolTable* add_next_symbol_table(SymbolTable **s, __uint32_t scope, __uint32_t parent_symbol_table_scope);
 SymbolTableElement *get_symbol(SymbolTable *s, __uint32_t i);
 
-SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __int32_t frame_pointer, __uint32_t scope);
+SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __uint32_t size[2], __int32_t adress, __uint32_t scope);
 SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type);
 SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32_t type);
-SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t frame_pointer, __uint32_t scope);
+SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t adress, __uint32_t scope);
 
 SymbolTableElement *lookup_variable(SymbolTable *s, const char *name, __uint32_t scope, __uint32_t class, __uint32_t exact_scope);
 SymbolTableElement *lookup_function(SymbolTable *s, const char *name);
 SymbolTableElement *lookup_constant(SymbolTable *s, Constant  constant, __uint32_t type);
 SymbolTableElement *lookup_string(SymbolTable *s, char *string);
 
-SymbolTableElement *newtemp(SymbolTable * t, __uint32_t type, __int32_t offset);
+SymbolTableElement *newtemp(SymbolTable * t, __uint32_t class, __uint32_t type, __int32_t offset, __uint32_t size[2]);
 
-void symbol_dump(SymbolTableElement *);
+void symbol_dump(SymbolTableElement *e, __uint32_t by_adress);
 void symbol_table_dump(SymbolTable *s, FILE *of);
 void free_symbol_table(SymbolTable *s);
 

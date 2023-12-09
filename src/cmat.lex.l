@@ -43,8 +43,8 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 
 "int"           { ret_print("KEYWORD_INT");     yylval.type_val = INT;   return INT;}
 "float"         { ret_print("KEYWORD_FLOAT");   yylval.type_val = FLOAT; return FLOAT;}
-"matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX;}
-"void"          { ret_print("KEYWORD_VOID");    return VOID;}
+"matrix"        { ret_print("KEYWORD_MATRIX");  yylval.type_val = MATRIX;return MATRIX;}
+"void"          { ret_print("KEYWORD_VOID");    yylval.type_val = VOID;  return VOID;}
 
 
 {ID}            { ret_print("IDENTIFIER");

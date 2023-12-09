@@ -37,6 +37,8 @@ void push_predefined_functions(SymbolTable **s)
     insert_function(&symbol_table, "printf", VOID, FUNCTION, 1, (__uint32_t[]){STRING});
 	insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = 0.0f}, INT);
 	insert_constant(&symbol_table, (Constant){.int_value = 1, .float_value = 1.0f}, INT);
+	insert_constant(&symbol_table, (Constant){.int_value = 4, .float_value = 4.0f}, INT);
+	insert_variable(symbol_table, "$fp", INT, VARIABLE, NULL, -1, 0);
 }
 
 SymbolTable* add_next_symbol_table(SymbolTable **s, __uint32_t scope, __uint32_t parent_symbol_table_scope)
@@ -74,9 +76,9 @@ SymbolTable *get_symbol_table_by_scope(SymbolTable *s, __uint32_t scope)
 	return tmp;
 }
 
-SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __int32_t frame_pointer, __uint32_t scope)
+SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __uint32_t size[2], __int32_t adress, __uint32_t scope)
 {
-	SymbolTableElement *l = lookup_variable(s, name, scope, VARIABLE, 1);
+	SymbolTableElement *l = lookup_variable(s, name, scope, class, 1);
 
 	SymbolTable *tmp = s;
 
@@ -96,14 +98,26 @@ SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t
 		get_symbol(s, (s)->size-1)->next = l;
 		l->next = NULL;
 		
-		strncpy(l->attribute.variable.name, name, MAXTOKENLEN);
-	
-		l->attribute.variable.frame_pointer = frame_pointer;
-	
-		l->class = VARIABLE;
-		l->type = type;
+		if(class == VARIABLE)
+		{
+			strncpy(l->attribute.variable.name, name, MAXTOKENLEN);
+			l->attribute.variable.adress = adress;
+			l->class = VARIABLE;		
+			l->type = type;
+			s->nb_variable++;
+		}
+		else if(class == ARRAY)
+		{
+			strncpy(l->attribute.array.name, name, MAXTOKENLEN);
+			l->attribute.array.adress = adress;
+			l->attribute.array.size[0] = size[0];
+			l->attribute.array.size[1] = size[1];
+			l->class = ARRAY;		
+			l->type = type;
+			s->nb_variable+=size[0]*size[1];
+		}
+
 		s->size++;
-		s->nb_variable++;
 
 		s = tmp;
 		
@@ -168,7 +182,7 @@ SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32
 	return l;
 }
 
-SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t frame_pointer, __uint32_t scope)
+SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t adress, __uint32_t scope)
 {
 	// SymbolTableElement *l = lookup_string(s, string);
 	SymbolTableElement* l = malloc(sizeof(SymbolTableElement));
@@ -181,7 +195,7 @@ SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t
 	l->next = NULL;
 	
 	strncpy(l->attribute.string.string, string, MAXSTRLEN);
-	l->attribute.string.frame_pointer = frame_pointer + strlen(string) + 1; // Car l'offset sur a0 va dans les positifs et ecrase les variables dans la stack
+	l->attribute.string.adress = adress + strlen(string) + 1; // Car l'offset sur a0 va dans les positifs et ecrase les variables dans la stack
 	l->class = STR;
 	l->type = STRING;
 	s->size++;
@@ -218,7 +232,7 @@ SymbolTableElement *lookup_variable(SymbolTable *s, const char *name, __uint32_t
 		for (i = 0; i < tmp->size; i++)
 		{
 			// on doit verifier le type car il ya des constantes, des strings et des fonctions dans la table des symboles de cscope 0
-			if(l->class == VARIABLE)
+			if(l->class == VARIABLE || l->class == ARRAY)
 			{
 				if(strcmp(l->attribute.variable.name, name) == 0)
 					break;
@@ -226,8 +240,7 @@ SymbolTableElement *lookup_variable(SymbolTable *s, const char *name, __uint32_t
 			l = l->next;
 			
 		} 
-			
-			
+				
 		if (i < tmp->size)
 			return l;
 		
@@ -314,10 +327,10 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 	SymbolTable *tmp = s;
 		
 	__uint32_t i;
-	fprintf(of, "-------------- ----------- ---------- ---------------\n");
-	fprintf(of, "     Name         Class       Type       arguments   \n");
-	fprintf(of, "                                          or scope   \n");
-	fprintf(of, "-------------- ----------- ---------- ---------------\n");
+	fprintf(of, "-------------- ----------- ---------- -------- ---------------\n");
+	fprintf(of, "     Name         Class       Type      size 	arguments   \n");
+	fprintf(of, "                                          		or scope   \n");
+	fprintf(of, "-------------- ----------- ---------- -------- ---------------\n");
 	__uint32_t nb_cst = 0;
 	__uint32_t nb_str = 0;
 	
@@ -369,11 +382,14 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 			case FUNCTION:
 				classStr = "function";
 				break;
+			case ARRAY:
+				classStr = "array";
+				break;
 			}
 
 			if(elem->class == FUNCTION)
 			{
-				fprintf(of, "%-14s %-11s %-10s (", elem->attribute.function.name, classStr, typeStr);
+				fprintf(of, "%-14s %-11s %-19s (", elem->attribute.function.name, classStr, typeStr);
 				for(int j = 0; j < elem->attribute.function.nb_parameters; j++)
 				{
 					switch (elem->attribute.function.parameters_type[j])
@@ -400,19 +416,27 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 				fprintf(of, ")\n");
 			}
 			else if(elem->attribute.variable.name[0] != '%')
-				fprintf(of, "%-14s %-11s %-10s %d\n", elem->attribute.variable.name, classStr, typeStr, tmp->scope);
+			{
+				if(elem->class == VARIABLE)
+					fprintf(of, "%-14s %-11s %-10s %10d\n", elem->attribute.variable.name, classStr, typeStr, tmp->scope);
+				if(elem->class == ARRAY)
+					fprintf(of, "%-14s %-11s %-10s %-2dx%2d %4d\n", elem->attribute.array.name, classStr, typeStr, elem->attribute.array.size[0], elem->attribute.array.size[1], tmp->scope);
+			}
 		}
 		tmp = tmp->next;
 	}
-	fprintf(of, "-------------- ----------- ---------- ---------------\n");
+	fprintf(of, "-------------- ----------- ---------- -------- ---------------\n");
 	fprintf(of, "Number of constants: %d\n", nb_cst);
 	fprintf(of, "Number of strings: %d\n", nb_str);
 }
 
-void symbol_dump(SymbolTableElement *e)
+void symbol_dump(SymbolTableElement *e, __uint32_t by_adress)
 {
 	if (e->class == VARIABLE)
-		printf("%s", e->attribute.variable.name);
+		if(by_adress)
+			printf("[%s]", e->attribute.variable.name);
+		else
+			printf("%s", e->attribute.variable.name);
 	else if (e->class == CONSTANT)
 	{
 		if (e->type == INT)
@@ -425,14 +449,18 @@ void symbol_dump(SymbolTableElement *e)
 	
 }
 
-SymbolTableElement *newtemp(SymbolTable *t, __uint32_t type, __int32_t offset)
+SymbolTableElement *newtemp(SymbolTable *t, __uint32_t class, __uint32_t type, __int32_t offset, __uint32_t size[2])
 {
     SymbolTableElement *s;
     char name[MAXTOKENLEN];
-    sprintf(name,"%%%d",t->temporary);
-    s = insert_variable(t, name, type, VARIABLE, offset, current_scope);
-    ++(t->temporary);
-    return s;
+    if(class == VARIABLE || class == ARRAY)
+	{
+		sprintf(name,"%%%d",t->temporary);
+    	s = insert_variable(t, name, type, class, size, offset, current_scope);
+    	++(t->temporary);
+    	return s;
+	}
+	
 }
 
 void free_symbol_table(SymbolTable *s)
