@@ -10,8 +10,7 @@ print(1);
 printf("\n");*/
 int main()
 {
-    int r=9;
-    // print(r);
+    // int r=9;
     // int c;
     // r = 3;
     // c = r;
@@ -19,9 +18,11 @@ int main()
     matrix ff[4];
     // int y=0;
 
-    ff[3] = 5;
-    print(ff[3]);   
-    // ff[0] = ff[1]+ff[2];
+    ff[3] = 144;
+    print(ff[3]);
+    // printf("\n");
+    // printmat(ff);
+    // ff[0] = ff[1]+ff[2];*/
 
     // c = 2*f[3][3*c];
     // print(1+2*9+4*2+7);
@@ -30,14 +31,13 @@ int main()
     {
         print(i);
         printf("\n");
-    }*/
-
-    /*while(c< 5)
+    }
+    c=0;
+    while(c < 5)
     {
         // print(c);
         // printf("\n");
-        c=c+2;
-        r++;
+        c++;
         int k;
     }
 
@@ -45,17 +45,17 @@ int main()
     {
         printf(">");
     }
-    /*else if(2 > 1)
+    else if(2 > 1)
     {
         printf(">");
     }
     else
     {
         printf("=");
-    }*/
-    // int t;
-    // t=1;
-    /*if(2 <= 1)
+    }
+    int t;
+    t=1;
+    if(2 <= 1)
     {
         printf("<=");
     }
@@ -76,12 +76,12 @@ int main()
         printf("||");
     }
     // if((1!=1 && 1 < 2) || (2!=2))
-    /*if((1!=1 || 1 > 2)&&r)
+    if((1!=1 || 1 > 2)&&r)
     {
         printf("!=");
-    }
+    }*/
     int t;
-    t=1;*/
+    t=1;
 }
     /*int a;
     int c;

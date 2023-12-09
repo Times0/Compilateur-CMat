@@ -297,6 +297,10 @@ slice_array : '[' expression ']'
                     printf("malloc failed\n");
                     exit(1);
                }
+               if($2.ptr->type == FLOAT)
+               {
+                    semantic_error("can't slice array with float");
+               }
                $$.ptr_list[0] = $2.ptr;
                $$.size_ptr_list = 1;
             }
@@ -342,6 +346,18 @@ call : ID '(' parameter_list ')'
                }
                gen_quad_function(code, K_CALL_PRINTF, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
           }
+          else if(strcmp($1, "printmat") == 0)
+          {
+               if($3.size_ptr_list != id->attribute.function.nb_parameters)
+               {
+                    semantic_error("printf takes one argument");
+               }
+               if($3.ptr_list[0]->type != MATRIX)
+               {
+                    semantic_error("printmat only takes one matrix as argument");
+               }
+               gen_quad_function(code, K_CALL_PRINTMAT, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
+          }
           else
           {
                if(id == NULL)
@@ -354,7 +370,9 @@ call : ID '(' parameter_list ')'
 parameter : expression
           {
                $$.ptr = $1.ptr;
-               printf("%d\n", $1.ptr->class);
+               $$.by_address = $1.by_address;
+               if($1.by_address == MATRIX)
+                    $$.by_address = FLOAT;
           }
           | STRING
           {
@@ -414,8 +432,8 @@ assign :  ID '=' expression
           }
           | ID slice_array '=' expression 
           {
-               SymbolTableElement *e = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-               if($$.ptr == NULL)
+               SymbolTableElement *e = lookup_variable(symbol_table, $1, current_scope, ARRAY, 0);
+               if(e == NULL)
                {
                     semantic_error("variable \"%s\" not declared", $1);
                }
@@ -426,7 +444,16 @@ assign :  ID '=' expression
                gen_quad(code, BOP_PLUS, t, add, $2.ptr_list[0], (__uint32_t[]){0, 0, 0});
                gen_quad(code, BOP_MULT, t, t, four, (__uint32_t[]){0, 0, 0});
                gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
-               gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){1, 0, 0});
+               // on utilise le symbole 3 qui est inutile pour donner l'information du type de l'assignation
+               SymbolTableElement *t2 = malloc(sizeof(SymbolTableElement));
+               if(t2 == NULL)
+               {
+                    printf("malloc failed\n");
+                    exit(1);
+               }
+               if(e->type == MATRIX)
+                    t2->type = FLOAT;
+               gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){t2->type, 0, 0});
                adress++;
           }
           /* | ID slice_array slice_array '=' expression {$$.ptr= NULL;} */
@@ -665,7 +692,7 @@ primary_expression : ID
                                    gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
                                    adress++;
                                    $$.ptr = t;
-                                   $$.by_address = 1;
+                                   $$.by_address = FLOAT;
                               }
                               // cas des tableaux
                               // else

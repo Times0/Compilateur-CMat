@@ -95,9 +95,8 @@ void gencode_mips_quad(FILE *f, Quad *quad)
             gencode_affect(f, quad);
             break;
         case K_CALL_PRINT:
-            gencode_print(f, quad);
-            break;
         case K_CALL_PRINTF:
+        case K_CALL_PRINTMAT:
             gencode_print(f, quad);
             break;
         case K_GOTO:
@@ -306,18 +305,22 @@ void gencode_affect (FILE * f, Quad *quad)
     }
     else
     {
-        if(quad->sym1->type == INT)
+        SymbolTableElement t;
+        t.type = quad->by_adress[0];
+        // sym3 contient seulement le type de la cible
+        if(t.type == FLOAT)
         {
-            printf("fr");
-            type_change_sym2 = convert_float_to_int(quad->sym2);
+            
+            type_change_sym2 = convert_int_to_float(quad->sym2);
         
             load_operator(f, quad->sym1, 0);
             load_operator(f, quad->sym2, 0);
-            store_result (f, NULL, quad->sym1->attribute.constant.int_value);
+            store_result (f, &t, quad->sym1->attribute.constant.int_value);
 
             if(type_change_sym2)
-                convert_int_to_float(quad->sym2);
+                convert_float_to_int(quad->sym2);
         }
+        
     }
 }
 
@@ -325,7 +328,7 @@ void gencode_print(FILE *f, Quad *quad)
 {
     if(quad->kind == K_CALL_PRINT)
     {
-        if(quad->function_parameters[0]->type == INT)
+        if(quad->by_address_list[0] == INT)
         {
             load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
             fprintf (f, "\tli $v0, 1\n");
@@ -333,7 +336,7 @@ void gencode_print(FILE *f, Quad *quad)
             fprintf (f, "\tsyscall\n");
             current_register_int--;
         }
-        else if(quad->function_parameters[0]->type == FLOAT)
+        else if(quad->by_address_list[0] == FLOAT)
         {
             load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
             fprintf (f, "\tli $v0, 2\n");
@@ -345,61 +348,82 @@ void gencode_print(FILE *f, Quad *quad)
     else if(quad->kind == K_CALL_PRINTF)
     {
         // caractere d'échappement : \n, \t, \\, \"
-        if(quad->function_parameters[0]->type == STRING)
+        fprintf(f, "\tli $v0, 4\n");
+        fprintf(f, "\tla $a0, %d($fp)\n", -4*(quad->function_parameters[0]->attribute.string.adress+1));
+        __uint32_t str_size = strlen(quad->function_parameters[0]->attribute.string.string)-2;
+        __uint32_t char_ptr = 0;
+        for(__uint32_t i = 0; i<str_size; i++)
         {
-            fprintf(f, "\tli $v0, 4\n");
-            fprintf(f, "\tla $a0, %d($fp)\n", -4*(quad->function_parameters[0]->attribute.string.adress+1));
-            __uint32_t str_size = strlen(quad->function_parameters[0]->attribute.string.string)-2;
-            __uint32_t char_ptr = 0;
-
-            for(__uint32_t i = 0; i<str_size; i++)
+            __uint32_t char_special=0;
+            if(quad->function_parameters[0]->attribute.string.string[i+1] == '\\')
             {
-                __uint32_t char_special=0;
-                if(quad->function_parameters[0]->attribute.string.string[i+1] == '\\')
+                __uint32_t car;
+                switch(quad->function_parameters[0]->attribute.string.string[i+2])
                 {
-                    __uint32_t car;
-                    switch(quad->function_parameters[0]->attribute.string.string[i+2])
-                    {
-                        case 'n':
-                            car = 10;
-                            char_special = 1;
-                            break;
-                        case 't':
-                            car = 9;
-                            char_special = 1;
-                            break;
-                        case '\\':
-                            car = 92;
-                            char_special = 1;
-                            break;
-                        case '"':
-                            car = 34;
-                            char_special = 1;
-                            break;
-                        default:
-                            printf("Error at line %d : unknown special character\n", lineno);
-                            exit(1);
-                    }
-                    
-                    fprintf(f, "\tli $t%d, %d\n", current_register_int, car);
-                    fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
-                    i++;
+                    case 'n':
+                        car = 10;
+                        char_special = 1;
+                        break;
+                    case 't':
+                        car = 9;
+                        char_special = 1;
+                        break;
+                    case '\\':
+                        car = 92;
+                        char_special = 1;
+                        break;
+                    case '"':
+                        car = 34;
+                        char_special = 1;
+                        break;
+                    default:
+                        printf("Error at line %d : unknown special character\n", lineno);
+                        exit(1);
                 }
-                else if(!char_special)
-                {
-                    fprintf(f, "\tli $t%d, %d\n", current_register_int, quad->function_parameters[0]->attribute.string.string[i+1]);
-                    fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
-                }
-                char_ptr++;
+                
+                fprintf(f, "\tli $t%d, %d\n", current_register_int, car);
+                fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
+                i++;
             }
-            // caractere de fin de chaine
-            fprintf(f, "\tli $t%d, %d\n", current_register_int, 0);
-            fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
-            fprintf(f, "\tsyscall\n");
+            else if(!char_special)
+            {
+                fprintf(f, "\tli $t%d, %d\n", current_register_int, quad->function_parameters[0]->attribute.string.string[i+1]);
+                fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
+            }
+            char_ptr++;
         }
+        // caractere de fin de chaine
+        fprintf(f, "\tli $t%d, %d\n", current_register_int, 0);
+        fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
+        fprintf(f, "\tsyscall\n");
     }
     else if(quad->kind == K_CALL_PRINTMAT)
     {
+        __uint32_t t = quad->function_parameters[0]->attribute.array.size[1];
+        if(t ==0)
+            t++;
+        
+        for(int i=0; i < quad->function_parameters[0]->attribute.array.size[0]; i++)
+        {
+            for(int j=0; j < t; j++)
+            {
+                load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
+                fprintf (f, "\tli $v0, 2\n");
+                fprintf (f, "\tmov.s $f12, $f%d\n", current_register_float - 1);
+                fprintf (f, "\tsyscall\n");
+                current_register_float--;
+            }
+            
+            // \t
+            fprintf(f, "\tli $t%d, %d\n", current_register_int, 9);
+            fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, 0);
+            fprintf(f, "\tsyscall\n");
+        }
+
+        // \n
+        fprintf(f, "\tli $t%d, %d\n", current_register_int, 10);
+        fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, 0);
+        fprintf(f, "\tsyscall\n");
     }
 }
 
@@ -538,7 +562,8 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address)
                     // si passage par addresse, on charge la valeur pointé par le registre
                     if(address)
                     {
-                        fprintf (f, "\tlw $t%d, 0($t%d)\n", current_register_int, current_register_int);
+                        fprintf (f, "\tl.s $f%d, 0($t%d)\n", current_register_float, current_register_int);
+                        current_register_float++;
                     }
                 }
             }
@@ -575,6 +600,7 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address)
             current_register_float++;
         }
     }
+    // dans le cas ou on sauvegarde une addresse
     else if (elem->class == CONSTANT)
     {
         if(elem->type == INT)
@@ -609,7 +635,7 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address)
 
 void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
 {
-    if (res != NULL)
+    if (adress == 0)
     {
         if (res->class == VARIABLE)
         {
@@ -653,10 +679,12 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
     }
     else
     {
-        // if(fp_type[(int)adress/4])
+        if(res->type == FLOAT)
         {
-            fprintf (f, "\tsw $t%d, 0($t%d)\n", current_register_int - 1, current_register_int -2);
-            current_register_int-=2;
+            fprintf (f, "\ts.s $f%d, 0($t%d)\n", current_register_float-1, current_register_int-1);
+            fp_type[adress] = FLOAT;
+            current_register_int--;
+            current_register_float--;
         }
         /*else if(res->type == FLOAT)
         {

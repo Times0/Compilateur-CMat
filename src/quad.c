@@ -283,17 +283,9 @@ void quad_dump(Quad *q)
             symbol_dump(q->sym2, 0);
             break;
         case K_CALL_PRINT:
-            printf("print (");
-            for(int i = q->nb_parameters - 1; i >= 0; i--)
-            {
-                symbol_dump(q->function_parameters[i], q->by_address_list[i]);
-                if(i > 0)
-                    printf(", ");
-            }
-            printf(")");
-            break;
         case K_CALL_PRINTF:
-            printf("printf (");
+        case K_CALL_PRINTMAT:
+            printf("%s (", q->sym2->attribute.function.name);
             for(int i = q->nb_parameters - 1; i >= 0; i--)
             {
                 symbol_dump(q->function_parameters[i], q->by_address_list[i]);
