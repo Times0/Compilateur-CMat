@@ -469,6 +469,7 @@ assign :  ID '=' expression
           }
           | ID slice_array '=' expression 
           {
+               printf("%d\n", $4.by_address);
                SymbolTableElement *e = lookup_variable(symbol_table, $1, current_scope, ARRAY, 0);
                if(e == NULL)
                {
@@ -503,6 +504,7 @@ block : '{'                   {
 additive_expression : multiplicative_expresssion
                     {
                          $$.ptr = $1.ptr;
+                         $$.by_address = $1.by_address;
 
                          if(logical_expression_flag == 1)
                          {
@@ -514,8 +516,10 @@ additive_expression : multiplicative_expresssion
                     { 
                          if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                          {
-                              $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($1.ptr->type, $3.ptr->type), adress, (__uint32_t[]) {0, 0});
+
+                              $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
                               gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
+                              $$.by_address = 0;
                               adress++;
                          }
                     }
@@ -670,7 +674,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                 gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, -1);
                                 gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
                            }
-                           | primary_expression {$$.ptr = $1.ptr;}
+                           | primary_expression {$$.ptr = $1.ptr; $$.by_address = $1.by_address;}
 
 
 primary_expression : ID
