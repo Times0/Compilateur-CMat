@@ -183,7 +183,7 @@ SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32
 	return l;
 }
 
-SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t adress, __uint32_t scope)
+SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t adress)
 {
 	// SymbolTableElement *l = lookup_string(s, string);
 	SymbolTableElement* l = malloc(sizeof(SymbolTableElement));

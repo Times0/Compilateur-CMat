@@ -17,11 +17,12 @@ int main()
     // matrix f[7][3];
     matrix ff[4];
     // int y=0;
-
+    ff[2] = 3.2;
     ff[3] = 144;
     print(ff[3]);
-    // printf("\n");
-    // printmat(ff);
+    print(ff[2]);
+    printf("\n");
+    printmat(ff);
     // ff[0] = ff[1]+ff[2];*/
 
     // c = 2*f[3][3*c];

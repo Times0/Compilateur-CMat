@@ -24,6 +24,7 @@ __uint32_t adress = 0;
 __uint32_t logical_expression_flag = 0;
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
+SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *value);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
 %}
@@ -356,7 +357,43 @@ call : ID '(' parameter_list ')'
                {
                     semantic_error("printmat only takes one matrix as argument");
                }
-               gen_quad_function(code, K_CALL_PRINTMAT, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
+               
+               __uint32_t size = $3.ptr_list[0]->attribute.array.size[1];
+               if(size == 0)
+                    size++;
+
+               SymbolTableElement *printff = lookup_function(symbol_table, "printf");
+               SymbolTableElement *print = lookup_function(symbol_table, "print");
+               SymbolTableElement **n = malloc(sizeof(SymbolTableElement*));
+               SymbolTableElement **t = malloc(sizeof(SymbolTableElement*));
+               if(n == NULL || t == NULL)
+               {
+                    printf("Error malloc in printmat\n");
+                    exit(1);
+               }
+               n[0]  = insert_string(symbol_table, "\"\\n\"", adress);
+               adress++;
+               t[0]  = insert_string(symbol_table, "\"\\t\"", adress);
+
+
+               
+               for(int i=0;i<$3.ptr_list[0]->attribute.array.size[0];i++)
+               {
+                    for(int j=0;j<size;j++)
+                    {
+                         SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                         SymbolTableElement *e = generate_address_quads($3.ptr_list[0], add);
+                         SymbolTableElement **list = malloc(sizeof(SymbolTableElement*));
+                         list[0] = e;
+                         gen_quad_function(code, K_CALL_PRINT, NULL, print, list, 1, (__uint32_t[]){FLOAT});
+                         
+                         gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){t}, 1, (__uint32_t[]){0});
+                    }
+                    gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){n}, 1, (__uint32_t[]){0});
+               }
+               adress--;
+               
+               
           }
           else
           {
@@ -376,7 +413,7 @@ parameter : expression
           }
           | STRING
           {
-               $$.ptr = insert_string(symbol_table, $1, adress, current_scope);
+               $$.ptr = insert_string(symbol_table, $1, adress);
                // on ne modifie pas adress car on ne stocke pas les strings dans la pile
           }
 
@@ -437,23 +474,12 @@ assign :  ID '=' expression
                {
                     semantic_error("variable \"%s\" not declared", $1);
                }
-               SymbolTableElement *four = lookup_constant(symbol_table, (Constant){.int_value = 4}, INT);
-               SymbolTableElement *fp = lookup_variable(symbol_table, "$fp", current_scope, VARIABLE, 0);
-               SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = e->attribute.array.adress, .float_value = (float)e->attribute.array.adress}, INT);
-               SymbolTableElement *t = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
-               gen_quad(code, BOP_PLUS, t, add, $2.ptr_list[0], (__uint32_t[]){0, 0, 0});
-               gen_quad(code, BOP_MULT, t, t, four, (__uint32_t[]){0, 0, 0});
-               gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
+               SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
                // on utilise le symbole 3 qui est inutile pour donner l'information du type de l'assignation
-               SymbolTableElement *t2 = malloc(sizeof(SymbolTableElement));
-               if(t2 == NULL)
-               {
-                    printf("malloc failed\n");
-                    exit(1);
-               }
+               __uint32_t type;
                if(e->type == MATRIX)
-                    t2->type = FLOAT;
-               gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){t2->type, 0, 0});
+                    type = FLOAT;
+               gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){type, 0, 0});
                adress++;
           }
           /* | ID slice_array slice_array '=' expression {$$.ptr= NULL;} */
@@ -683,13 +709,7 @@ primary_expression : ID
                          {
                               if(e->type == MATRIX)
                               {
-                                   SymbolTableElement *four = lookup_constant(symbol_table, (Constant){.int_value = 4}, INT);
-                                   SymbolTableElement *fp = lookup_variable(symbol_table, "$fp", current_scope, VARIABLE, 0);
-                                   SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = e->attribute.array.adress, .float_value = (float)e->attribute.array.adress}, INT);
-                                   SymbolTableElement *t = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
-                                   gen_quad(code, BOP_PLUS, t, add, $2.ptr_list[0], (__uint32_t[]){0, 0, 0});
-                                   gen_quad(code, BOP_MULT, t, t, four, (__uint32_t[]){0, 0, 0});
-                                   gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
+                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
                                    adress++;
                                    $$.ptr = t;
                                    $$.by_address = FLOAT;
@@ -861,4 +881,16 @@ void semantic_warning(const char *format, ...)
     va_end(args);
 
     fprintf(stderr, "\n");
+}
+
+SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *value)
+{
+     SymbolTableElement *four = lookup_constant(symbol_table, (Constant){.int_value = 4}, INT);
+     SymbolTableElement *fp = lookup_variable(symbol_table, "$fp", current_scope, VARIABLE, 0);
+     SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = id->attribute.array.adress, .float_value = (float)id->attribute.array.adress}, INT);
+     SymbolTableElement *t = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
+     gen_quad(code, BOP_PLUS, t, add, value, (__uint32_t[]){0, 0, 0});
+     gen_quad(code, BOP_MULT, t, t, four, (__uint32_t[]){0, 0, 0});
+     gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
+     return t;
 }

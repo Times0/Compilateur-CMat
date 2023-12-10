@@ -195,7 +195,7 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         // on autorise les additions avec $fp
         if(strcmp(quad->sym3->attribute.variable.name, "$fp") == 0)
         {
-            fprintf (f, "\tadd $t%d, $t%d, $fp\n", current_register_int, current_register_int - 1);
+            fprintf (f, "\tadd $t%d, $t%d, $fp\n", current_register_int, current_register_int - 2);
         }
         else
         {
@@ -305,6 +305,7 @@ void gencode_affect (FILE * f, Quad *quad)
     }
     else
     {
+        // on charge le type de l'élément référencé
         SymbolTableElement t;
         t.type = quad->by_adress[0];
         // sym3 contient seulement le type de la cible
@@ -407,11 +408,7 @@ void gencode_print(FILE *f, Quad *quad)
         {
             for(int j=0; j < t; j++)
             {
-                load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
-                fprintf (f, "\tli $v0, 2\n");
-                fprintf (f, "\tmov.s $f12, $f%d\n", current_register_float - 1);
-                fprintf (f, "\tsyscall\n");
-                current_register_float--;
+                
             }
             
             // \t
