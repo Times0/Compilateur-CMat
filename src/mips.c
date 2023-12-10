@@ -151,7 +151,7 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
 {
     if(quad->kind == UOP_MINUS)
     {
-        load_operator(f, quad->sym2, 0, 0);
+        load_operator(f, quad->sym2, quad->by_adress[1], 1);
         if(quad->sym1->type == INT)
         {
             fprintf (f, "\tneg $t%d, $t%d\n", current_register_int, current_register_int - 1);
@@ -431,30 +431,6 @@ void gencode_print(FILE *f, Quad *quad)
         // caractere de fin de chaine
         fprintf(f, "\tli $t%d, %d\n", current_register_int, 0);
         fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
-        fprintf(f, "\tsyscall\n");
-    }
-    else if(quad->kind == K_CALL_PRINTMAT)
-    {
-        __uint32_t t = quad->function_parameters[0]->attribute.array.size[1];
-        if(t ==0)
-            t++;
-        
-        for(int i=0; i < quad->function_parameters[0]->attribute.array.size[0]; i++)
-        {
-            for(int j=0; j < t; j++)
-            {
-                
-            }
-            
-            // \t
-            fprintf(f, "\tli $t%d, %d\n", current_register_int, 9);
-            fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, 0);
-            fprintf(f, "\tsyscall\n");
-        }
-
-        // \n
-        fprintf(f, "\tli $t%d, %d\n", current_register_int, 10);
-        fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, 0);
         fprintf(f, "\tsyscall\n");
     }
 }

@@ -10,20 +10,22 @@ print(1);
 printf("\n");*/
 int main()
 {
-    /*float r=9;
+    float r=0;
     int a;
     matrix ff[5];
     ff[0] = 1;
-    ff[1] = 4.5;
+    ff[1] = -ff[0];
     ff[2] = ff[0]+3;
-    ff[3] = ff[1]+2.7;
-    ff[4] = ff[2]+ff[3];
-    printmat(ff);*/
+    ff[3] = ff[1]-2.7;
+    ff[4] = ff[2]*(ff[3]);
+    printmat(ff);
+    
 
-    int a[3];
+    /*int a[3];
     float b =9.66;
+    print(c);
     a[0] = 999+b;
-    print(a[0]);
+    print(a[0]);*/
 
 }
     // a = ff[2] + ff[3];

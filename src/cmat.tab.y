@@ -528,13 +528,18 @@ additive_expression : multiplicative_expresssion
                     {
                          if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                          {
-                              $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($1.ptr->type, $3.ptr->type), adress, (__uint32_t[]) {0, 0});
-                              gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, 0, 0}); 
+                              $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
+                              gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
+                              $$.by_address = 0;
                               adress++;
                          }
                     }
                     | additive_expression AND_OP M multiplicative_expresssion
                     { 
+                         if($1.ptr->class == ARRAY || $4.ptr->class == ARRAY)
+                         {
+                              semantic_error("\"&&\" can't be applied to matrices");
+                         }
                          if(logical_expression_flag == 0)
                          {
                               semantic_error("\"&&\" can only be applied to logical expressions");
@@ -545,6 +550,10 @@ additive_expression : multiplicative_expresssion
                     }
                     | additive_expression OR_OP M multiplicative_expresssion
                     {
+                         if($1.ptr->class == ARRAY || $4.ptr->class == ARRAY)
+                         {
+                              semantic_error("\"&&\" can't be applied to matrices");
+                         }
                          if(logical_expression_flag == 0)
                          {
                               semantic_error("\"||\" can only be applied to logical expressions");
@@ -581,8 +590,9 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                            {
                               if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                               {
-                                   $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($1.ptr->type, $3.ptr->type), adress, (__uint32_t[]) {0, 0});
-                                   gen_quad(code, BOP_MULT, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, 0, 0}); 
+                                   $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
+                                   gen_quad(code, BOP_MULT, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
+                                   $$.by_address = 0;
                                    adress++;
                               }
                            }
@@ -590,21 +600,23 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                            {
                               if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                               {
-                                   $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($1.ptr->type, $3.ptr->type), adress, (__uint32_t[]) {0, 0});
-                                   gen_quad(code, BOP_DIV, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, 0, 0}); 
+                                   $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
+                                   gen_quad(code, BOP_DIV, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
+                                   $$.by_address = 0;
                                    adress++;
                               }
                            }
                            | multiplicative_expresssion '%' primary_expression
                            {
-                              if($1.ptr->type != INT || $3.ptr->type != INT)
+                              if($1.ptr->type != INT || $3.ptr->type != INT || $1.by_address != INT || $3.by_address != INT)
                               {
                                    semantic_error("modulo operator can only be applied to integers");
                               }
                               if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                               {
-                                   $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($1.ptr->type, $3.ptr->type), adress, (__uint32_t[]) {0, 0});
-                                   gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, 0, 0}); 
+                                   $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
+                                   gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
+                                   $$.by_address = 0;
                                    adress++;
                               }
                            }
@@ -839,22 +851,20 @@ primary_expression : ID
 expression :  additive_expression
           {
                $$.ptr = $1.ptr;
-           
           }
           | '-' expression %prec UNARY_OP
           {
-               $$.ptr = $2.ptr;
-               $$.by_address = $2.by_address;
-               printf("%f\n", $2.ptr->attribute.constant.float_value);
-               if($2.ptr->class == VARIABLE || $2.ptr->class == CONSTANT)
-               {
-                    $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($2.ptr->type, INT), adress, (__uint32_t[]){0, 0});
-                    gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL, (__uint32_t[]){0, 0, 0});
-                    
-               }
+               $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($2.ptr->type, $2.by_address), adress, (__uint32_t[]){0, 0});
+               gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL, (__uint32_t[]){0, $2.by_address, 0});
+               $$.by_address = 0;
+               adress++;           
           }
           | '!' expression %prec UNARY_OP
           {
+               if($2.ptr->class == ARRAY)
+               {
+                    semantic_error("\"!\" can't be applied to matrices");
+               }
                if(logical_expression_flag == 0)
                {
                    semantic_error("\"!\" can only be applied to logical expressions");
