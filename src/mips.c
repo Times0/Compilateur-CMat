@@ -151,7 +151,7 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
 {
     if(quad->kind == UOP_MINUS)
     {
-        load_operator(f, quad->sym2, 0);
+        load_operator(f, quad->sym2, 0, 0);
         if(quad->sym1->type == INT)
         {
             fprintf (f, "\tneg $t%d, $t%d\n", current_register_int, current_register_int - 1);
@@ -186,9 +186,10 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
     }
     
     // récupérer la valeur de op1 dans un registre temp
-    load_operator(f, quad->sym2, 0);
+    load_operator(f, quad->sym2, quad->by_adress[1], 1);
     // récupérer la valeur de op2 dans un autre registre temp
-    load_operator(f, quad->sym3, 0);
+    load_operator(f, quad->sym3, quad->by_adress[2], 1);
+
 
     if (quad->kind == BOP_PLUS)
     {
@@ -287,7 +288,7 @@ void gencode_affect (FILE * f, Quad *quad)
         {
             type_change_sym2 = convert_float_to_int(quad->sym2);
         
-            load_operator(f, quad->sym2, 0);
+            load_operator(f, quad->sym2, 0, 0);
             store_result (f, quad->sym1, 0);
 
             if(type_change_sym2)
@@ -297,7 +298,7 @@ void gencode_affect (FILE * f, Quad *quad)
         {
             type_change_sym2 = convert_int_to_float(quad->sym2);
         
-            load_operator(f, quad->sym2, 0);
+            load_operator(f, quad->sym2, 0, 0);
             store_result (f, quad->sym1, 0);
         
             if(type_change_sym2)
@@ -309,14 +310,14 @@ void gencode_affect (FILE * f, Quad *quad)
         // on charge le type de l'élément référencé
         SymbolTableElement t;
         t.type = quad->by_adress[0];
-        // sym3 contient seulement le type de la cible
+        // t contient seulement le type de la cible
         if(t.type == FLOAT)
         {
-            
             type_change_sym2 = convert_int_to_float(quad->sym2);
         
-            load_operator(f, quad->sym1, 0);
-            load_operator(f, quad->sym2, 0);
+            load_operator(f, quad->sym2, quad->by_adress[1], 1);
+            load_operator(f, quad->sym1, quad->by_adress[0], 0);
+            
             store_result (f, &t, quad->sym1->attribute.constant.int_value);
 
             if(type_change_sym2)
@@ -333,7 +334,7 @@ void gencode_print(FILE *f, Quad *quad)
         // Si passage par adresse
         if(quad->by_address_list[0] == INT)
         {
-            load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
+            load_operator(f, quad->function_parameters[0], quad->by_address_list[0], 1);
             fprintf (f, "\tli $v0, 1\n");
             fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 1);
             fprintf (f, "\tsyscall\n");
@@ -341,7 +342,7 @@ void gencode_print(FILE *f, Quad *quad)
         }
         else if(quad->by_address_list[0] == FLOAT)
         {
-            load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
+            load_operator(f, quad->function_parameters[0], quad->by_address_list[0], 1);
             fprintf (f, "\tli $v0, 2\n");
             fprintf (f, "\tmov.s $f12, $f%d\n", current_register_float - 1);
             fprintf (f, "\tsyscall\n");
@@ -351,7 +352,7 @@ void gencode_print(FILE *f, Quad *quad)
         // Passage par valeur on doit l'evaluer apres car il peyt y avoir des conflits entre les 2 types
         else if(quad->function_parameters[0]->type == INT)
         {
-            load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
+            load_operator(f, quad->function_parameters[0], quad->by_address_list[0], 1);
             fprintf (f, "\tli $v0, 1\n");
             fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 1);
             fprintf (f, "\tsyscall\n");
@@ -359,7 +360,7 @@ void gencode_print(FILE *f, Quad *quad)
         }
         else if(quad->function_parameters[0]->type == FLOAT)
         {
-            load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
+            load_operator(f, quad->function_parameters[0], quad->by_address_list[0], 1);
             fprintf (f, "\tli $v0, 2\n");
             fprintf (f, "\tmov.s $f12, $f%d\n", current_register_float - 1);
             fprintf (f, "\tsyscall\n");
@@ -467,8 +468,8 @@ void gencode_goto(FILE *f, Quad *quad)
             type_change_sym3 = convert_float_to_int(quad->sym3);
         }
         
-        load_operator(f, quad->sym2, 0);
-        load_operator(f, quad->sym3, 0);
+        load_operator(f, quad->sym2, 0, 0);
+        load_operator(f, quad->sym3, 0, 0);
 
         char *l = generate_label_with_nb(quad->branch_label);
         
@@ -538,7 +539,7 @@ void gencode_goto(FILE *f, Quad *quad)
     }
 }
 
-void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address)
+void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __uint32_t load_address)
 {
     if(strcmp(elem->attribute.variable.name, "$fp") == 0)
     {
@@ -548,7 +549,21 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address)
     
     if (elem->class == VARIABLE)
     {
-        if(elem->type == INT)
+        // si passage par addresse, on charge la valeur pointé par le registre
+        if(address == FLOAT)
+        {
+            fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
+            
+            // Indique si on doit charger la valeur pointé par l'addresse
+            if(load_address)
+            {
+                fprintf (f, "\tl.s $f%d, 0($t%d)\n", current_register_float, current_register_int);
+                current_register_float++;
+            }
+            current_register_int++;
+            
+        }
+        else if(elem->type == INT)
         {   
             // Pour charger un int, on le charge dans un registre float puis on le convertit en int
             // si variable globale
@@ -576,12 +591,6 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address)
                 else
                 {
                     fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
-                    // si passage par addresse, on charge la valeur pointé par le registre
-                    if(address)
-                    {
-                        fprintf (f, "\tl.s $f%d, 0($t%d)\n", current_register_float, current_register_int);
-                        current_register_float++;
-                    }
                 }
             }
             current_register_int++;

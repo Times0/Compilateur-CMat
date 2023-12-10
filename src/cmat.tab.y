@@ -479,7 +479,7 @@ assign :  ID '=' expression
                __uint32_t type;
                if(e->type == MATRIX)
                     type = FLOAT;
-               gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){type, 0, 0});
+               gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){type, $4.by_address, 0});
                adress++;
           }
           /* | ID slice_array slice_array '=' expression {$$.ptr= NULL;} */
@@ -515,7 +515,7 @@ additive_expression : multiplicative_expresssion
                          if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                          {
                               $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($1.ptr->type, $3.ptr->type), adress, (__uint32_t[]) {0, 0});
-                              gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, 0, 0}); 
+                              gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
                               adress++;
                          }
                     }
@@ -717,7 +717,6 @@ primary_expression : ID
                               // cas des tableaux
                               // else
                                    // $$.ptr = newtemp(symbol_table, VARIABLE, $2.ptr_list[0]->type, adress, (__uint32_t[]) {0, 0});
-  
                          }
                     }
                     /*| ID slice_array slice_array
@@ -833,10 +832,14 @@ expression :  additive_expression
           }
           | '-' expression %prec UNARY_OP
           {
-               if($2.ptr->class == VARIABLE)
+               $$.ptr = $2.ptr;
+               $$.by_address = $2.by_address;
+               printf("%f\n", $2.ptr->attribute.constant.float_value);
+               if($2.ptr->class == VARIABLE || $2.ptr->class == CONSTANT)
                {
-                    $$.ptr = newtemp(symbol_table, $2.ptr->class, $2.ptr->type, adress, (__uint32_t[]){0, 0});
+                    $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($2.ptr->type, INT), adress, (__uint32_t[]){0, 0});
                     gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL, (__uint32_t[]){0, 0, 0});
+                    
                }
           }
           | '!' expression %prec UNARY_OP

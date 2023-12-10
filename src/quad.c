@@ -244,9 +244,9 @@ void quad_dump(Quad *q)
         case BOP_PLUS:
             symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" + ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_MINUS:
             symbol_dump(q->sym1, q->by_adress[0]);
@@ -278,7 +278,7 @@ void quad_dump(Quad *q)
             break;
         case UOP_MINUS:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" := ");
+            printf(" = ");
             printf("- ");
             symbol_dump(q->sym2, 0);
             break;
@@ -297,7 +297,7 @@ void quad_dump(Quad *q)
         case K_COPY:
             symbol_dump(q->sym1, q->by_adress[0]);
             printf(" = ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             break;
         case K_GOTO:
             printf("goto %s", l);

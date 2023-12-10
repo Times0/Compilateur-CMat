@@ -10,20 +10,26 @@ print(1);
 printf("\n");*/
 int main()
 {
-    int r=9;
-    print(r);
-    // int c;
-    // r = 3;
-    // c = r;
-    // matrix f[7][3];
+    float r=9;
+    int a;
     matrix ff[4];
-    // int y=0;
-    ff[2] = 3.2;
+    ff[0] = 1;
+    ff[1] = 4.5;
+    ff[2] = 3;
     ff[3] = 144;
-    print(ff[3]);
+
+    ff[2] = ff[1];
+    ff[3] = ff[2];
+    printmat(ff);
+    a=8;
+    print(a);
+}
+    // a = ff[2] + ff[3];
+    // print(r);
+    /*print(ff[3]);
     print(ff[2]);
     printf("\n");
-    printmat(ff);
+    printmat(ff);*/
     // ff[0] = ff[1]+ff[2];*/
 
     // c = 2*f[3][3*c];
@@ -81,10 +87,10 @@ int main()
     if((1!=1 || 1 > 2)&&r)
     {
         printf("!=");
-    }*/
+    }
     int t;
-    t=1;
-}
+    t=1;*/
+
     /*int a;
     int c;
     int r;
@@ -133,7 +139,7 @@ int main()
     print(a);
     printf("\n");
 
-    a = -2.5;
+    a = -a;
     print(a);
     printf("\n");
 
