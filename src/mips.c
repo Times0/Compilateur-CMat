@@ -282,6 +282,7 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
 void gencode_affect (FILE * f, Quad *quad)
 {
     __uint32_t type_change_sym2=0;
+    // Si passage classique par valeur
     if(!quad->by_adress[0])
     {
         if(quad->sym1->type == INT)
@@ -305,6 +306,7 @@ void gencode_affect (FILE * f, Quad *quad)
                 convert_float_to_int(quad->sym2);
         }
     }
+    // Si passage par adresse
     else
     {
         // on charge le type de l'élément référencé
@@ -315,13 +317,25 @@ void gencode_affect (FILE * f, Quad *quad)
         {
             type_change_sym2 = convert_int_to_float(quad->sym2);
         
-            load_operator(f, quad->sym2, quad->by_adress[1], 1);
+            load_operator(f, quad->sym2, quad->by_adress[1], 1); // le 4eme parametre indique si on charge la valeur pointé par l'adresse ou seulement l'addresse
             load_operator(f, quad->sym1, quad->by_adress[0], 0);
             
             store_result (f, &t, quad->sym1->attribute.constant.int_value);
 
             if(type_change_sym2)
                 convert_float_to_int(quad->sym2);
+        }
+        else if(t.type == INT)
+        {
+            type_change_sym2 = convert_float_to_int(quad->sym2);
+        
+            load_operator(f, quad->sym2, quad->by_adress[1], 1);
+            load_operator(f, quad->sym1, quad->by_adress[0], 0);
+            
+            store_result (f, &t, quad->sym1->attribute.constant.int_value);
+
+            if(type_change_sym2)
+                convert_int_to_float(quad->sym2);
         }
         
     }
@@ -336,7 +350,7 @@ void gencode_print(FILE *f, Quad *quad)
         {
             load_operator(f, quad->function_parameters[0], quad->by_address_list[0], 1);
             fprintf (f, "\tli $v0, 1\n");
-            fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 1);
+            fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 2);
             fprintf (f, "\tsyscall\n");
             current_register_int-=2;
         }
@@ -563,6 +577,18 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
             current_register_int++;
             
         }
+        else if(address == INT)
+        {
+            fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
+            
+            // Indique si on doit charger la valeur pointé par l'addresse
+            if(load_address)
+            {
+                fprintf (f, "\tlw $t%d, 0($t%d)\n", current_register_int, current_register_int);
+                current_register_int++;
+            }
+            current_register_int++;
+        }
         else if(elem->type == INT)
         {   
             // Pour charger un int, on le charge dans un registre float puis on le convertit en int
@@ -626,7 +652,7 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
             current_register_float++;
         }
     }
-    // dans le cas ou on sauvegarde une addresse
+    // dans le cas ou on lit une addresse
     else if (elem->class == CONSTANT)
     {
         if(elem->type == INT)
@@ -639,24 +665,7 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
             fprintf (f, "\tli.s $f%d, %f\n", current_register_float, elem->attribute.constant.float_value);
             current_register_float++;
         }
-        //if((unsigned_operator != NULL) && (quadop->content.cst->type == TYPE_INT) && (quadop->content.cst->value > 0))
-            // (*unsigned_operator) ++;
     }
-    // else if (quadop->flag == BOOL_EXPR) {
-    //     if (quadop->content.bool_expr->bool_flag == IDENT) {
-    //         fprintf (f, "\tlw $t%zu, ", nb_reg_temp);
-    //         if (quadop->content.bool_expr->bool_content.temp->adress == -1)
-    //             fprintf (f, "%s\n", quadop->content.bool_expr->bool_content.temp->label);
-    //         else
-    //             fprintf (f, "%d($fp)\n", -4 * (quadop->content.bool_expr->bool_content.temp->adress + 1));   
-    //     }
-    //     else if (quadop->flag == CST) {
-    //         fprintf (f, "\tli $t%zu, %d\n", nb_reg_temp, quadop->content.bool_expr->bool_content.constant);
-    //         // toujours de type bool
-    //         // donc on ne va pas actualiser la valeur de unsigned_operator
-    //     }
-    //     nb_reg_temp ++;
-    // }
 }
 
 void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
@@ -712,11 +721,12 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
             current_register_int--;
             current_register_float--;
         }
-        /*else if(res->type == FLOAT)
+        else if(res->type == INT)
         {
-            // fprintf (f, "\ts.s $f%d, %d($t%d)\n", current_register_float - 1, adress);
-            current_register_float--;
-        }*/
+            fprintf (f, "\tsw $t%d, 0($t%d)\n", current_register_int-2, current_register_int-1);
+            fp_type[adress] = INT;
+            current_register_int-=2;
+        }
     }
 }
 

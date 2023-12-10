@@ -329,7 +329,7 @@ call : ID '(' parameter_list ')'
                {
                     semantic_error("print take one argument");
                }
-               if($3.ptr_list[0]->type != INT && $3.ptr_list[0]->type != FLOAT)
+               if($3.ptr_list[0]->class == ARRAY || $3.ptr_list[0]->class == STRING)
                {
                     semantic_error("print only takes int or float as argument");
                }
@@ -408,6 +408,8 @@ parameter : expression
           {
                $$.ptr = $1.ptr;
                $$.by_address = $1.by_address;
+
+               // inutile
                if($1.by_address == MATRIX)
                     $$.by_address = FLOAT;
           }
@@ -469,7 +471,6 @@ assign :  ID '=' expression
           }
           | ID slice_array '=' expression 
           {
-               printf("%d\n", $4.by_address);
                SymbolTableElement *e = lookup_variable(symbol_table, $1, current_scope, ARRAY, 0);
                if(e == NULL)
                {
@@ -477,7 +478,7 @@ assign :  ID '=' expression
                }
                SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
                // on utilise le symbole 3 qui est inutile pour donner l'information du type de l'assignation
-               __uint32_t type;
+               __uint32_t type = e->type;
                if(e->type == MATRIX)
                     type = FLOAT;
                gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){type, $4.by_address, 0});
@@ -719,8 +720,14 @@ primary_expression : ID
                                    $$.by_address = FLOAT;
                               }
                               // cas des tableaux
-                              // else
-                                   // $$.ptr = newtemp(symbol_table, VARIABLE, $2.ptr_list[0]->type, adress, (__uint32_t[]) {0, 0});
+                              else
+                              {
+
+                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
+                                   adress++;
+                                   $$.ptr = t;
+                                   $$.by_address = e->type;         
+                              }
                          }
                     }
                     /*| ID slice_array slice_array
