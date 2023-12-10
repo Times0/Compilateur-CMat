@@ -195,7 +195,8 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         // on autorise les additions avec $fp
         if(strcmp(quad->sym3->attribute.variable.name, "$fp") == 0)
         {
-            fprintf (f, "\tadd $t%d, $t%d, $fp\n", current_register_int, current_register_int - 2);
+
+            fprintf (f, "\tadd $t%d, $t%d, $fp\n", current_register_int, current_register_int-2);
         }
         else
         {
@@ -329,7 +330,26 @@ void gencode_print(FILE *f, Quad *quad)
 {
     if(quad->kind == K_CALL_PRINT)
     {
+        // Si passage par adresse
         if(quad->by_address_list[0] == INT)
+        {
+            load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
+            fprintf (f, "\tli $v0, 1\n");
+            fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 1);
+            fprintf (f, "\tsyscall\n");
+            current_register_int-=2;
+        }
+        else if(quad->by_address_list[0] == FLOAT)
+        {
+            load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
+            fprintf (f, "\tli $v0, 2\n");
+            fprintf (f, "\tmov.s $f12, $f%d\n", current_register_float - 1);
+            fprintf (f, "\tsyscall\n");
+            current_register_float--;
+            current_register_int--; // il faut vider le registre contenant l'addresse
+        }
+        // Passage par valeur on doit l'evaluer apres car il peyt y avoir des conflits entre les 2 types
+        else if(quad->function_parameters[0]->type == INT)
         {
             load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
             fprintf (f, "\tli $v0, 1\n");
@@ -337,7 +357,7 @@ void gencode_print(FILE *f, Quad *quad)
             fprintf (f, "\tsyscall\n");
             current_register_int--;
         }
-        else if(quad->by_address_list[0] == FLOAT)
+        else if(quad->function_parameters[0]->type == FLOAT)
         {
             load_operator(f, quad->function_parameters[0], quad->by_address_list[0]);
             fprintf (f, "\tli $v0, 2\n");

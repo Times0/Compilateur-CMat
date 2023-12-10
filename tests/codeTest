@@ -10,7 +10,8 @@ print(1);
 printf("\n");*/
 int main()
 {
-    // int r=9;
+    int r=9;
+    print(r);
     // int c;
     // r = 3;
     // c = r;
