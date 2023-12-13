@@ -12,6 +12,7 @@ typedef struct Quad {
   SymbolTableElement *sym3; // operand 2 or NULL
 
   __uint32_t by_adress[3]; //used for arrays to tell if the value is store by adress, one for each operand
+                           // we store type
 
   SymbolTableElement **function_parameters;
   __uint32_t nb_parameters;
@@ -33,7 +34,7 @@ QuadTable *code_new();
 
 void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, SymbolTableElement * s3, __uint32_t by_adress[3]);
 void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters, __uint32_t *by_address);
-void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, __int32_t label);
+void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, __int32_t label, __uint32_t by_adress[2]);
 
 char* generate_label();
 char *generate_label_with_nb(__uint32_t nb);

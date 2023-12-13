@@ -1,5 +1,5 @@
 %define api.header.include {"../include/cmat.tab.h"}
-%glr-parser
+/* %glr-parser */
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +21,7 @@ extern SymbolTable *symbol_table;
  SymbolTable *next_symbol_table = NULL;
  __uint32_t lineno = 1;
 __uint32_t adress = 0;
-__uint32_t logical_expression_flag = 0;
+__uint32_t logical_expression_flag = 0; // permet d'indiquer si on se situe dans une expression logique
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
 SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *value);
@@ -41,11 +41,15 @@ void semantic_warning(const char *format, ...);
      struct
      {
           SymbolTableElement * ptr;
+
           SymbolTableElement ** ptr_list;    // liste de pointeurs vers des elements de la table des symboles, pour les parametres de fonctions ou slice des tableaux
-          __uint32_t *by_address_list;         // liste de 0 et 1 pour savoir si on passe par adresse ou non
+          __uint32_t size_ptr_list;          // taille de la liste, dans le cas des slice cela correspond au nombre de slice de la 1ere dimension
+          __uint32_t size_ptr_list2;         // 2eme dimension
+          __uint32_t capacity_ptr_list;      
+          
+          __uint32_t *by_address_list;       // liste de 0, FLOAT, INT pour savoir si on passe par adresse ou non et si oui quel est le type de l'objet pointé
           __uint32_t by_address;
-          __uint32_t size_ptr_list;
-          __uint32_t capacity_ptr_list;
+          
           
           __int32_t *true_list;        // liste des indices quads à compléter pour le vrai
           __int32_t *false_list;       // liste des indices quads à compléter pour le faux
@@ -64,11 +68,10 @@ void semantic_warning(const char *format, ...);
 
 
 %token ';' '*' '/' '^' '(' ')'
-
 %token '+' '-' 
 // useless
-%token VOID MAIN IF ELSE WHILE FOR OR_OP UNARY_OP  DDOT
-%token  AND_OP DECR INCR
+%token VOID MAIN IF ELSE WHILE FOR UNARY_OP DDOT
+%token DECR INCR
 %token RETURN
 
 
@@ -79,11 +82,11 @@ void semantic_warning(const char *format, ...);
 %left '(' ')' OR_OP AND_OP
 
 
-
 %type <expr> expression
 %type <expr> primary_expression
 %type <expr> multiplicative_expresssion
 %type <expr> additive_expression
+%type <expr> logical_expression
 %type <expr> parameter
 %type <expr> parameter_list
 %type <expr> statement
@@ -92,7 +95,6 @@ void semantic_warning(const char *format, ...);
 %type <expr> statement_while
 %type <expr> statement_for
 %type <expr> block
-%type <expr> id_or_const
 %type <expr> instruction
 %type <expr> instruction_list
 %type <expr> declaration_function
@@ -103,6 +105,8 @@ void semantic_warning(const char *format, ...);
 %type <expr> declaration_or_assign
 %type <int_val> declaration_array
 %type <expr> slice_array
+%type <expr> expression_slice
+%type <expr> expression_slice_list
 %type <type_val> type
 %type <expr> M
 %type <expr> N
@@ -110,6 +114,7 @@ void semantic_warning(const char *format, ...);
 %start start
 %%
 start: instruction_list
+     | %empty
 
 instruction_list: instruction_list M instruction   { complete_list($1.next_list, $2.quad); $$.next_list = $3.next_list; }
                 | instruction                      { $$.next_list = $1.next_list; }
@@ -126,7 +131,7 @@ instruction : declaration ';'           { $$.next_list = create_list(-1);}
 
 M : %empty { $$.quad = code->nextquad; }
 
-N : %empty { $$.next_list = create_list(code->nextquad); gen_quad_goto(code, K_GOTO, NULL, NULL, -1); $$.quad = code->nextquad; }
+N : %empty { $$.next_list = create_list(code->nextquad); gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0}); $$.quad = code->nextquad; }
 
 statement : statement_if
           | statement_while
@@ -140,7 +145,7 @@ statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expre
                          complete_list($4.true_list, $7.quad);
                          $$.next_list = concat_list($4.false_list, $8.next_list);
                          $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
-                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
                     }
                     else
                     {
@@ -148,7 +153,7 @@ statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expre
                          complete_list($4.false_list, $9.quad);
                          $$.next_list = concat_list($8.next_list, $9.next_list);
                          $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
-                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
                     }
              }
 
@@ -170,7 +175,7 @@ statement_else : ELSE N statement_if
 statement_while : WHILE M '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block
                 {
                     complete_list($5.true_list, $8.quad);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad, (__uint32_t[]){0, 0});
                     
                     // on ajoute un label pour le while, on regenere un label (meme si inutile) pour faciliter le free 
                     code->quads[$2.quad].label = $2.quad;
@@ -231,7 +236,7 @@ declaration_or_assign : declaration
 
 declaration_function : type MAIN '(' ')' block {$$.ptr = NULL;}
 
-// impossible de factoriser
+// impossible de factoriser, on ne peut pas remplacer par "type assign" car la variable n'existe pas
 declaration :  type ID declaration_affectation
                {
                     SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
@@ -264,6 +269,10 @@ declaration :  type ID declaration_affectation
                     {
                          semantic_error("variable \"%s\" already declared in this scope", $2);
                     }
+                    if($3 == 0)
+                    {
+                         semantic_error("variable \"%s\" must have a dimension", $2);
+                    }
                     if(current_scope == 0)
                          insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 0}, -1, current_scope);
                     else
@@ -272,7 +281,7 @@ declaration :  type ID declaration_affectation
                          adress += $3*1;
                     }
                }
-               | type ID declaration_array declaration_array declaration_affectation
+               /*| type ID declaration_array declaration_array declaration_affectation
                {
                     SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
                     if(l != NULL)
@@ -286,30 +295,89 @@ declaration :  type ID declaration_affectation
                          insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, $4},adress, current_scope);
                          adress += $3*$4;
                     }
-               }
+               }*/
 
-declaration_array : '[' INT_CONST ']'        { $$ = $2;}
+declaration_array : '[' INT_CONST ']'   { $$ = $2;}
 
-slice_array : '[' expression ']'
+// il manque * generer les quad pour tous les slices
+slice_array : '[' expression_slice_list ']'
             {
-               $$.ptr_list = malloc(sizeof(SymbolTableElement *));
-               if($$.ptr_list == NULL)
-               {
-                    printf("malloc failed\n");
-                    exit(1);
-               }
-               if($2.ptr->type == FLOAT)
-               {
-                    semantic_error("can't slice array with float");
-               }
-               $$.ptr_list[0] = $2.ptr;
+               $$.ptr_list = $2.ptr_list;
                $$.size_ptr_list = 1;
+
+               for(int i=0; i< $2.size_ptr_list;i++)
+                    printf("%d\n", $2.ptr_list[i]->attribute.constant.int_value);
+
             }
 
+expression_slice : INT_CONST DDOT INT_CONST
+                 {
+                    if($3 <= $1)
+                    {
+                         semantic_error("invalid slice");
+                    }
+                    $$.size_ptr_list = $3-$1+1;
+                    $$.ptr_list = malloc(($$.size_ptr_list)*sizeof(SymbolTableElement*));
+                    if($$.ptr_list == NULL)
+                    {
+                         printf("Error malloc in expression_slice");
+                         exit(1);
+                    }
+                    for(__uint32_t i = $1; i <= $3;i++)
+                    {
+                         SymbolTableElement *c = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i}, INT);
+                         $$.ptr_list[i-$1] = c;
+                    }
+                 }
+                 | additive_expression
+                 {
+                    $$.ptr_list = malloc(sizeof(SymbolTableElement *));
+                    if($$.ptr_list == NULL)
+                    {
+                         printf("Error malloc in expression_slice\n");
+                         exit(1);
+                    }
+                    if($1.ptr->class == ARRAY)
+                    {
+                         semantic_error("can't slice array with an array");
+                    }
+                    if($1.ptr->type == FLOAT)
+                    {
+                         semantic_error("can't slice array with a float");
+                    }
+                    $$.ptr_list[0] = $1.ptr;
+                    $$.size_ptr_list = 1;
+                 }
+                 | '*'
 
-declaration_affectation : '=' expression
+expression_slice_list : expression_slice ';' expression_slice_list // merge les listes
+                      {
+                         $$.ptr_list = realloc($1.ptr_list, ($1.size_ptr_list+$3.size_ptr_list)*sizeof(SymbolTableElement*));
+                         if($$.ptr_list == NULL)
+                         {
+                              printf("Error malloc in expression_slice_list");
+                              exit(1);
+                         }
+                         for(__uint32_t i = 0; i<$3.size_ptr_list; i++)
+                         {
+                              $$.ptr_list[i+$1.size_ptr_list] = $3.ptr_list[i];
+                         }
+                         $$.size_ptr_list = $1.size_ptr_list+$3.size_ptr_list;
+                      }
+                      | expression_slice
+                      {
+                         $$.ptr_list = $1.ptr_list;
+                         $$.size_ptr_list = $1.size_ptr_list;
+                      }
+
+
+declaration_affectation : '=' additive_expression
                         {
                               $$.ptr = $2.ptr;
+                              if($2.ptr->class == ARRAY)
+                              {
+                                   semantic_error("can't affect array to variable");
+                              }
                         }
                         | %empty
                         {
@@ -374,7 +442,7 @@ call : ID '(' parameter_list ')'
                n[0]  = insert_string(symbol_table, "\"\\n\"", adress);
                adress++;
                t[0]  = insert_string(symbol_table, "\"\\t\"", adress);
-
+               adress++;
 
                
                for(int i=0;i<$3.ptr_list[0]->attribute.array.size[0];i++)
@@ -383,17 +451,23 @@ call : ID '(' parameter_list ')'
                     {
                          SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
                          SymbolTableElement *e = generate_address_quads($3.ptr_list[0], add);
+                         // pas adress++ car on ne stocke pas les addresses
                          SymbolTableElement **list = malloc(sizeof(SymbolTableElement*));
+                         __uint32_t *by_address_list = malloc(sizeof(__uint32_t));
+                         if(list == NULL || by_address_list == NULL)
+                         {
+                              printf("Error malloc in call printmat");
+                              exit(1);
+                         }
                          list[0] = e;
-                         gen_quad_function(code, K_CALL_PRINT, NULL, print, list, 1, (__uint32_t[]){FLOAT});
+                         by_address_list[0] = FLOAT;
+                         gen_quad_function(code, K_CALL_PRINT, NULL, print, list, 1, by_address_list);
                          
                          gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){t}, 1, (__uint32_t[]){0});
                     }
                     gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){n}, 1, (__uint32_t[]){0});
                }
-               adress--;
-               
-               
+               adress-=2;
           }
           else
           {
@@ -457,9 +531,6 @@ parameter_list : parameter ',' parameter_list
                }
 
 
-
-
-
 assign :  ID '=' expression
           {    
                $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
@@ -467,24 +538,61 @@ assign :  ID '=' expression
                {
                     semantic_error("variable \"%s\" not declared", $1);
                }
-               gen_quad(code, K_COPY, $$.ptr, $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
+               if($$.ptr->class != ARRAY)
+                    gen_quad(code, K_COPY, $$.ptr, $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
+               else if($$.ptr->type == MATRIX)
+               {    
+                    if($$.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $$.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
+                         semantic_error("arrays size must be consistent for affectation");
+
+                    __uint32_t size = $3.ptr->attribute.array.size[1];
+                    if(size == 0)
+                         size++;
+
+                    // on ne stocke pas les variables temporaires contenat les adresses
+                    for(int i=0;i<$3.ptr->attribute.array.size[0];i++)
+                    {
+                         for(int j=0;j<size;j++)
+                         {
+                              SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                              SymbolTableElement *e1 = generate_address_quads($$.ptr, add);
+                              adress++;
+                              SymbolTableElement *e2 = generate_address_quads($3.ptr, add);
+                              
+                              gen_quad(code, K_COPY, e1, e2, NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
+                              adress--;
+                         }
+                    }
+                    
+               }
+               else
+               {
+                    semantic_error("operation not permitted on list use matrix instead");
+               }
           }
-          | ID slice_array '=' expression 
+          | ID slice_array '=' expression    // bloquer les reference 1 pour matrice 2
           {
                SymbolTableElement *e = lookup_variable(symbol_table, $1, current_scope, ARRAY, 0);
                if(e == NULL)
                {
                     semantic_error("variable \"%s\" not declared", $1);
                }
+               if($4.ptr->class == ARRAY)
+               {
+                    semantic_error("can't affect array to %s", e->type == INT?"INT":"FLOAT");
+               }
+                    
                SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
-               // on utilise le symbole 3 qui est inutile pour donner l'information du type de l'assignation
                __uint32_t type = e->type;
                if(e->type == MATRIX)
                     type = FLOAT;
                gen_quad(code, K_COPY, t, $4.ptr, NULL, (__uint32_t[]){type, $4.by_address, 0});
                adress++;
           }
-          /* | ID slice_array slice_array '=' expression {$$.ptr= NULL;} */
+          | ID slice_array slice_array '=' expression
+          {
+               $$.ptr= NULL;
+          }
 
 block : '{'                   {
                                    __uint32_t t = current_scope;
@@ -499,6 +607,7 @@ block : '{'                   {
                                    adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable; // il faut plus que ca pour matrice
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 
                               }
+     | '{' '}' {$$.ptr = NULL;}
      /* | instruction */ // tres smart 
 
 
@@ -534,57 +643,7 @@ additive_expression : multiplicative_expresssion
                               adress++;
                          }
                     }
-                    | additive_expression AND_OP M multiplicative_expresssion
-                    { 
-                         if($1.ptr->class == ARRAY || $4.ptr->class == ARRAY)
-                         {
-                              semantic_error("\"&&\" can't be applied to matrices");
-                         }
-                         if(logical_expression_flag == 0)
-                         {
-                              semantic_error("\"&&\" can only be applied to logical expressions");
-                         }
-                         complete_list($1.true_list, $3.quad);
-                         $$.true_list = $4.true_list;
-                         $$.false_list = concat_list($1.false_list, $4.false_list);
-                    }
-                    | additive_expression OR_OP M multiplicative_expresssion
-                    {
-                         if($1.ptr->class == ARRAY || $4.ptr->class == ARRAY)
-                         {
-                              semantic_error("\"&&\" can't be applied to matrices");
-                         }
-                         if(logical_expression_flag == 0)
-                         {
-                              semantic_error("\"||\" can only be applied to logical expressions");
-                         }
-                         complete_list($1.false_list, $3.quad);
-                         $$.false_list = $4.false_list;
-                         $$.true_list = concat_list($1.true_list, $4.true_list);
-                    }
-
-id_or_const : ID
-            {
-               $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-               if($$.ptr == NULL)
-               {
-                    semantic_error("variable \"%s\" not declared", $1);
-               }
-            }
-            | INT_CONST
-            {
-               Constant v;
-               v.int_value = $1;
-               v.float_value = (float)$1;
-               $$.ptr = insert_constant(&symbol_table, v, INT);
-            }
-            | FLOAT_CONST
-            {
-               Constant v;
-               v.float_value = $1;
-               v.int_value = (int)$1;
-               $$.ptr = insert_constant(&symbol_table, v, FLOAT);
-            }
+                    
 
 multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                            {
@@ -608,7 +667,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                            }
                            | multiplicative_expresssion '%' primary_expression
                            {
-                              if($1.ptr->type != INT || $3.ptr->type != INT || $1.by_address != INT || $3.by_address != INT)
+                              if($1.ptr->type != INT || $3.ptr->type != INT || ($1.by_address != INT && $1.by_address != 0) || ($3.by_address != INT && $3.by_address != 0))
                               {
                                    semantic_error("modulo operator can only be applied to integers");
                               }
@@ -620,73 +679,6 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                    adress++;
                               }
                            }
-                           | id_or_const EQ_OP id_or_const
-                           {
-                                if(logical_expression_flag == 0)
-                                {
-                                     semantic_error("comparison operator can only be applied to logical expressions");
-                                }
-                                $$.true_list = create_list(code->nextquad);
-                                $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, -1);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
-                           }  
-                           | id_or_const NEQ_OP id_or_const
-                           {
-                                if(logical_expression_flag == 0)
-                                {
-                                     semantic_error("comparison operator can only be applied to logical expressions");
-                                }
-                                $$.true_list = create_list(code->nextquad);
-                                $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, -1);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
-                           }
-                           | id_or_const LT_OP id_or_const
-                           {
-                                if(logical_expression_flag == 0)
-                                {
-                                     semantic_error("comparison operator can only be applied to logical expressions");
-                                }
-                                $$.true_list = create_list(code->nextquad);
-                                $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, -1);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
-                           }
-                           | id_or_const GT_OP id_or_const
-                           {
-                                if(logical_expression_flag == 0)
-                                {
-                                     semantic_error("comparison operator can only be applied to logical expressions");
-                                }
-                                $$.true_list = create_list(code->nextquad);
-                                $$.false_list = create_list(code->nextquad+1);
-                                printf("Gen op_gt %p with %d\n", $$.true_list, $$.true_list[0]);
-                                gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, -1);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
-                           }
-                           | id_or_const LE_OP id_or_const
-                           {
-                                if(logical_expression_flag == 0)
-                                {
-                                     semantic_error("comparison operator can only be applied to logical expressions");
-                                }
-                                $$.true_list = create_list(code->nextquad);
-                                $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, -1);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
-                           }
-                           | id_or_const GE_OP id_or_const
-                           {
-                                if(logical_expression_flag == 0)
-                                {
-                                     semantic_error("comparison operator can only be applied to logical expressions");
-                                }
-                                $$.true_list = create_list(code->nextquad);
-                                $$.false_list = create_list(code->nextquad+1);
-                                gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, -1);
-                                gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
-                           }
                            | primary_expression {$$.ptr = $1.ptr; $$.by_address = $1.by_address;}
 
 
@@ -697,15 +689,13 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" not declared", $1);
                          }
-
-                         if(logical_expression_flag == 1)
-                         {
-                              $$.true_list = create_list(code->nextquad);
-                              $$.false_list = create_list(code->nextquad+1);
-                              gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), -1);
-                              gen_quad_goto(code, K_GOTO, NULL, NULL, -1);
-                         }
                          $$.by_address = 0;
+                         
+                         if(logical_expression_flag)
+                         {
+                              $$.true_list = NULL;
+                              $$.false_list = NULL;
+                         }
                     }
                     | ID slice_array
                     {
@@ -742,14 +732,14 @@ primary_expression : ID
                               }
                          }
                     }
-                    /*| ID slice_array slice_array
+                    | ID slice_array slice_array
                     {
                          $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
                          if($$.ptr == NULL)
                          {
                               semantic_error("variable \"%s\" not declared", $1);
                          }
-                    }*/
+                    }
                     | INT_CONST
                     {
                          Constant v;
@@ -778,10 +768,10 @@ primary_expression : ID
                          c.float_value = (float)1;
                          SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
 
-                         $$.ptr = newtemp(symbol_table, id->class, id->type, adress, (__uint32_t[]) {0, 0});
+                         gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0});
                          $$.by_address = 0;
-                         gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0}); 
-                         adress++;
+                         $$.ptr = id;
+                         
                     }
                     | INCR ID
                     {
@@ -795,10 +785,8 @@ primary_expression : ID
                          c.float_value = (float)1;
                          SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
 
-                         $$.ptr = newtemp(symbol_table, id->class, id->type, adress, (__uint32_t[]) {0, 0});
+                         gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0});
                          $$.by_address = 0;
-                         gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0}); 
-                         adress++;
                     }
                     | ID DECR
                     {
@@ -812,10 +800,8 @@ primary_expression : ID
                          c.float_value = (float)1;
                          SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
 
-                         $$.ptr = newtemp(symbol_table, id->class, id->type, adress, (__uint32_t[]) {0, 0});
+                         gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
                          $$.by_address = 0;
-                         gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0}); 
-                         adress++;
                     }
                     | DECR ID
                     {
@@ -829,10 +815,30 @@ primary_expression : ID
                          c.float_value = (float)1;
                          SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
 
-                         $$.ptr = newtemp(symbol_table, id->class, id->type, adress, (__uint32_t[]) {0, 0});
+                         gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
                          $$.by_address = 0;
-                         gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0}); 
+                    }
+                    | '-' primary_expression %prec UNARY_OP
+                    {
+                         $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($2.ptr->type, $2.by_address), adress, (__uint32_t[]){0, 0});
                          adress++;
+                         gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL, (__uint32_t[]){0, $2.by_address, 0});
+                         $$.by_address = 0;
+                    }                    
+                    | '!' primary_expression %prec UNARY_OP
+                    {    
+                         if($2.ptr->class == ARRAY)
+                         {
+                              semantic_error("\"!\" can't be applied to matrices");
+                         }
+                         if(logical_expression_flag == 0)
+                         {
+                             semantic_error("\"!\" can only be applied to logical expressions");
+                         }
+                         $$.true_list = $2.false_list;
+                         $$.false_list = $2.true_list;
+                         $$.ptr = $2.ptr;
+                         $$.by_address = $2.by_address;
                     }
                     | '(' expression ')'
                     {
@@ -841,37 +847,149 @@ primary_expression : ID
                               $$.true_list = $2.true_list;
                               $$.false_list = $2.false_list;
                          }
-                         else
+                         $$.ptr = $2.ptr;
+                         $$.by_address = $2.by_address;
+                    }
+                    
+
+// priorité maximale
+logical_expression  : additive_expression    // si on prend cette regle c'est qu'il n'y pas de comparaison et donc on a seulement une constante ou un id
+                    {
+                         $$.ptr = $1.ptr;
+                         $$.by_address = $1.by_address;
+
+                         if(logical_expression_flag == 1)
                          {
-                              $$.ptr = $2.ptr;
-                              $$.by_address = $2.by_address;
+                              if($1.ptr->class == ARRAY)
+                              {
+                                   semantic_error("arrays are not allowed in logical expressions");
+                              }
+                              if($1.true_list == NULL && $1.false_list == NULL)
+                              {
+                                   $$.true_list = create_list(code->nextquad);
+                                   $$.false_list = create_list(code->nextquad+1);
+                              }
+                              gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), -1, (__uint32_t[]){$1.by_address, 0});
+                              gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
                          }
                     }
+                    | additive_expression EQ_OP additive_expression 
+                    {
+                       if(logical_expression_flag == 0)
+                       {
+                            semantic_error("\"==\" can only be applied to logical expressions");
+                       }
+                       if($1.ptr->class == ARRAY || $3.ptr->class == ARRAY)
+                       {
+                              semantic_error("\"==\" can't be applied to arrays");
+                       }
+                       $$.true_list = create_list(code->nextquad);
+                       $$.false_list = create_list(code->nextquad+1);
+                       gen_quad_goto(code, K_IF, $1.ptr, $3.ptr, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                       gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
+                    }  
+                    | additive_expression NEQ_OP additive_expression
+                    {
+                         if(logical_expression_flag == 0)
+                         {
+                              semantic_error("comparison operator can only be applied to logical expressions");
+                         }
+                         if($1.ptr->class == ARRAY || $3.ptr->class == ARRAY)
+                         {
+                              semantic_error("\"!=\" can't be applied to arrays");
+                         }
+                         $$.true_list = create_list(code->nextquad);
+                         $$.false_list = create_list(code->nextquad+1);
+                         gen_quad_goto(code, K_IFNOT, $1.ptr, $3.ptr, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                    }
+                    | additive_expression LT_OP additive_expression
+                    {
+                         if(logical_expression_flag == 0)
+                         {
+                              semantic_error("comparison operator can only be applied to logical expressions");
+                         }
+                         if($1.ptr->class == ARRAY || $3.ptr->class == ARRAY)
+                         {
+                              semantic_error("\"<\" can't be applied to arrays");
+                         }
+                         $$.true_list = create_list(code->nextquad);
+                         $$.false_list = create_list(code->nextquad+1);
+                         gen_quad_goto(code, K_IFLT, $1.ptr, $3.ptr, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                    }
+                    | additive_expression GT_OP additive_expression
+                    {
+                         if(logical_expression_flag == 0)
+                         {
+                              semantic_error("comparison operator can only be applied to logical expressions");
+                         }
+                         if($1.ptr->class == ARRAY || $3.ptr->class == ARRAY)
+                         {
+                              semantic_error("\">\" can't be applied to arrays");
+                         }
+                         $$.true_list = create_list(code->nextquad);
+                         $$.false_list = create_list(code->nextquad+1);
+                         printf("Gen op_gt %p with %d\n", $$.true_list, $$.true_list[0]);
+                         gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                    }
+                    | additive_expression LE_OP additive_expression
+                    {
+                         if(logical_expression_flag == 0)
+                         {
+                              semantic_error("comparison operator can only be applied to logical expressions");
+                         }
+                         if($1.ptr->class == ARRAY || $3.ptr->class == ARRAY)
+                         {
+                              semantic_error("\"<=\" can't be applied to arrays");
+                         }
+                         $$.true_list = create_list(code->nextquad);
+                         $$.false_list = create_list(code->nextquad+1);
+                         gen_quad_goto(code, K_IFLE, $1.ptr, $3.ptr, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1,(__uint32_t[]){$1.by_address, $3.by_address});
+                    }
+                    | additive_expression GE_OP additive_expression
+                    {
+                         if(logical_expression_flag == 0)
+                         {
+                              semantic_error("comparison operator can only be applied to logical expressions");
+                         }
+                         if($1.ptr->class == ARRAY || $3.ptr->class == ARRAY)
+                         {
+                              semantic_error("\">=\" can't be applied to arrays");
+                         }
+                         $$.true_list = create_list(code->nextquad);
+                         $$.false_list = create_list(code->nextquad+1);
+                         gen_quad_goto(code, K_IFGE, $1.ptr, $3.ptr, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){$1.by_address, $3.by_address});
+                    }
 
-expression :  additive_expression
+expression : logical_expression
           {
                $$.ptr = $1.ptr;
+               $$.by_address = $1.by_address;
           }
-          | '-' expression %prec UNARY_OP
-          {
-               $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($2.ptr->type, $2.by_address), adress, (__uint32_t[]){0, 0});
-               gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL, (__uint32_t[]){0, $2.by_address, 0});
-               $$.by_address = 0;
-               adress++;           
-          }
-          | '!' expression %prec UNARY_OP
-          {
-               if($2.ptr->class == ARRAY)
-               {
-                    semantic_error("\"!\" can't be applied to matrices");
-               }
+          | expression AND_OP M logical_expression
+          { 
                if(logical_expression_flag == 0)
                {
-                   semantic_error("\"!\" can only be applied to logical expressions");
+                    semantic_error("\"&&\" can only be applied to logical expressions");
                }
-               $$.true_list = $2.false_list;
-               $$.false_list = $2.true_list;
+               complete_list($1.true_list, $3.quad);
+               $$.true_list = $4.true_list;
+               $$.false_list = concat_list($1.false_list, $4.false_list);
           }
+          | expression OR_OP M logical_expression
+          {
+               if(logical_expression_flag == 0)
+               {
+                    semantic_error("\"||\" can only be applied to logical expressions");
+               }
+               complete_list($1.false_list, $3.quad);
+               $$.false_list = $4.false_list;
+               $$.true_list = concat_list($1.true_list, $4.true_list);
+          }  
           
 %%     
 
@@ -907,6 +1025,8 @@ void semantic_warning(const char *format, ...)
     fprintf(stderr, "\n");
 }
 
+// Prend en paramètre la variable dont il faut calculer l'addresse et une reference vers la variable qui contient l'indice
+// Renvoi une variable temporaire contenant l'adresse de la variable
 SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *value)
 {
      SymbolTableElement *four = lookup_constant(symbol_table, (Constant){.int_value = 4}, INT);

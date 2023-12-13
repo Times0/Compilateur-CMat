@@ -103,7 +103,7 @@ SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t
 		{
 			strncpy(l->attribute.variable.name, name, MAXTOKENLEN);
 			l->attribute.variable.adress = adress;
-			l->class = VARIABLE;		
+			l->class = VARIABLE;
 			l->type = type;
 			s->nb_variable++;
 		}
@@ -119,7 +119,6 @@ SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t
 		}
 
 		s->size++;
-
 		s = tmp;
 		
 	}
@@ -448,8 +447,10 @@ void symbol_dump(SymbolTableElement *e, __uint32_t by_adress)
 	else if (e->class == STR)
 		printf("%s", e->attribute.string.string);
 	else if(e->class == ARRAY)
-		printf("%s", e->attribute.variable.name);
-	
+		if(by_adress)
+			printf("[%s]", e->attribute.array.name);
+		else
+			printf("%s", e->attribute.array.name);
 }
 
 SymbolTableElement *newtemp(SymbolTable *t, __uint32_t class, __uint32_t type, __int32_t offset, __uint32_t size[2])

@@ -58,6 +58,13 @@ void gencode_mips(QuadTable *code, FILE * f)
     }
 
     // fin du main et du code
+    // si le dernier quad (pas généré) a un label
+    if(code->quads[code->nextquad].label != -1)
+    {
+        char *label = generate_label_with_nb(code->quads[code->nextquad].label);
+        fprintf(f, "\n%s:\n", label);
+        free(label);
+    }
     fprintf (f, "\tli $v0, 10\n\tsyscall\n");
 
     // parcours de tous les quads avant le main
@@ -108,38 +115,6 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case K_IFGE:
             gencode_goto(f, quad);
             break;
-        /*
-        case Q_IF:
-            gencode_if (f, global_code[quad_num]);
-            break;
-        case Q_GOTO:
-            global_code[quad_num+1]->brenched = TRUE;
-            int goto_quad_num = global_code[quad_num]->op1->content.goto_quad_num;
-            if (goto_quad_num >= 0 && goto_quad_num < (int)next_quad) {
-                    fprintf (f, "\tb %d_label:\n", goto_quad_num);
-            }
-            break;
-            case Q_SUP:
-            case Q_INF:
-            case Q_SUP_EQ:
-            case Q_INF_EQ:
-                gencode_sup_inf (f, global_code[quad_num]);
-                break;
-            case Q_PRE_CALL :
-                methode_pre_call (f, global_code[quad_num]->op1->content.entry);
-                break;
-            case Q_PUSH_ARG :
-                methode_push_arg (f, global_code[quad_num]->res->content.entry->size_param, global_code[quad_num]->op1, global_code[quad_num]->op2->content.cst->value);
-                break;
-            case Q_CALL :
-                methode_call (f, global_code[quad_num]->op1->content.entry);
-                break;
-            case Q_METH_DECL:
-                methode_decl (f, global_code[quad_num]->op1->content.entry);
-                break;
-            case Q_METH_JR:
-                methode_jr (f, global_code[quad_num]->op1->content.entry);
-                break;*/
                                 
             default:
                 printf ("Error : Quad type not recognized\n");
@@ -149,6 +124,13 @@ void gencode_mips_quad(FILE *f, Quad *quad)
 
 void gencode_arith_unary_op (FILE * f, Quad *quad)
 {
+    // l'opérande a quache est une variable temporaire
+    /*__uint32_t type_change_sym2=0;
+    if(quad->sym1->type == FLOAT)
+        type_change_sym2 = convert_int_to_float(quad->sym2);
+    else
+        type_change_sym2 = convert_float_to_int(quad->sym2);*/
+
     if(quad->kind == UOP_MINUS)
     {
         load_operator(f, quad->sym2, quad->by_adress[1], 1);
@@ -162,9 +144,17 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
             fprintf (f, "\tneg.s $f%d, $f%d\n", current_register_float, current_register_float - 1);
             current_register_float++;
         }
+        
         store_result(f, quad->sym1, 0);
-        return;
+        
     }
+
+    /*if(quad->sym1->type == FLOAT)
+        if(type_change_sym2)
+            convert_float_to_int(quad->sym2);
+    else
+        if(type_change_sym2)
+            convert_int_to_float(quad->sym2);*/
 }
 
 void gencode_arith_binary_op (FILE * f, Quad *quad)
@@ -174,15 +164,23 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
 
     __uint32_t type_change_sym2=0;
     __uint32_t type_change_sym3=0;
-    if(quad->sym1->type == INT)
+    if(quad->sym1->type == INT || quad->by_adress[0] == INT)
     {
         type_change_sym2 = convert_float_to_int(quad->sym2);
+        // if(type_change_sym2)
+            // quad->by_adress[1] = INT;
         type_change_sym3 = convert_float_to_int(quad->sym3);
+        // if(type_change_sym3)
+            // quad->by_adress[2] = INT;
     }
     else if(quad->sym1->type == FLOAT)
     {
         type_change_sym2 = convert_int_to_float(quad->sym2);
+        // if(type_change_sym2)
+            // quad->by_adress[1] = FLOAT;
         type_change_sym3 = convert_int_to_float(quad->sym3);
+        // if(type_change_sym3)
+            // quad->by_adress[2] = FLOAT;
     }
     
     // récupérer la valeur de op1 dans un registre temp
@@ -265,16 +263,29 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
     if(quad->sym1->type == INT)
     {
         if(type_change_sym2)
+        {
             convert_int_to_float(quad->sym2);
+            // quad->by_adress[1] = FLOAT;
+        }
         if(type_change_sym3)
+        {
             convert_int_to_float(quad->sym3);
+            // quad->by_adress[2] = FLOAT;
+        }
     }
     else if(quad->sym1->type == FLOAT)
     {
         if(type_change_sym2)
+        {
             convert_float_to_int(quad->sym2);
+            // quad->by_adress[1] = INT;   
+        }
         if(type_change_sym3)
+        {
             convert_float_to_int(quad->sym3);
+            // quad->by_adress[2] = INT;
+        }
+            
     }
 
 }
@@ -350,9 +361,9 @@ void gencode_print(FILE *f, Quad *quad)
         {
             load_operator(f, quad->function_parameters[0], quad->by_address_list[0], 1);
             fprintf (f, "\tli $v0, 1\n");
-            fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 2);
+            fprintf (f, "\tmove $a0, $t%d\n", current_register_int - 1);
             fprintf (f, "\tsyscall\n");
-            current_register_int-=2;
+            current_register_int--;
         }
         else if(quad->by_address_list[0] == FLOAT)
         {
@@ -447,7 +458,7 @@ void gencode_goto(FILE *f, Quad *quad)
     {
         __uint32_t type_change_sym2=0;
         __uint32_t type_change_sym3=0;
-        if(quad->sym2->type == FLOAT || quad->sym3->type == FLOAT)
+        if(quad->sym2->type == FLOAT || quad->sym3->type == FLOAT || quad->by_adress[1] || quad->by_adress[2])
         {
             type_change_sym2 = convert_int_to_float(quad->sym2);
             type_change_sym3 = convert_int_to_float(quad->sym3);
@@ -458,8 +469,8 @@ void gencode_goto(FILE *f, Quad *quad)
             type_change_sym3 = convert_float_to_int(quad->sym3);
         }
         
-        load_operator(f, quad->sym2, 0, 0);
-        load_operator(f, quad->sym3, 0, 0);
+        load_operator(f, quad->sym2, quad->by_adress[1], 1);
+        load_operator(f, quad->sym3, quad->by_adress[2], 1);
 
         char *l = generate_label_with_nb(quad->branch_label);
         
@@ -561,7 +572,6 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
             if(load_address)
             {
                 fprintf (f, "\tlw $t%d, 0($t%d)\n", current_register_int, current_register_int);
-                current_register_int++;
             }
             current_register_int++;
         }

@@ -80,7 +80,7 @@ void gen_quad(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTab
     c->nextquad++;
 }
 
-void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, __int32_t label)
+void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, SymbolTableElement * s2, __int32_t label, __uint32_t by_adress[2])
 {
     if ( c->nextquad == c->capacity )
         code_grow(&c);
@@ -90,6 +90,8 @@ void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, Symb
     q->sym2 = s1;
     q->sym3 = s2;
     q->branch_label = label;
+    q->by_adress[1] = by_adress[0];
+    q->by_adress[2] = by_adress[1];
     c->nextquad++;
 }
 
@@ -219,10 +221,7 @@ void complete_list(__int32_t *l, __int32_t i)
     }
 
     code->quads[i].label = i;
-    printf("complete list %d with %d\n", l[0], i);
 
-
-    // printf("complete list %d with %d\n", l[0], i);
     __int32_t j = 0;
     
     while(l[j] != -1)
@@ -231,6 +230,7 @@ void complete_list(__int32_t *l, __int32_t i)
             code->quads[l[j]].branch_label = i;
         j++;
     }   
+    // printf("complete list %d with %d and size %d\n", l[0], i, j);
 }
 
 void quad_dump(Quad *q)
@@ -251,36 +251,36 @@ void quad_dump(Quad *q)
         case BOP_MINUS:
             symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" - ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_MULT:
             symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" * ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_DIV:
             symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" / ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_MOD:
             symbol_dump(q->sym1, q->by_adress[0]);
             printf(" := ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" %% ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case UOP_MINUS:
             symbol_dump(q->sym1, q->by_adress[0]);
             printf(" = ");
             printf("- ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             break;
         case K_CALL_PRINT:
         case K_CALL_PRINTF:
@@ -304,44 +304,44 @@ void quad_dump(Quad *q)
             break;
         case K_IF:
             printf("if ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" == ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             printf(" goto %s", l);
             break;
         case K_IFNOT:
             printf("if ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" != ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             printf(" goto %s", l);
             break;
         case K_IFLT:
             printf("if ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" < ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             printf(" goto %s", l);
             break;
         case K_IFGT:
             printf("if ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" > ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             printf(" goto %s", l);
             break;
         case K_IFLE:
             printf("if ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" <= ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             printf(" goto %s", l);
             break;
         case K_IFGE:
             printf("if ");
-            symbol_dump(q->sym2, 0);
+            symbol_dump(q->sym2, q->by_adress[1]);
             printf(" >= ");
-            symbol_dump(q->sym3, 0);
+            symbol_dump(q->sym3, q->by_adress[2]);
             printf(" goto %s", l);
             break;
         default:
