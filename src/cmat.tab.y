@@ -24,7 +24,7 @@ __uint32_t adress = 0;
 __uint32_t logical_expression_flag = 0; // permet d'indiquer si on se situe dans une expression logique
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
-SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *value);
+SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *add, SymbolTableElement *add2);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
 %}
@@ -48,7 +48,7 @@ void semantic_warning(const char *format, ...);
           __uint32_t capacity_ptr_list;      
           
           __uint32_t *by_address_list;       // liste de 0, FLOAT, INT pour savoir si on passe par adresse ou non et si oui quel est le type de l'objet pointé
-          __uint32_t by_address;
+          __uint32_t by_address;             // de meme pour un seul element
           
           
           __int32_t *true_list;        // liste des indices quads à compléter pour le vrai
@@ -269,10 +269,6 @@ declaration :  type ID declaration_affectation
                     {
                          semantic_error("variable \"%s\" already declared in this scope", $2);
                     }
-                    if($3 == 0)
-                    {
-                         semantic_error("variable \"%s\" must have a dimension", $2);
-                    }
                     if(current_scope == 0)
                          insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 0}, -1, current_scope);
                     else
@@ -281,7 +277,7 @@ declaration :  type ID declaration_affectation
                          adress += $3*1;
                     }
                }
-               /*| type ID declaration_array declaration_array declaration_affectation
+               | type ID declaration_array declaration_array declaration_affectation
                {
                     SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
                     if(l != NULL)
@@ -295,7 +291,7 @@ declaration :  type ID declaration_affectation
                          insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, $4},adress, current_scope);
                          adress += $3*$4;
                     }
-               }*/
+               }
 
 declaration_array : '[' INT_CONST ']'   { $$ = $2;}
 
@@ -303,7 +299,7 @@ declaration_array : '[' INT_CONST ']'   { $$ = $2;}
 slice_array : '[' expression_slice_list ']'
             {
                $$.ptr_list = $2.ptr_list;
-               $$.size_ptr_list = 1;
+               $$.size_ptr_list = $2.size_ptr_list;
 
                for(int i=0; i< $2.size_ptr_list;i++)
                     printf("%d\n", $2.ptr_list[i]->attribute.constant.int_value);
@@ -449,8 +445,16 @@ call : ID '(' parameter_list ')'
                {
                     for(int j=0;j<size;j++)
                     {
-                         SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
-                         SymbolTableElement *e = generate_address_quads($3.ptr_list[0], add);
+                         SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                         SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+                         SymbolTableElement *e;
+                         
+                         // si 1 dimension
+                         if(size == 1)
+                              e = generate_address_quads($3.ptr_list[0], add1, NULL);
+                         else
+                              e = generate_address_quads($3.ptr_list[0], add1, add2);
+
                          // pas adress++ car on ne stocke pas les addresses
                          SymbolTableElement **list = malloc(sizeof(SymbolTableElement*));
                          __uint32_t *by_address_list = malloc(sizeof(__uint32_t));
@@ -459,12 +463,15 @@ call : ID '(' parameter_list ')'
                               printf("Error malloc in call printmat");
                               exit(1);
                          }
+
                          list[0] = e;
                          by_address_list[0] = FLOAT;
                          gen_quad_function(code, K_CALL_PRINT, NULL, print, list, 1, by_address_list);
                          
+                         // \t
                          gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){t}, 1, (__uint32_t[]){0});
                     }
+                    // \n
                     gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){n}, 1, (__uint32_t[]){0});
                }
                adress-=2;
@@ -538,9 +545,10 @@ assign :  ID '=' expression
                {
                     semantic_error("variable \"%s\" not declared", $1);
                }
-               if($$.ptr->class != ARRAY)
+               
+               if($$.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                     gen_quad(code, K_COPY, $$.ptr, $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
-               else if($$.ptr->type == MATRIX)
+               else if($$.ptr->type == MATRIX && $3.ptr->type == MATRIX) // copie de matrice
                {    
                     if($$.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $$.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
                          semantic_error("arrays size must be consistent for affectation");
@@ -555,9 +563,9 @@ assign :  ID '=' expression
                          for(int j=0;j<size;j++)
                          {
                               SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
-                              SymbolTableElement *e1 = generate_address_quads($$.ptr, add);
+                              SymbolTableElement *e1 = generate_address_quads($$.ptr, add, NULL);
                               adress++;
-                              SymbolTableElement *e2 = generate_address_quads($3.ptr, add);
+                              SymbolTableElement *e2 = generate_address_quads($3.ptr, add, NULL);
                               
                               gen_quad(code, K_COPY, e1, e2, NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
                               adress--;
@@ -567,7 +575,7 @@ assign :  ID '=' expression
                }
                else
                {
-                    semantic_error("operation not permitted on list use matrix instead");
+                    semantic_error("\"=\" not permitted on list use matrix instead");
                }
           }
           | ID slice_array '=' expression    // bloquer les reference 1 pour matrice 2
@@ -582,7 +590,7 @@ assign :  ID '=' expression
                     semantic_error("can't affect array to %s", e->type == INT?"INT":"FLOAT");
                }
                     
-               SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
+               SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], NULL);
                __uint32_t type = e->type;
                if(e->type == MATRIX)
                     type = FLOAT;
@@ -591,7 +599,26 @@ assign :  ID '=' expression
           }
           | ID slice_array slice_array '=' expression
           {
-               $$.ptr= NULL;
+               SymbolTableElement *e = lookup_variable(symbol_table, $1, current_scope, ARRAY, 0);
+               if(e == NULL)
+               {
+                    semantic_error("variable \"%s\" not declared", $1);
+               }
+               if($5.ptr->class == ARRAY)
+               {
+                    semantic_error("can't affect array to %s", e->type == INT?"INT":"FLOAT");
+               }
+               printf("%d %d\n", $2.size_ptr_list, $3.size_ptr_list);
+               if($2.size_ptr_list > 1 || $3.size_ptr_list > 1)
+               {
+                    semantic_error("affectation of sliced matrix is impossible");
+               }
+               SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], $3.ptr_list[0]);
+               __uint32_t type = e->type;
+               if(e->type == MATRIX)
+                    type = FLOAT;
+               gen_quad(code, K_COPY, t, $5.ptr, NULL, (__uint32_t[]){type, $5.by_address, 0});
+               adress++;
           }
 
 block : '{'                   {
@@ -631,6 +658,15 @@ additive_expression : multiplicative_expresssion
                               gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
                               $$.by_address = 0;
                               adress++;
+                         }
+                         else if($1.ptr->type != MATRIX || $3.ptr->type != MATRIX)// matrices
+                         {
+                              semantic_error("operation not permitted on list use matrix instead");
+                         }
+
+                         if($1.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $1.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
+                         {
+                              semantic_error("matrices should have the same dimension for \"+\"");
                          }
                     }
                     | additive_expression '-' multiplicative_expresssion
@@ -716,7 +752,7 @@ primary_expression : ID
                          {
                               if(e->type == MATRIX)
                               {
-                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
+                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], NULL);
                                    adress++;
                                    $$.ptr = t;
                                    $$.by_address = FLOAT;
@@ -725,7 +761,7 @@ primary_expression : ID
                               else
                               {
 
-                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0]);
+                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], NULL);
                                    adress++;
                                    $$.ptr = t;
                                    $$.by_address = e->type;         
@@ -734,10 +770,43 @@ primary_expression : ID
                     }
                     | ID slice_array slice_array
                     {
-                         $$.ptr = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-                         if($$.ptr == NULL)
+                         SymbolTableElement *e = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
+                         if(e == NULL)
                          {
                               semantic_error("variable \"%s\" not declared", $1);
+                         }
+                         if(e->class != ARRAY)
+                         {
+                              semantic_error("variable \"%s\" is not an array", $1);
+                         }
+                         if(e->attribute.array.size[1] == 0)
+                         {
+                              semantic_error("variable \"%s\" have one dimension", $1);
+                         }
+                         if($2.size_ptr_list == 1 && $3.size_ptr_list == 1)
+                         {
+                              if(e->type == MATRIX)
+                              {
+                                   SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = e->attribute.array.size[0], .float_value = (float)e->attribute.array.size[0]}, INT);
+                                   SymbolTableElement *temp = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
+                                   adress++;
+                                   gen_quad(code, BOP_MULT, temp, temp, $2.ptr_list[0], (__uint32_t[]){0, 0, 0});
+                                   gen_quad(code, BOP_PLUS, temp, temp, $3.ptr_list[0], (__uint32_t[]){0, 0, 0});
+
+                                   SymbolTableElement *t = generate_address_quads(e, temp, NULL);
+                                   adress++;
+                                   $$.ptr = t;
+                                   $$.by_address = FLOAT;
+                              }
+                              // cas des tableaux
+                              else
+                              {
+
+                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], NULL); // NUL
+                                   adress++;
+                                   $$.ptr = t;
+                                   $$.by_address = e->type;         
+                              }
                          }
                     }
                     | INT_CONST
@@ -1027,14 +1096,32 @@ void semantic_warning(const char *format, ...)
 
 // Prend en paramètre la variable dont il faut calculer l'addresse et une reference vers la variable qui contient l'indice
 // Renvoi une variable temporaire contenant l'adresse de la variable
-SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *value)
+SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *add1, SymbolTableElement *add2)
 {
      SymbolTableElement *four = lookup_constant(symbol_table, (Constant){.int_value = 4}, INT);
      SymbolTableElement *fp = lookup_variable(symbol_table, "$fp", current_scope, VARIABLE, 0);
      SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = id->attribute.array.adress, .float_value = (float)id->attribute.array.adress}, INT);
      SymbolTableElement *t = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
-     gen_quad(code, BOP_PLUS, t, add, value, (__uint32_t[]){0, 0, 0});
-     gen_quad(code, BOP_MULT, t, t, four, (__uint32_t[]){0, 0, 0});
-     gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
+     
+     // 2 dimensions
+     if(add2 != NULL)
+     {
+          SymbolTableElement *size = insert_constant(&symbol_table, (Constant){.int_value = id->attribute.array.size[0], .float_value = (float)id->attribute.array.size[0]}, INT);
+          SymbolTableElement *s = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
+          adress++;
+          gen_quad(code, BOP_MULT, s, size, add1, (__uint32_t[]){0, 0, 0});
+          gen_quad(code, BOP_PLUS, s, s, add2, (__uint32_t[]){0, 0, 0});
+
+          gen_quad(code, BOP_PLUS, t, add, s, (__uint32_t[]){0, 0, 0});
+          gen_quad(code, BOP_MULT, t, t, four, (__uint32_t[]){0, 0, 0});
+          gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
+     }
+     // 1 dimension
+     else
+     {
+          gen_quad(code, BOP_PLUS, t, add, add1, (__uint32_t[]){0, 0, 0});
+          gen_quad(code, BOP_MULT, t, t, four, (__uint32_t[]){0, 0, 0});
+          gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
+     }
      return t;
 }

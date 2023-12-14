@@ -334,7 +334,10 @@ void gencode_affect (FILE * f, Quad *quad)
             store_result (f, &t, quad->sym1->attribute.constant.int_value);
 
             if(type_change_sym2)
+            {
                 convert_float_to_int(quad->sym2);
+                current_register_int--;
+            }
         }
         else if(t.type == INT)
         {

@@ -1,7 +1,8 @@
-// Restrictions :   - segfualt si on comple iun quad trop loin -> facilement corrigeable
+// Restrictions :   - segfault si on comple iun quad trop loin -> facilement corrigeable
 //                  - Pas de parentheses dans les expr logiques
 //                  - Pas de for
-
+//                  - Faire les matrices globales
+//                  - Pas ff[a[0]]
 
 /*int a;
 float d; // b banni car opcode de branch
@@ -23,23 +24,41 @@ int main()
 
     // float r=0;
     // int a = 1;
+    /*matrix f[3][3];
+    f[0][0] = 1;
+    f[0][1] = 2;
+    f[0][2] = 3;
+    f[1][0] = 4;
+    f[1][1] = 5;
+    f[1][2] = 6;
+    f[2][0] = 7;
+    f[2][1] = 8;
+    f[2][2] = 9;
+    
+    printmat(f);
+
+    int a[2];
+    a[0] = 1;
     matrix ff[5];
-    /*ff[0] = -12.1+27;
+    ff[0] = -12.1+27;
     ff[1] = ff[0]*8.9;
     ff[2] = 1;
     ff[3] = ff[1]-2;
     ff[4] = ff[2]*ff[2];
-    printf("Matrice ff\n");
-    printmat(ff);*/
+    ff[a[0]] = 97;*/
+    // printf("Matrice ff\n");
+    // printmat(ff);
 
     matrix A[3];
+    int a[3];
+    A = a;
     A[0] = 1;
-    A[1] = 2;
-    A[2] = 3;
+    // A[1] = 2;
+    // A[2] = 3;
     matrix B[3];
-    B[0] = 4;
-    B[1] = 5;
-    B[2] = 6;
+    // B[0] = 4;
+    // B[1] = 5;
+    // B[2] = 6;
 
     A = B;
     // int a[2];
