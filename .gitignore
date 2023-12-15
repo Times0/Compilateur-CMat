@@ -6,6 +6,7 @@ src/cmat.*.c
 tests/*/out
 .vscode/
 *.txt
+*.s
 
 
 # Prerequisites

@@ -20,7 +20,7 @@ extern SymbolTable *symbol_table;
  __uint32_t max_scope = 0;
  SymbolTable *next_symbol_table = NULL;
  __uint32_t lineno = 1;
-__uint32_t adress = 0;
+__uint32_t adress = 0;                  // donne la prochaine adresse dans la stack
 __uint32_t logical_expression_flag = 0; // permet d'indiquer si on se situe dans une expression logique
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
@@ -663,10 +663,36 @@ additive_expression : multiplicative_expresssion
                          {
                               semantic_error("operation not permitted on list use matrix instead");
                          }
-
-                         if($1.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $1.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
+                         else
                          {
-                              semantic_error("matrices should have the same dimension for \"+\"");
+                              if($1.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $1.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
+                              {
+                                   semantic_error("matrices should have the same dimension for \"+\"");
+                              }
+
+                              __uint32_t size = $3.ptr->attribute.array.size[1];
+                              if(size == 0)
+                                   size++;
+
+                              $$.ptr = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){$3.ptr->attribute.array.size[0], $3.ptr->attribute.array.size[1]});
+                              adress += $3.ptr->attribute.array.size[0]*size;
+
+                              for(int i=0;i<$3.ptr->attribute.array.size[0];i++)
+                              {
+                                   for(int j=0;j<size;j++)
+                                   {
+                                        SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                                   
+                                        SymbolTableElement *e1 = generate_address_quads($$.ptr, add, NULL);
+                                        adress++;
+                                        SymbolTableElement *e2 = generate_address_quads($1.ptr, add, NULL);
+                                        adress++;
+                                        SymbolTableElement *e3 = generate_address_quads($3.ptr, add, NULL);
+                              
+                                        gen_quad(code, BOP_PLUS, e1, e2, e3, (__uint32_t[]){FLOAT, FLOAT, FLOAT});
+                                        adress-=2;
+                                   }
+                              }
                          }
                     }
                     | additive_expression '-' multiplicative_expresssion
