@@ -25,6 +25,8 @@ __uint32_t logical_expression_flag = 0; // permet d'indiquer si on se situe dans
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
 SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *add, SymbolTableElement *add2);
+SymbolTableElement *matrix_operation(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
+SymbolTableElement *matrix_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
 %}
@@ -562,10 +564,22 @@ assign :  ID '=' expression
                     {
                          for(int j=0;j<size;j++)
                          {
-                              SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
-                              SymbolTableElement *e1 = generate_address_quads($$.ptr, add, NULL);
-                              adress++;
-                              SymbolTableElement *e2 = generate_address_quads($3.ptr, add, NULL);
+                              SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                              SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+                              SymbolTableElement *e1, *e2;
+
+                              if(size == 1)
+                              {
+                                   e1 = generate_address_quads($$.ptr, add1, NULL);
+                                   adress++;
+                                   e2 = generate_address_quads($3.ptr, add1, NULL);
+                              }
+                              else
+                              {
+                                   e1 = generate_address_quads($$.ptr, add1, add2);
+                                   adress++;
+                                   e2 = generate_address_quads($3.ptr, add1, add2);
+                              }
                               
                               gen_quad(code, K_COPY, e1, e2, NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
                               adress--;
@@ -653,9 +667,35 @@ additive_expression : multiplicative_expresssion
                     { 
                          if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                          {
-
                               $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
                               gen_quad(code, BOP_PLUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
+                              $$.by_address = 0;
+                              adress++;
+                         }
+                         else if($1.ptr->type == MATRIX && $3.ptr->type == MATRIX)
+                         {
+                              if($1.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $1.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
+                              {
+                                   semantic_error("matrices should have the same dimension for \"+\"");
+                              }
+
+                              $$.ptr = matrix_operation($1.ptr, $3.ptr, '+');
+                         }
+                         else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                         {
+                              $$.ptr = matrix_operation_constant($1.ptr, $3.ptr, '+');
+                         }
+                         else
+                         {
+                              semantic_error("operation not permitted on list use matrix instead");
+                         }
+                    }
+                    | additive_expression '-' multiplicative_expresssion
+                    {
+                         if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
+                         {
+                              $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
+                              gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
                               $$.by_address = 0;
                               adress++;
                          }
@@ -670,39 +710,7 @@ additive_expression : multiplicative_expresssion
                                    semantic_error("matrices should have the same dimension for \"+\"");
                               }
 
-                              __uint32_t size = $3.ptr->attribute.array.size[1];
-                              if(size == 0)
-                                   size++;
-
-                              $$.ptr = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){$3.ptr->attribute.array.size[0], $3.ptr->attribute.array.size[1]});
-                              adress += $3.ptr->attribute.array.size[0]*size;
-
-                              for(int i=0;i<$3.ptr->attribute.array.size[0];i++)
-                              {
-                                   for(int j=0;j<size;j++)
-                                   {
-                                        SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
-                                   
-                                        SymbolTableElement *e1 = generate_address_quads($$.ptr, add, NULL);
-                                        adress++;
-                                        SymbolTableElement *e2 = generate_address_quads($1.ptr, add, NULL);
-                                        adress++;
-                                        SymbolTableElement *e3 = generate_address_quads($3.ptr, add, NULL);
-                              
-                                        gen_quad(code, BOP_PLUS, e1, e2, e3, (__uint32_t[]){FLOAT, FLOAT, FLOAT});
-                                        adress-=2;
-                                   }
-                              }
-                         }
-                    }
-                    | additive_expression '-' multiplicative_expresssion
-                    {
-                         if($1.ptr->class != ARRAY && $3.ptr->class != ARRAY)
-                         {
-                              $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type(get_float_type($1.ptr->type, $3.ptr->type), get_float_type($1.by_address, $3.by_address)), adress, (__uint32_t[]) {0, 0});
-                              gen_quad(code, BOP_MINUS, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
-                              $$.by_address = 0;
-                              adress++;
+                              $$.ptr = matrix_operation($1.ptr, $3.ptr, '-');
                          }
                     }
                     
@@ -1150,4 +1158,115 @@ SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableEl
           gen_quad(code, BOP_PLUS, t, t, fp, (__uint32_t[]){0, 0, 0});
      }
      return t;
+}
+
+SymbolTableElement *matrix_operation(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
+{
+     __uint32_t size = a2->attribute.array.size[1];
+     if(size == 0)
+          size++;
+
+     SymbolTableElement *r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){a2->attribute.array.size[0], a2->attribute.array.size[1]});
+     adress += a2->attribute.array.size[0]*size;
+
+     for(int i=0;i<a2->attribute.array.size[0];i++)
+     {
+          for(int j=0;j<size;j++)
+          {
+               SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+               SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+               SymbolTableElement *e1, *e2, *e3;
+
+               if(size == 1)
+               {
+                    e1 = generate_address_quads(r, add1, NULL);
+                    adress++;
+                    e2 = generate_address_quads(a1, add1, NULL);
+                    adress++;
+                    e3 = generate_address_quads(a2, add1, NULL);
+               }
+               else
+               {
+                    e1 = generate_address_quads(r, add1, add2);
+                    adress++;
+                    e2 = generate_address_quads(a1, add1, add2);
+                    adress++;
+                    e3 = generate_address_quads(a2, add1, add2);
+               }
+
+               switch(op)
+               {
+                    case '+':
+                         gen_quad(code, BOP_PLUS, e1, e2, e3, (__uint32_t[]){FLOAT, FLOAT, FLOAT});
+                    break;
+                    case '-':
+                         gen_quad(code, BOP_MINUS, e1, e2, e3, (__uint32_t[]){FLOAT, FLOAT, FLOAT});
+                    break;
+               }
+                              
+               
+               adress-=2;
+          }
+     }
+     return r;
+}
+
+SymbolTableElement *matrix_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
+{
+     SymbolTableElement *constant;
+     SymbolTableElement *array;
+     if(a1->class == CONSTANT)
+     {
+          constant = a1;
+          array = a2;
+     }
+     else
+     {
+          constant = a2;
+          array = a1;
+     }
+     
+     __uint32_t size = array->attribute.array.size[1];
+     if(size == 0)
+          size++;
+
+     // varaiable temporaire pour le resultat
+     SymbolTableElement *r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){array->attribute.array.size[0], array->attribute.array.size[1]});
+     adress += array->attribute.array.size[0]*size;
+
+     for(int i=0;i<array->attribute.array.size[0];i++)
+     {
+          for(int j=0;j<size;j++)
+          {
+               SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+               SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+               SymbolTableElement *e1, *e2;
+
+               if(size == 1)
+               {
+                    e1 = generate_address_quads(r, add1, NULL);
+                    adress++;
+                    e2 = generate_address_quads(array, add1, NULL);
+               }
+               else
+               {
+                    e1 = generate_address_quads(r, add1, add2);
+                    adress++;
+                    e2 = generate_address_quads(array, add1, add2);
+               }
+
+               switch(op)
+               {
+                    case '+':
+                         gen_quad(code, BOP_PLUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+                    case '-':
+                         gen_quad(code, BOP_MINUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+               }
+               
+               adress-=2;
+          }
+     }
+     return r;
 }
