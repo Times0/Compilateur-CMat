@@ -58,6 +58,10 @@ int main()
     // A[0][0] = A[0][0] +3.2;
     printmat(A);
 
+    int a=0;
+    a--;
+    print(a--);
+
     // print(d);
     // printf("\n");
     // print(c+a);

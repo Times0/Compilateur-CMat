@@ -2376,5 +2376,19 @@ main:
 	li $t0, 0
 	sb $t0, 1($a0)
 	syscall
+	li $t0, 0
+	sw $t0, -556($fp)
+	lw $t0, -556($fp)
+	li $t1, 1
+	sub $t2, $t0, $t1
+	sw $t2, -556($fp)
+	lw $t0, -556($fp)
+	li $t1, 1
+	sub $t2, $t0, $t1
+	sw $t2, -556($fp)
+	lw $t0, -556($fp)
+	li $v0, 1
+	move $a0, $t0
+	syscall
 	li $v0, 10
 	syscall

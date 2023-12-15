@@ -890,6 +890,7 @@ primary_expression : ID
 
                          gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0});
                          $$.by_address = 0;
+                         $$.ptr = id;
                     }
                     | ID DECR
                     {
@@ -905,6 +906,7 @@ primary_expression : ID
 
                          gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
                          $$.by_address = 0;
+                         $$.ptr = id;
                     }
                     | DECR ID
                     {
@@ -920,6 +922,7 @@ primary_expression : ID
 
                          gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
                          $$.by_address = 0;
+                         $$.ptr = id;
                     }
                     | '-' primary_expression %prec UNARY_OP
                     {
