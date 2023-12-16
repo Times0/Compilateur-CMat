@@ -124,6 +124,7 @@ void gencode_mips_quad(FILE *f, Quad *quad)
 
 void gencode_arith_unary_op (FILE * f, Quad *quad)
 {
+    __uint32_t type = quad->sym1->type;
     // l'opérande a quache est une variable temporaire
     /*__uint32_t type_change_sym2=0;
     if(quad->sym1->type == FLOAT)
@@ -131,22 +132,37 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
     else
         type_change_sym2 = convert_float_to_int(quad->sym2);*/
 
+    if(quad->by_adress[0] != 0)
+    {
+        load_operator(f, quad->sym1, quad->by_adress[0], 0);
+        type = quad->by_adress[0];   
+    }
+
     if(quad->kind == UOP_MINUS)
     {
         load_operator(f, quad->sym2, quad->by_adress[1], 1);
-        if(quad->sym1->type == INT)
+        if(type == INT)
         {
             fprintf (f, "\tneg $t%d, $t%d\n", current_register_int, current_register_int - 1);
             current_register_int++;
         }
-        else if(quad->sym1->type == FLOAT)
+        else if(type == FLOAT)
         {
             fprintf (f, "\tneg.s $f%d, $f%d\n", current_register_float, current_register_float - 1);
             current_register_float++;
         }
         
-        store_result(f, quad->sym1, 0);
-        
+        if(quad->by_adress[0] == 0)
+            store_result(f, quad->sym1, 0);
+        else
+        {
+            SymbolTableElement t;
+            t.type = quad->by_adress[0];
+            
+            current_register_int--;
+            store_result (f, &t, quad->sym1->attribute.constant.int_value);
+            
+        }
     }
 
     /*if(quad->sym1->type == FLOAT)

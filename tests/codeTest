@@ -54,9 +54,14 @@ int main()
     B[1][1] = 5;
     B[2][2] = 6;
 
-    A=2-A;
+    A = -A+B*2;
     // A[0][0] = A[0][0] +3.2;
     printmat(A);
+
+    // int a=0;
+    // float d = 9.1;
+    // a = -d;
+    // print(a);
 
     // print(d);
     // printf("\n");

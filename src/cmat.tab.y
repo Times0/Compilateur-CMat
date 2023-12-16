@@ -27,6 +27,7 @@ uint32_t get_float_type(uint32_t type1, uint32_t type2);
 SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *add, SymbolTableElement *add2);
 SymbolTableElement *matrix_operation(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
 SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
+SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __uint32_t op);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
 %}
@@ -890,14 +891,22 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" not declared", $1);
                          }
-                         Constant c;
-                         c.int_value = 1;
-                         c.float_value = (float)1;
-                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+                         if(id->class != ARRAY)
+                         {
+                              Constant c;
+                              c.int_value = 1;
+                              c.float_value = (float)1;
+                              SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
 
-                         gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0});
-                         $$.by_address = 0;
-                         $$.ptr = id;
+                              gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0});
+                              $$.by_address = 0;
+                              $$.ptr = id;
+                         }
+                         else
+                         {
+                              $$.ptr = matrix_unary_operation_constant(id, INCR);
+                              $$.by_address = 0;
+                         }
                          
                     }
                     | INCR ID
@@ -907,14 +916,22 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" not declared", $2);
                          }
-                         Constant c;
-                         c.int_value = 1;
-                         c.float_value = (float)1;
-                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
-
-                         gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0});
-                         $$.by_address = 0;
-                         $$.ptr = id;
+                         if(id->class != ARRAY)
+                         {
+                              Constant c;
+                              c.int_value = 1;
+                              c.float_value = (float)1;
+                              SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+     
+                              gen_quad(code, BOP_PLUS, id, id, n1, (__uint32_t[]){0, 0, 0});
+                              $$.by_address = 0;
+                              $$.ptr = id;
+                         }
+                         else
+                         {
+                              $$.ptr = matrix_unary_operation_constant(id, INCR);
+                              $$.by_address = 0;
+                         }
                     }
                     | ID DECR
                     {
@@ -923,14 +940,22 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" not declared", $1);
                          }
-                         Constant c;
-                         c.int_value = 1;
-                         c.float_value = (float)1;
-                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+                         if(id->class != ARRAY)
+                         {
+                              Constant c;
+                              c.int_value = 1;
+                              c.float_value = (float)1;
+                              SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
 
-                         gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
-                         $$.by_address = 0;
-                         $$.ptr = id;
+                              gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
+                              $$.by_address = 0;
+                              $$.ptr = id;
+                         }
+                         else
+                         {
+                              $$.ptr = matrix_unary_operation_constant(id, DECR);
+                              $$.by_address = 0;
+                         }
                     }
                     | DECR ID
                     {
@@ -939,21 +964,37 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" not declared", $2);
                          }
-                         Constant c;
-                         c.int_value = 1;
-                         c.float_value = (float)1;
-                         SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
+                         if(id->class != ARRAY)
+                         {
+                              Constant c;
+                              c.int_value = 1;
+                              c.float_value = (float)1;
+                              SymbolTableElement *n1 = insert_constant(&symbol_table, c, INT);
 
-                         gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
-                         $$.by_address = 0;
-                         $$.ptr = id;
+                              gen_quad(code, BOP_MINUS, id, id, n1, (__uint32_t[]){0, 0, 0});
+                              $$.by_address = 0;
+                              $$.ptr = id;
+                         }
+                         else
+                         {
+                              $$.ptr = matrix_unary_operation_constant(id, DECR);
+                              $$.by_address = 0;
+                         }
                     }
                     | '-' primary_expression %prec UNARY_OP
                     {
-                         $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($2.ptr->type, $2.by_address), adress, (__uint32_t[]){0, 0});
-                         adress++;
-                         gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL, (__uint32_t[]){0, $2.by_address, 0});
-                         $$.by_address = 0;
+                         if($2.ptr->class != ARRAY)
+                         {
+                              $$.ptr = newtemp(symbol_table, VARIABLE, get_float_type($2.ptr->type, $2.by_address), adress, (__uint32_t[]){0, 0});
+                              adress++;
+                              gen_quad(code, UOP_MINUS, $$.ptr, $2.ptr, NULL, (__uint32_t[]){0, $2.by_address, 0});
+                              $$.by_address = 0;
+                         }
+                         else
+                         {
+                              $$.ptr = matrix_unary_operation_constant($2.ptr, '-');
+                              $$.by_address = 0;
+                         }
                     }                    
                     | '!' primary_expression %prec UNARY_OP
                     {    
@@ -1238,6 +1279,7 @@ SymbolTableElement *matrix_operation(SymbolTableElement *a1, SymbolTableElement 
      return r;
 }
 
+// opération bianires constante/matrice
 SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
 {
      SymbolTableElement *constant;
@@ -1288,17 +1330,73 @@ SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, Sym
                          gen_quad(code, BOP_PLUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
                     break;
                     case '-':
-                         gen_quad(code, BOP_MINUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                         if(a1->class == CONSTANT)          // pour assurer la commutativité
+                              gen_quad(code, BOP_MINUS, e1, constant, e2, (__uint32_t[]){FLOAT, 0, FLOAT});
+                         else
+                              gen_quad(code, BOP_MINUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
                     break;
                     case '*':
                          gen_quad(code, BOP_MULT, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
                     break;
                     case '/':
-                         gen_quad(code, BOP_DIV, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                         if(a1->class == CONSTANT)
+                              gen_quad(code, BOP_DIV, e1, constant, e2, (__uint32_t[]){FLOAT, 0, FLOAT});
+                         else
+                              gen_quad(code, BOP_DIV, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
                     break;
                }
                
-               adress-=2;
+               adress--;
+          }
+     }
+     return r;
+}
+
+// opération unaires constante/matrice
+SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __uint32_t op)
+{     
+     SymbolTableElement *r = a1;
+     __uint32_t size = r->attribute.array.size[1];
+     if(size == 0)
+          size++;
+     
+     if(op == '-')
+     {
+          r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){a1->attribute.array.size[0], a1->attribute.array.size[1]});
+          adress += a1->attribute.array.size[0]*size;
+     }
+
+
+     for(int i=0;i<r->attribute.array.size[0];i++)
+     {
+          for(int j=0;j<size;j++)
+          {
+               SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+               SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+               SymbolTableElement *e1;
+
+               if(size == 1)
+               {
+                    e1 = generate_address_quads(r, add1, NULL);
+               }
+               else
+               {
+                    e1 = generate_address_quads(r, add1, add2);
+               }
+
+               SymbolTableElement *un = insert_constant(&symbol_table, (Constant){.int_value = 1, .float_value =(float)1}, INT);
+               switch(op)
+               {
+                    case INCR:
+                         gen_quad(code, BOP_PLUS, e1, e1, un, (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+                    case DECR:
+                         gen_quad(code, BOP_MINUS, e1, e1, un, (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+                    case '-':
+                         gen_quad(code, UOP_MINUS, e1, generate_address_quads(a1, add1, add2), NULL,  (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+               }
           }
      }
      return r;
