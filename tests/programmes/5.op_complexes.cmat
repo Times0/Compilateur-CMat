@@ -13,14 +13,14 @@ int main()
     print(b++);
     print(b);
 
+    print(b--);
+    print(b);
+    print(--b);
+    print(b--);
+
     // unary
     print(-a);
     print(-a + b);
     print(-a + -b);
     print(-a + -b + -c);
-
-    // unary avec parenthèses
-    print(-(a + b));
-    print(-(a + b) + c); // fails
-    print(-(a + b) + -(c + a)); // fails
 }
