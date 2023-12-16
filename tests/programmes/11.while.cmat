@@ -1,0 +1,18 @@
+int main()
+{
+    int count = 5;
+    while (count > 0) {
+        print(count);
+        count--;
+    }
+
+    int a = 0;
+    int b = 500;
+
+    while (a < b) {
+        a++;
+        print(a);
+    }
+
+    print(a);
+}

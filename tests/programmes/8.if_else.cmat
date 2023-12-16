@@ -1,0 +1,36 @@
+int main()
+{
+    int a = 1;
+    int b = 2;
+    int c = 3;
+    int d = 4;
+
+    if (a == 1 && b == 2 && c == 3 && d == 4)
+    {
+        printf("Oui\n");
+    }
+    else // Unreachable
+    {
+        printf("Non\n");
+    }
+
+
+    if (a == 1 && b == 2 && c == 3 && d == 5) // Unreachable
+    {
+        printf("Oui\n");
+    }
+    else
+    {
+        printf("Non\n");
+    }
+
+    if (a != 100 && b != 200 && c != 300 && d != 400)
+    {
+        printf("Oui\n");
+    }
+    else // Unreachable
+    {
+        printf("Non\n");
+    }
+
+}

@@ -1,0 +1,51 @@
+int main() {
+    for (int i = 0; i < 100; i++) {
+        printf("Let's go!\n");
+    }
+
+    // Un cout pour chaque fruit
+    int fraises = 3;
+    int bananes = 2;
+    int pommes = 1;
+    int poires = 1;
+    int peches = 2;
+
+    int total_argent = 100;
+    int total_fruits = 0;
+
+    int choix = 0;
+    while (total_argent > 0) {
+        choix = (choix + 1) % 5;
+        if (choix == 0) {
+            if (total_argent >= fraises) {
+                total_argent = total_argent - fraises;
+                total_fruits++;
+            }
+        } else if (choix == 1) {
+            if (total_argent >= bananes) {
+                total_argent = total_argent - bananes;
+                total_fruits++;
+            }
+        } else if (choix == 2) {
+            if (total_argent >= pommes) {
+                total_argent = total_argent - pommes;
+                total_fruits++;
+            }
+        } else if (choix == 3) {
+            if (total_argent >= poires) {
+                total_argent = total_argent - poires;
+                total_fruits++;
+            }
+        } else if (choix == 4) {
+            if (total_argent >= peches) {
+                total_argent = total_argent - peches;
+                total_fruits++;
+            }
+        } 
+    }
+
+    print(total_fruits);
+    print(total_argent);
+
+    printf("C'est quoi ce programme de golmon ?\n");
+}

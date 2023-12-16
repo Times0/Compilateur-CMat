@@ -1,0 +1,44 @@
+int main()
+{
+    int a = 1;
+    int b = 0;
+
+
+    if (a || b)
+    {
+        printf("1\n");
+    }
+
+    if (a && b)
+    {
+        printf("2\n");
+    }
+
+    // Multiple conditions
+    if (a && b || a)
+    {
+        printf("3\n");
+    }
+
+    if (a && b || a && b)
+    {
+        printf("4\n");
+    }
+
+
+    // Parantesis
+    if (a && (b || a))
+    {
+        printf("5\n");
+    }
+
+    if (a && (b || a) && b)
+    {
+        printf("6\n");
+    }
+
+    if (a && (b || a) && b || a)
+    {
+        printf("7\n");
+    }
+}

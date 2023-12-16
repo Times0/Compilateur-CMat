@@ -6,7 +6,9 @@ src/cmat.*.c
 tests/*/out
 .vscode/
 *.txt
+*.s
 
+tests/programmes/temp/
 
 # Prerequisites
 *.d

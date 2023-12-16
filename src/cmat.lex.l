@@ -7,13 +7,9 @@
 #include "../include/symbol_table.h"
 #include "../include/cmat.tab.h"
 
-
-extern FILE *yyin;
-extern FILE *yyout;
-int lineno = 1;
-
 void ret_print(char *token_type);
 void yyerror(char *);
+extern __uint32_t lineno;
 %}
 
 %x ML_COMMENT
@@ -21,14 +17,15 @@ void yyerror(char *);
 
 DIGIT   [0-9]
 ID      [a-zA-Z_][a-zA-Z_0-9]*
-STRING  \"[^\"]*\"
+/* double quotes, escaped characters, double quotes*/
+STRING  \"(?:[^\"]|\\.)*\"  
 INTEGER_CONST   {DIGIT}+
 FLOAT_CONST {DIGIT}*"."{DIGIT}+
 
 %%
 
 "/*"                { BEGIN(ML_COMMENT); }
-<ML_COMMENT>"*/"    { BEGIN(INITIAL); lineno++; }
+<ML_COMMENT>"*/"    { BEGIN(INITIAL); }
 <ML_COMMENT>.       { /* consume anything inside multi-line comments */ }
 <ML_COMMENT>\n      { lineno++; /* count lines inside multi-line comments */ }
 
@@ -44,33 +41,37 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
 "main"          { ret_print("KEYWORD_MAIN");    return MAIN;}
 
-"int"           { ret_print("KEYWORD_INT");     return INT;}
-"float"         { ret_print("KEYWORD_FLOAT");   return FLOAT;}
-"matrix"        { ret_print("KEYWORD_MATRIX");  return MATRIX;}
-"void"          { ret_print("KEYWORD_VOID");    return VOID;}
+"int"           { ret_print("KEYWORD_INT");     yylval.type_val = INT;   return INT;}
+"float"         { ret_print("KEYWORD_FLOAT");   yylval.type_val = FLOAT; return FLOAT;}
+"matrix"        { ret_print("KEYWORD_MATRIX");  yylval.type_val = MATRIX;return MATRIX;}
+"void"          { ret_print("KEYWORD_VOID");    yylval.type_val = VOID;  return VOID;}
 
 
-{ID}            { ret_print("IDENTIFIER"); insert(yytext, strlen(yytext), UNDEF, lineno);
-		          yylval.symbol_table_item = lookup(yytext);
-		          return ID;}
+{ID}            { ret_print("IDENTIFIER");
+                  if ( yyleng > MAXTOKENLEN )
+                      fprintf(stderr,"Identifier '%s' too long, truncated\n",yytext);
+                  strncpy(yylval.str_val,yytext,MAXTOKENLEN-1);
+                  yylval.str_val[MAXTOKENLEN] = '\0';
+                  return ID;
+                }
 
-{INTEGER_CONST} { yylval.int_val = atoi(yytext); ret_print("INTEGER_CONST");   return INT_CONST;}
-{FLOAT_CONST}   { yylval.double_val = atof(yytext); ret_print("FLOAT_CONST");     return FLOAT_CONST;}
+{INTEGER_CONST}     { ret_print("INTEGER_CONST");   yylval.int_val = atoi(yytext); return INT_CONST;}
+{FLOAT_CONST}       { ret_print("FLOAT_CONST");     yylval.float_val = atof(yytext);return FLOAT_CONST;}
 
-"++"                { ret_print("INC_OP");          return INCR;}    
-"--"                { ret_print("DEC_OP");          return DECR;}
+"++"                { ret_print("INC_OP");          return INCR;}           // ok
+"--"                { ret_print("DEC_OP");          return DECR;}           // ok
 ".."                { ret_print("DDOT");            return DDOT;}
-"+"|"-"             { ret_print("ADD_OP");          return yytext[0];}
-"*"|"/"|"%"         { ret_print("MUL_OP");          return yytext[0];}
-"="                 { ret_print("ASSIGN_OP");       return yytext[0];}
+"+"|"-"             { ret_print("ADD_OP");          return yytext[0];}      // ok
+"*"|"/"|"%"         { ret_print("MUL_OP");          return yytext[0];}      // ok
+"="                 { ret_print("ASSIGN_OP");       return yytext[0];}      // ok
 "=="                { ret_print("EQ_OP");           return EQ_OP;}
 "!="                { ret_print("NEQ_OP");          return NEQ_OP;}
 "<"                 { ret_print("REL_OP");          return LT_OP;}
 "<="                { ret_print("REL_OP");          return LE_OP;}
 ">"                 { ret_print("REL_OP");          return GT_OP;}
 ">="                { ret_print("REL_OP");          return GE_OP;}
-"&&"                { ret_print("LOG_OP");          return AND_OP;}
-"||"                { ret_print("LOG_OP");          return OR_OP;}
+"&&"                { ret_print("LOG_OP");          return AND_OP;}         
+"||"                { ret_print("LOG_OP");          return OR_OP;}          
 "!"                 { ret_print("NOT_OP");          return yytext[0];}
 
 ";"                 { ret_print("SEMI");            return yytext[0];}
@@ -82,9 +83,14 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "{"                 { ret_print("LBRACE");          return yytext[0];}
 "}"                 { ret_print("RBRACE");          return yytext[0];}
 "~"                 { ret_print("TRANSPOSE_OP");    return yytext[0];}
-{STRING}            { yylval.str_val = malloc(yyleng * sizeof(char)); 
-                      strcpy(yylval.str_val, yytext); 
-                      ret_print("STRING_LITERAL");  return STRING;}
+{STRING}            { ret_print("STRING");
+                        if ( yyleng > MAXSTRLEN )
+                            fprintf(stderr,"String '%s' too long, truncated\n",yytext);
+                        strncpy(yylval.string_val,yytext,MAXSTRLEN-1);
+                        yylval.string_val[MAXSTRLEN-1] = '"';
+                        yylval.string_val[MAXSTRLEN] = '\0';
+                        return STRING;
+                    }
 
 \n                  { lineno++; ret_print("\n");}   /*ignore newlines*/
 [ \t]+              { /* ignore whitespaces */ }
@@ -93,7 +99,6 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 
 // For tests only
 void ret_print(char *token_type) {
-    // printf("%s at line %d: %s\n", token_type, lineno, yytext);
     #ifdef TEST
     if (strcmp(token_type, "\n") == 0) {
         fprintf(stdout, "\n");
