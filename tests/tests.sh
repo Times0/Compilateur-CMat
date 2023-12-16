@@ -10,6 +10,7 @@ succeeded_tests=0
 failed_tests=0
 
 tempdir="programmes/temp"
+mkdir -p "$tempdir"
 
 # Iterate over .cmat files in the programmes directory
 for cmat_file in programmes/*.cmat; do
