@@ -8,6 +8,7 @@ tests/*/out
 *.txt
 *.s
 
+tests/programmes/temp/
 
 # Prerequisites
 *.d
