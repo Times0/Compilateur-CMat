@@ -26,7 +26,7 @@ __uint32_t logical_expression_flag = 0; // permet d'indiquer si on se situe dans
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
 SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *add, SymbolTableElement *add2);
 SymbolTableElement *matrix_operation(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
-SymbolTableElement *matrix_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
+SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
 %}
@@ -683,7 +683,7 @@ additive_expression : multiplicative_expresssion
                          }
                          else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
                          {
-                              $$.ptr = matrix_operation_constant($1.ptr, $3.ptr, '+');
+                              $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '+');
                          }
                          else
                          {
@@ -699,18 +699,22 @@ additive_expression : multiplicative_expresssion
                               $$.by_address = 0;
                               adress++;
                          }
-                         else if($1.ptr->type != MATRIX || $3.ptr->type != MATRIX)// matrices
-                         {
-                              semantic_error("operation not permitted on list use matrix instead");
-                         }
-                         else
+                         else if($1.ptr->type == MATRIX && $3.ptr->type == MATRIX)// matrices
                          {
                               if($1.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $1.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
                               {
-                                   semantic_error("matrices should have the same dimension for \"+\"");
+                                   semantic_error("matrices should have the same dimension for \"-\"");
                               }
 
                               $$.ptr = matrix_operation($1.ptr, $3.ptr, '-');
+                         }
+                         else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                         {
+                              $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '-');
+                         }
+                         else
+                         {
+                              semantic_error("operation not permitted on list use matrix instead");
                          }
                     }
                     
@@ -724,6 +728,14 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                    $$.by_address = 0;
                                    adress++;
                               }
+                              else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                              {
+                                   $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '*');
+                              }
+                              else
+                              {
+                                   semantic_error("operation not permitted on list use matrix instead");
+                              }
                            }
                            | multiplicative_expresssion '/' primary_expression
                            {
@@ -733,6 +745,14 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                    gen_quad(code, BOP_DIV, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
                                    $$.by_address = 0;
                                    adress++;
+                              }
+                              else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                              {
+                                   $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '/');
+                              }
+                              else
+                              {
+                                   semantic_error("operation not permitted on list use matrix instead");
                               }
                            }
                            | multiplicative_expresssion '%' primary_expression
@@ -747,6 +767,10 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                    gen_quad(code, BOP_MOD, $$.ptr, $1.ptr, $3.ptr, (__uint32_t[]){0, $1.by_address, $3.by_address}); 
                                    $$.by_address = 0;
                                    adress++;
+                              }
+                              else
+                              {
+                                   semantic_error("operation not permitted on list use matrix instead");
                               }
                            }
                            | primary_expression {$$.ptr = $1.ptr; $$.by_address = $1.by_address;}
@@ -1214,7 +1238,7 @@ SymbolTableElement *matrix_operation(SymbolTableElement *a1, SymbolTableElement 
      return r;
 }
 
-SymbolTableElement *matrix_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
+SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
 {
      SymbolTableElement *constant;
      SymbolTableElement *array;
@@ -1265,6 +1289,12 @@ SymbolTableElement *matrix_operation_constant(SymbolTableElement *a1, SymbolTabl
                     break;
                     case '-':
                          gen_quad(code, BOP_MINUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+                    case '*':
+                         gen_quad(code, BOP_MULT, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+                    case '/':
+                         gen_quad(code, BOP_DIV, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
                     break;
                }
                

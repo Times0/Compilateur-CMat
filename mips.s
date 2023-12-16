@@ -195,8 +195,8 @@ main:
 	lw $t0, -196($fp)
 	lw $t1, -204($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 0
@@ -243,8 +243,8 @@ main:
 	lw $t0, -200($fp)
 	lw $t1, -208($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 0
@@ -291,8 +291,8 @@ main:
 	lw $t0, -204($fp)
 	lw $t1, -212($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 1
@@ -339,8 +339,8 @@ main:
 	lw $t0, -208($fp)
 	lw $t1, -216($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 1
@@ -387,8 +387,8 @@ main:
 	lw $t0, -212($fp)
 	lw $t1, -220($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 1
@@ -435,8 +435,8 @@ main:
 	lw $t0, -216($fp)
 	lw $t1, -224($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 2
@@ -483,8 +483,8 @@ main:
 	lw $t0, -220($fp)
 	lw $t1, -228($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 2
@@ -531,8 +531,8 @@ main:
 	lw $t0, -224($fp)
 	lw $t1, -232($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 2
@@ -579,89 +579,295 @@ main:
 	lw $t0, -228($fp)
 	lw $t1, -236($fp)
 	l.s $f0, 0($t1)
-	li.s $f1, 1.000000
-	add.s $f2, $f0, $f1
+	li.s $f1, 2.000000
+	sub.s $f2, $f0, $f1
 	s.s $f2, 0($t0)
 	li $t0, 3
 	li $t1, 0
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -268($fp)
-	lw $t0, -268($fp)
+	sw $t2, -232($fp)
+	lw $t0, -232($fp)
 	li $t1, 0
 	add $t2, $t0, $t1
-	sw $t2, -268($fp)
-	li $t0, 57
-	lw $t1, -268($fp)
+	sw $t2, -232($fp)
+	li $t0, 9
+	lw $t1, -232($fp)
 	add $t2, $t0, $t1
-	sw $t2, -268($fp)
-	lw $t0, -268($fp)
+	sw $t2, -232($fp)
+	lw $t0, -232($fp)
 	li $t1, 4
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -268($fp)
-	lw $t0, -268($fp)
+	sw $t2, -232($fp)
+	lw $t0, -232($fp)
 	add $t2, $t0, $fp
-	sw $t2, -268($fp)
+	sw $t2, -232($fp)
 	li $t0, 3
 	li $t1, 0
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -276($fp)
-	lw $t0, -276($fp)
+	sw $t2, -240($fp)
+	lw $t0, -240($fp)
 	li $t1, 0
 	add $t2, $t0, $t1
-	sw $t2, -276($fp)
+	sw $t2, -240($fp)
 	li $t0, 39
-	lw $t1, -276($fp)
+	lw $t1, -240($fp)
 	add $t2, $t0, $t1
-	sw $t2, -276($fp)
-	lw $t0, -276($fp)
+	sw $t2, -240($fp)
+	lw $t0, -240($fp)
 	li $t1, 4
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -276($fp)
-	lw $t0, -276($fp)
+	sw $t2, -240($fp)
+	lw $t0, -240($fp)
 	add $t2, $t0, $fp
-	sw $t2, -276($fp)
+	sw $t2, -240($fp)
+	lw $t0, -240($fp)
+	l.s $f0, 0($t0)
+	lw $t1, -232($fp)
+	s.s $f0, 0($t1)
 	li $t0, 3
 	li $t1, 0
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -284($fp)
-	lw $t0, -284($fp)
-	li $t1, 0
+	sw $t2, -240($fp)
+	lw $t0, -240($fp)
+	li $t1, 1
 	add $t2, $t0, $t1
-	sw $t2, -284($fp)
-	li $t0, 24
-	lw $t1, -284($fp)
+	sw $t2, -240($fp)
+	li $t0, 9
+	lw $t1, -240($fp)
 	add $t2, $t0, $t1
-	sw $t2, -284($fp)
-	lw $t0, -284($fp)
+	sw $t2, -240($fp)
+	lw $t0, -240($fp)
 	li $t1, 4
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -284($fp)
-	lw $t0, -284($fp)
+	sw $t2, -240($fp)
+	lw $t0, -240($fp)
 	add $t2, $t0, $fp
-	sw $t2, -284($fp)
-	lw $t0, -268($fp)
-	lw $t1, -276($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -284($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
+	sw $t2, -240($fp)
 	li $t0, 3
 	li $t1, 0
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -248($fp)
+	lw $t0, -248($fp)
+	li $t1, 1
+	add $t2, $t0, $t1
+	sw $t2, -248($fp)
+	li $t0, 39
+	lw $t1, -248($fp)
+	add $t2, $t0, $t1
+	sw $t2, -248($fp)
+	lw $t0, -248($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -248($fp)
+	lw $t0, -248($fp)
+	add $t2, $t0, $fp
+	sw $t2, -248($fp)
+	lw $t0, -248($fp)
+	l.s $f0, 0($t0)
+	lw $t1, -240($fp)
+	s.s $f0, 0($t1)
+	li $t0, 3
+	li $t1, 0
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -248($fp)
+	lw $t0, -248($fp)
+	li $t1, 2
+	add $t2, $t0, $t1
+	sw $t2, -248($fp)
+	li $t0, 9
+	lw $t1, -248($fp)
+	add $t2, $t0, $t1
+	sw $t2, -248($fp)
+	lw $t0, -248($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -248($fp)
+	lw $t0, -248($fp)
+	add $t2, $t0, $fp
+	sw $t2, -248($fp)
+	li $t0, 3
+	li $t1, 0
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -256($fp)
+	lw $t0, -256($fp)
+	li $t1, 2
+	add $t2, $t0, $t1
+	sw $t2, -256($fp)
+	li $t0, 39
+	lw $t1, -256($fp)
+	add $t2, $t0, $t1
+	sw $t2, -256($fp)
+	lw $t0, -256($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -256($fp)
+	lw $t0, -256($fp)
+	add $t2, $t0, $fp
+	sw $t2, -256($fp)
+	lw $t0, -256($fp)
+	l.s $f0, 0($t0)
+	lw $t1, -248($fp)
+	s.s $f0, 0($t1)
+	li $t0, 3
+	li $t1, 1
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -256($fp)
+	lw $t0, -256($fp)
+	li $t1, 0
+	add $t2, $t0, $t1
+	sw $t2, -256($fp)
+	li $t0, 9
+	lw $t1, -256($fp)
+	add $t2, $t0, $t1
+	sw $t2, -256($fp)
+	lw $t0, -256($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -256($fp)
+	lw $t0, -256($fp)
+	add $t2, $t0, $fp
+	sw $t2, -256($fp)
+	li $t0, 3
+	li $t1, 1
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -264($fp)
+	lw $t0, -264($fp)
+	li $t1, 0
+	add $t2, $t0, $t1
+	sw $t2, -264($fp)
+	li $t0, 39
+	lw $t1, -264($fp)
+	add $t2, $t0, $t1
+	sw $t2, -264($fp)
+	lw $t0, -264($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -264($fp)
+	lw $t0, -264($fp)
+	add $t2, $t0, $fp
+	sw $t2, -264($fp)
+	lw $t0, -264($fp)
+	l.s $f0, 0($t0)
+	lw $t1, -256($fp)
+	s.s $f0, 0($t1)
+	li $t0, 3
+	li $t1, 1
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -264($fp)
+	lw $t0, -264($fp)
+	li $t1, 1
+	add $t2, $t0, $t1
+	sw $t2, -264($fp)
+	li $t0, 9
+	lw $t1, -264($fp)
+	add $t2, $t0, $t1
+	sw $t2, -264($fp)
+	lw $t0, -264($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -264($fp)
+	lw $t0, -264($fp)
+	add $t2, $t0, $fp
+	sw $t2, -264($fp)
+	li $t0, 3
+	li $t1, 1
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -272($fp)
+	lw $t0, -272($fp)
+	li $t1, 1
+	add $t2, $t0, $t1
+	sw $t2, -272($fp)
+	li $t0, 39
+	lw $t1, -272($fp)
+	add $t2, $t0, $t1
+	sw $t2, -272($fp)
+	lw $t0, -272($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -272($fp)
+	lw $t0, -272($fp)
+	add $t2, $t0, $fp
+	sw $t2, -272($fp)
+	lw $t0, -272($fp)
+	l.s $f0, 0($t0)
+	lw $t1, -264($fp)
+	s.s $f0, 0($t1)
+	li $t0, 3
+	li $t1, 1
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -272($fp)
+	lw $t0, -272($fp)
+	li $t1, 2
+	add $t2, $t0, $t1
+	sw $t2, -272($fp)
+	li $t0, 9
+	lw $t1, -272($fp)
+	add $t2, $t0, $t1
+	sw $t2, -272($fp)
+	lw $t0, -272($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -272($fp)
+	lw $t0, -272($fp)
+	add $t2, $t0, $fp
+	sw $t2, -272($fp)
+	li $t0, 3
+	li $t1, 1
 	mult $t0, $t1
 	mflo $t2
 	sw $t2, -280($fp)
 	lw $t0, -280($fp)
-	li $t1, 1
+	li $t1, 2
 	add $t2, $t0, $t1
 	sw $t2, -280($fp)
-	li $t0, 57
+	li $t0, 39
+	lw $t1, -280($fp)
+	add $t2, $t0, $t1
+	sw $t2, -280($fp)
+	lw $t0, -280($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -280($fp)
+	lw $t0, -280($fp)
+	add $t2, $t0, $fp
+	sw $t2, -280($fp)
+	lw $t0, -280($fp)
+	l.s $f0, 0($t0)
+	lw $t1, -272($fp)
+	s.s $f0, 0($t1)
+	li $t0, 3
+	li $t1, 2
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -280($fp)
+	lw $t0, -280($fp)
+	li $t1, 0
+	add $t2, $t0, $t1
+	sw $t2, -280($fp)
+	li $t0, 9
 	lw $t1, -280($fp)
 	add $t2, $t0, $t1
 	sw $t2, -280($fp)
@@ -674,12 +880,12 @@ main:
 	add $t2, $t0, $fp
 	sw $t2, -280($fp)
 	li $t0, 3
-	li $t1, 0
+	li $t1, 2
 	mult $t0, $t1
 	mflo $t2
 	sw $t2, -288($fp)
 	lw $t0, -288($fp)
-	li $t1, 1
+	li $t1, 0
 	add $t2, $t0, $t1
 	sw $t2, -288($fp)
 	li $t0, 39
@@ -694,8 +900,33 @@ main:
 	lw $t0, -288($fp)
 	add $t2, $t0, $fp
 	sw $t2, -288($fp)
+	lw $t0, -288($fp)
+	l.s $f0, 0($t0)
+	lw $t1, -280($fp)
+	s.s $f0, 0($t1)
 	li $t0, 3
-	li $t1, 0
+	li $t1, 2
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -288($fp)
+	lw $t0, -288($fp)
+	li $t1, 1
+	add $t2, $t0, $t1
+	sw $t2, -288($fp)
+	li $t0, 9
+	lw $t1, -288($fp)
+	add $t2, $t0, $t1
+	sw $t2, -288($fp)
+	lw $t0, -288($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -288($fp)
+	lw $t0, -288($fp)
+	add $t2, $t0, $fp
+	sw $t2, -288($fp)
+	li $t0, 3
+	li $t1, 2
 	mult $t0, $t1
 	mflo $t2
 	sw $t2, -296($fp)
@@ -703,7 +934,7 @@ main:
 	li $t1, 1
 	add $t2, $t0, $t1
 	sw $t2, -296($fp)
-	li $t0, 24
+	li $t0, 39
 	lw $t1, -296($fp)
 	add $t2, $t0, $t1
 	sw $t2, -296($fp)
@@ -715,93 +946,41 @@ main:
 	lw $t0, -296($fp)
 	add $t2, $t0, $fp
 	sw $t2, -296($fp)
-	lw $t0, -280($fp)
+	lw $t0, -296($fp)
+	l.s $f0, 0($t0)
 	lw $t1, -288($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -296($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
+	s.s $f0, 0($t1)
 	li $t0, 3
-	li $t1, 0
+	li $t1, 2
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -292($fp)
-	lw $t0, -292($fp)
+	sw $t2, -296($fp)
+	lw $t0, -296($fp)
 	li $t1, 2
 	add $t2, $t0, $t1
-	sw $t2, -292($fp)
-	li $t0, 57
-	lw $t1, -292($fp)
+	sw $t2, -296($fp)
+	li $t0, 9
+	lw $t1, -296($fp)
 	add $t2, $t0, $t1
-	sw $t2, -292($fp)
-	lw $t0, -292($fp)
+	sw $t2, -296($fp)
+	lw $t0, -296($fp)
 	li $t1, 4
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -292($fp)
-	lw $t0, -292($fp)
+	sw $t2, -296($fp)
+	lw $t0, -296($fp)
 	add $t2, $t0, $fp
-	sw $t2, -292($fp)
+	sw $t2, -296($fp)
 	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -300($fp)
-	lw $t0, -300($fp)
 	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -300($fp)
-	li $t0, 39
-	lw $t1, -300($fp)
-	add $t2, $t0, $t1
-	sw $t2, -300($fp)
-	lw $t0, -300($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -300($fp)
-	lw $t0, -300($fp)
-	add $t2, $t0, $fp
-	sw $t2, -300($fp)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -308($fp)
-	lw $t0, -308($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -308($fp)
-	li $t0, 24
-	lw $t1, -308($fp)
-	add $t2, $t0, $t1
-	sw $t2, -308($fp)
-	lw $t0, -308($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -308($fp)
-	lw $t0, -308($fp)
-	add $t2, $t0, $fp
-	sw $t2, -308($fp)
-	lw $t0, -292($fp)
-	lw $t1, -300($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -308($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 1
 	mult $t0, $t1
 	mflo $t2
 	sw $t2, -304($fp)
 	lw $t0, -304($fp)
-	li $t1, 0
+	li $t1, 2
 	add $t2, $t0, $t1
 	sw $t2, -304($fp)
-	li $t0, 57
+	li $t0, 39
 	lw $t1, -304($fp)
 	add $t2, $t0, $t1
 	sw $t2, -304($fp)
@@ -813,57 +992,45 @@ main:
 	lw $t0, -304($fp)
 	add $t2, $t0, $fp
 	sw $t2, -304($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -312($fp)
-	lw $t0, -312($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -312($fp)
-	li $t0, 39
-	lw $t1, -312($fp)
-	add $t2, $t0, $t1
-	sw $t2, -312($fp)
-	lw $t0, -312($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -312($fp)
-	lw $t0, -312($fp)
-	add $t2, $t0, $fp
-	sw $t2, -312($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -320($fp)
-	lw $t0, -320($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -320($fp)
-	li $t0, 24
-	lw $t1, -320($fp)
-	add $t2, $t0, $t1
-	sw $t2, -320($fp)
-	lw $t0, -320($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -320($fp)
-	lw $t0, -320($fp)
-	add $t2, $t0, $fp
-	sw $t2, -320($fp)
 	lw $t0, -304($fp)
-	lw $t1, -312($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -320($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
+	l.s $f0, 0($t0)
+	lw $t1, -296($fp)
+	s.s $f0, 0($t1)
 	li $t0, 3
-	li $t1, 1
+	li $t1, 0
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -312($fp)
+	lw $t0, -312($fp)
+	li $t1, 0
+	add $t2, $t0, $t1
+	sw $t2, -312($fp)
+	li $t0, 9
+	lw $t1, -312($fp)
+	add $t2, $t0, $t1
+	sw $t2, -312($fp)
+	lw $t0, -312($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -312($fp)
+	lw $t0, -312($fp)
+	add $t2, $t0, $fp
+	sw $t2, -312($fp)
+	lw $t0, -312($fp)
+	l.s $f0, 0($t0)
+	li $v0, 2
+	mov.s $f12, $f0
+	syscall
+	li $v0, 4
+	la $a0, -328($fp)
+	li $t0, 9
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li $t0, 3
+	li $t1, 0
 	mult $t0, $t1
 	mflo $t2
 	sw $t2, -316($fp)
@@ -871,7 +1038,7 @@ main:
 	li $t1, 1
 	add $t2, $t0, $t1
 	sw $t2, -316($fp)
-	li $t0, 57
+	li $t0, 9
 	lw $t1, -316($fp)
 	add $t2, $t0, $t1
 	sw $t2, -316($fp)
@@ -883,65 +1050,101 @@ main:
 	lw $t0, -316($fp)
 	add $t2, $t0, $fp
 	sw $t2, -316($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -324($fp)
-	lw $t0, -324($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -324($fp)
-	li $t0, 39
-	lw $t1, -324($fp)
-	add $t2, $t0, $t1
-	sw $t2, -324($fp)
-	lw $t0, -324($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -324($fp)
-	lw $t0, -324($fp)
-	add $t2, $t0, $fp
-	sw $t2, -324($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -332($fp)
-	lw $t0, -332($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -332($fp)
-	li $t0, 24
-	lw $t1, -332($fp)
-	add $t2, $t0, $t1
-	sw $t2, -332($fp)
-	lw $t0, -332($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -332($fp)
-	lw $t0, -332($fp)
-	add $t2, $t0, $fp
-	sw $t2, -332($fp)
 	lw $t0, -316($fp)
+	l.s $f0, 0($t0)
+	li $v0, 2
+	mov.s $f12, $f0
+	syscall
+	li $v0, 4
+	la $a0, -328($fp)
+	li $t0, 9
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li $t0, 3
+	li $t1, 0
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -320($fp)
+	lw $t0, -320($fp)
+	li $t1, 2
+	add $t2, $t0, $t1
+	sw $t2, -320($fp)
+	li $t0, 9
+	lw $t1, -320($fp)
+	add $t2, $t0, $t1
+	sw $t2, -320($fp)
+	lw $t0, -320($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -320($fp)
+	lw $t0, -320($fp)
+	add $t2, $t0, $fp
+	sw $t2, -320($fp)
+	lw $t0, -320($fp)
+	l.s $f0, 0($t0)
+	li $v0, 2
+	mov.s $f12, $f0
+	syscall
+	li $v0, 4
+	la $a0, -328($fp)
+	li $t0, 9
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li $v0, 4
+	la $a0, -324($fp)
+	li $t0, 10
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li $t0, 3
+	li $t1, 1
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -324($fp)
+	lw $t0, -324($fp)
+	li $t1, 0
+	add $t2, $t0, $t1
+	sw $t2, -324($fp)
+	li $t0, 9
 	lw $t1, -324($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -332($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
+	add $t2, $t0, $t1
+	sw $t2, -324($fp)
+	lw $t0, -324($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -324($fp)
+	lw $t0, -324($fp)
+	add $t2, $t0, $fp
+	sw $t2, -324($fp)
+	lw $t0, -324($fp)
+	l.s $f0, 0($t0)
+	li $v0, 2
+	mov.s $f12, $f0
+	syscall
+	li $v0, 4
+	la $a0, -328($fp)
+	li $t0, 9
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
 	li $t0, 3
 	li $t1, 1
 	mult $t0, $t1
 	mflo $t2
 	sw $t2, -328($fp)
 	lw $t0, -328($fp)
-	li $t1, 2
+	li $t1, 1
 	add $t2, $t0, $t1
 	sw $t2, -328($fp)
-	li $t0, 57
+	li $t0, 9
 	lw $t1, -328($fp)
 	add $t2, $t0, $t1
 	sw $t2, -328($fp)
@@ -953,65 +1156,101 @@ main:
 	lw $t0, -328($fp)
 	add $t2, $t0, $fp
 	sw $t2, -328($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -336($fp)
-	lw $t0, -336($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -336($fp)
-	li $t0, 39
-	lw $t1, -336($fp)
-	add $t2, $t0, $t1
-	sw $t2, -336($fp)
-	lw $t0, -336($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -336($fp)
-	lw $t0, -336($fp)
-	add $t2, $t0, $fp
-	sw $t2, -336($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -344($fp)
-	lw $t0, -344($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -344($fp)
-	li $t0, 24
-	lw $t1, -344($fp)
-	add $t2, $t0, $t1
-	sw $t2, -344($fp)
-	lw $t0, -344($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -344($fp)
-	lw $t0, -344($fp)
-	add $t2, $t0, $fp
-	sw $t2, -344($fp)
 	lw $t0, -328($fp)
+	l.s $f0, 0($t0)
+	li $v0, 2
+	mov.s $f12, $f0
+	syscall
+	li $v0, 4
+	la $a0, -328($fp)
+	li $t0, 9
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li $t0, 3
+	li $t1, 1
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -332($fp)
+	lw $t0, -332($fp)
+	li $t1, 2
+	add $t2, $t0, $t1
+	sw $t2, -332($fp)
+	li $t0, 9
+	lw $t1, -332($fp)
+	add $t2, $t0, $t1
+	sw $t2, -332($fp)
+	lw $t0, -332($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -332($fp)
+	lw $t0, -332($fp)
+	add $t2, $t0, $fp
+	sw $t2, -332($fp)
+	lw $t0, -332($fp)
+	l.s $f0, 0($t0)
+	li $v0, 2
+	mov.s $f12, $f0
+	syscall
+	li $v0, 4
+	la $a0, -328($fp)
+	li $t0, 9
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li $v0, 4
+	la $a0, -324($fp)
+	li $t0, 10
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
+	li $t0, 3
+	li $t1, 2
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -336($fp)
+	lw $t0, -336($fp)
+	li $t1, 0
+	add $t2, $t0, $t1
+	sw $t2, -336($fp)
+	li $t0, 9
 	lw $t1, -336($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -344($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
+	add $t2, $t0, $t1
+	sw $t2, -336($fp)
+	lw $t0, -336($fp)
+	li $t1, 4
+	mult $t0, $t1
+	mflo $t2
+	sw $t2, -336($fp)
+	lw $t0, -336($fp)
+	add $t2, $t0, $fp
+	sw $t2, -336($fp)
+	lw $t0, -336($fp)
+	l.s $f0, 0($t0)
+	li $v0, 2
+	mov.s $f12, $f0
+	syscall
+	li $v0, 4
+	la $a0, -328($fp)
+	li $t0, 9
+	sb $t0, 0($a0)
+	li $t0, 0
+	sb $t0, 1($a0)
+	syscall
 	li $t0, 3
 	li $t1, 2
 	mult $t0, $t1
 	mflo $t2
 	sw $t2, -340($fp)
 	lw $t0, -340($fp)
-	li $t1, 0
+	li $t1, 1
 	add $t2, $t0, $t1
 	sw $t2, -340($fp)
-	li $t0, 57
+	li $t0, 9
 	lw $t1, -340($fp)
 	add $t2, $t0, $t1
 	sw $t2, -340($fp)
@@ -1023,1372 +1262,57 @@ main:
 	lw $t0, -340($fp)
 	add $t2, $t0, $fp
 	sw $t2, -340($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -348($fp)
-	lw $t0, -348($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -348($fp)
-	li $t0, 39
-	lw $t1, -348($fp)
-	add $t2, $t0, $t1
-	sw $t2, -348($fp)
-	lw $t0, -348($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -348($fp)
-	lw $t0, -348($fp)
-	add $t2, $t0, $fp
-	sw $t2, -348($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -356($fp)
-	lw $t0, -356($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -356($fp)
-	li $t0, 24
-	lw $t1, -356($fp)
-	add $t2, $t0, $t1
-	sw $t2, -356($fp)
-	lw $t0, -356($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -356($fp)
-	lw $t0, -356($fp)
-	add $t2, $t0, $fp
-	sw $t2, -356($fp)
 	lw $t0, -340($fp)
-	lw $t1, -348($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -356($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -352($fp)
-	lw $t0, -352($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -352($fp)
-	li $t0, 57
-	lw $t1, -352($fp)
-	add $t2, $t0, $t1
-	sw $t2, -352($fp)
-	lw $t0, -352($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -352($fp)
-	lw $t0, -352($fp)
-	add $t2, $t0, $fp
-	sw $t2, -352($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -360($fp)
-	lw $t0, -360($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -360($fp)
-	li $t0, 39
-	lw $t1, -360($fp)
-	add $t2, $t0, $t1
-	sw $t2, -360($fp)
-	lw $t0, -360($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -360($fp)
-	lw $t0, -360($fp)
-	add $t2, $t0, $fp
-	sw $t2, -360($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -368($fp)
-	lw $t0, -368($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -368($fp)
-	li $t0, 24
-	lw $t1, -368($fp)
-	add $t2, $t0, $t1
-	sw $t2, -368($fp)
-	lw $t0, -368($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -368($fp)
-	lw $t0, -368($fp)
-	add $t2, $t0, $fp
-	sw $t2, -368($fp)
-	lw $t0, -352($fp)
-	lw $t1, -360($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -368($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -364($fp)
-	lw $t0, -364($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -364($fp)
-	li $t0, 57
-	lw $t1, -364($fp)
-	add $t2, $t0, $t1
-	sw $t2, -364($fp)
-	lw $t0, -364($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -364($fp)
-	lw $t0, -364($fp)
-	add $t2, $t0, $fp
-	sw $t2, -364($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -372($fp)
-	lw $t0, -372($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -372($fp)
-	li $t0, 39
-	lw $t1, -372($fp)
-	add $t2, $t0, $t1
-	sw $t2, -372($fp)
-	lw $t0, -372($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -372($fp)
-	lw $t0, -372($fp)
-	add $t2, $t0, $fp
-	sw $t2, -372($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -380($fp)
-	lw $t0, -380($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -380($fp)
-	li $t0, 24
-	lw $t1, -380($fp)
-	add $t2, $t0, $t1
-	sw $t2, -380($fp)
-	lw $t0, -380($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -380($fp)
-	lw $t0, -380($fp)
-	add $t2, $t0, $fp
-	sw $t2, -380($fp)
-	lw $t0, -364($fp)
-	lw $t1, -372($fp)
-	l.s $f0, 0($t1)
-	lw $t2, -380($fp)
-	l.s $f1, 0($t2)
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -412($fp)
-	lw $t0, -412($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -412($fp)
-	li $t0, 93
-	lw $t1, -412($fp)
-	add $t2, $t0, $t1
-	sw $t2, -412($fp)
-	lw $t0, -412($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -412($fp)
-	lw $t0, -412($fp)
-	add $t2, $t0, $fp
-	sw $t2, -412($fp)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -420($fp)
-	lw $t0, -420($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -420($fp)
-	li $t0, 57
-	lw $t1, -420($fp)
-	add $t2, $t0, $t1
-	sw $t2, -420($fp)
-	lw $t0, -420($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -420($fp)
-	lw $t0, -420($fp)
-	add $t2, $t0, $fp
-	sw $t2, -420($fp)
-	lw $t0, -412($fp)
-	lw $t1, -420($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -416($fp)
-	lw $t0, -416($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -416($fp)
-	li $t0, 93
-	lw $t1, -416($fp)
-	add $t2, $t0, $t1
-	sw $t2, -416($fp)
-	lw $t0, -416($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -416($fp)
-	lw $t0, -416($fp)
-	add $t2, $t0, $fp
-	sw $t2, -416($fp)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -424($fp)
-	lw $t0, -424($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -424($fp)
-	li $t0, 57
-	lw $t1, -424($fp)
-	add $t2, $t0, $t1
-	sw $t2, -424($fp)
-	lw $t0, -424($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -424($fp)
-	lw $t0, -424($fp)
-	add $t2, $t0, $fp
-	sw $t2, -424($fp)
-	lw $t0, -416($fp)
-	lw $t1, -424($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -420($fp)
-	lw $t0, -420($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -420($fp)
-	li $t0, 93
-	lw $t1, -420($fp)
-	add $t2, $t0, $t1
-	sw $t2, -420($fp)
-	lw $t0, -420($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -420($fp)
-	lw $t0, -420($fp)
-	add $t2, $t0, $fp
-	sw $t2, -420($fp)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -428($fp)
-	lw $t0, -428($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -428($fp)
-	li $t0, 57
-	lw $t1, -428($fp)
-	add $t2, $t0, $t1
-	sw $t2, -428($fp)
-	lw $t0, -428($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -428($fp)
-	lw $t0, -428($fp)
-	add $t2, $t0, $fp
-	sw $t2, -428($fp)
-	lw $t0, -420($fp)
-	lw $t1, -428($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -424($fp)
-	lw $t0, -424($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -424($fp)
-	li $t0, 93
-	lw $t1, -424($fp)
-	add $t2, $t0, $t1
-	sw $t2, -424($fp)
-	lw $t0, -424($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -424($fp)
-	lw $t0, -424($fp)
-	add $t2, $t0, $fp
-	sw $t2, -424($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -432($fp)
-	lw $t0, -432($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -432($fp)
-	li $t0, 57
-	lw $t1, -432($fp)
-	add $t2, $t0, $t1
-	sw $t2, -432($fp)
-	lw $t0, -432($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -432($fp)
-	lw $t0, -432($fp)
-	add $t2, $t0, $fp
-	sw $t2, -432($fp)
-	lw $t0, -424($fp)
-	lw $t1, -432($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -428($fp)
-	lw $t0, -428($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -428($fp)
-	li $t0, 93
-	lw $t1, -428($fp)
-	add $t2, $t0, $t1
-	sw $t2, -428($fp)
-	lw $t0, -428($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -428($fp)
-	lw $t0, -428($fp)
-	add $t2, $t0, $fp
-	sw $t2, -428($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -436($fp)
-	lw $t0, -436($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -436($fp)
-	li $t0, 57
-	lw $t1, -436($fp)
-	add $t2, $t0, $t1
-	sw $t2, -436($fp)
-	lw $t0, -436($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -436($fp)
-	lw $t0, -436($fp)
-	add $t2, $t0, $fp
-	sw $t2, -436($fp)
-	lw $t0, -428($fp)
-	lw $t1, -436($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -432($fp)
-	lw $t0, -432($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -432($fp)
-	li $t0, 93
-	lw $t1, -432($fp)
-	add $t2, $t0, $t1
-	sw $t2, -432($fp)
-	lw $t0, -432($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -432($fp)
-	lw $t0, -432($fp)
-	add $t2, $t0, $fp
-	sw $t2, -432($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -440($fp)
-	lw $t0, -440($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -440($fp)
-	li $t0, 57
-	lw $t1, -440($fp)
-	add $t2, $t0, $t1
-	sw $t2, -440($fp)
-	lw $t0, -440($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -440($fp)
-	lw $t0, -440($fp)
-	add $t2, $t0, $fp
-	sw $t2, -440($fp)
-	lw $t0, -432($fp)
-	lw $t1, -440($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -436($fp)
-	lw $t0, -436($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -436($fp)
-	li $t0, 93
-	lw $t1, -436($fp)
-	add $t2, $t0, $t1
-	sw $t2, -436($fp)
-	lw $t0, -436($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -436($fp)
-	lw $t0, -436($fp)
-	add $t2, $t0, $fp
-	sw $t2, -436($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -444($fp)
-	lw $t0, -444($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -444($fp)
-	li $t0, 57
-	lw $t1, -444($fp)
-	add $t2, $t0, $t1
-	sw $t2, -444($fp)
-	lw $t0, -444($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -444($fp)
-	lw $t0, -444($fp)
-	add $t2, $t0, $fp
-	sw $t2, -444($fp)
-	lw $t0, -436($fp)
-	lw $t1, -444($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -440($fp)
-	lw $t0, -440($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -440($fp)
-	li $t0, 93
-	lw $t1, -440($fp)
-	add $t2, $t0, $t1
-	sw $t2, -440($fp)
-	lw $t0, -440($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -440($fp)
-	lw $t0, -440($fp)
-	add $t2, $t0, $fp
-	sw $t2, -440($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -448($fp)
-	lw $t0, -448($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -448($fp)
-	li $t0, 57
-	lw $t1, -448($fp)
-	add $t2, $t0, $t1
-	sw $t2, -448($fp)
-	lw $t0, -448($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -448($fp)
-	lw $t0, -448($fp)
-	add $t2, $t0, $fp
-	sw $t2, -448($fp)
-	lw $t0, -440($fp)
-	lw $t1, -448($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -444($fp)
-	lw $t0, -444($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -444($fp)
-	li $t0, 93
-	lw $t1, -444($fp)
-	add $t2, $t0, $t1
-	sw $t2, -444($fp)
-	lw $t0, -444($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -444($fp)
-	lw $t0, -444($fp)
-	add $t2, $t0, $fp
-	sw $t2, -444($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -452($fp)
-	lw $t0, -452($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -452($fp)
-	li $t0, 57
-	lw $t1, -452($fp)
-	add $t2, $t0, $t1
-	sw $t2, -452($fp)
-	lw $t0, -452($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -452($fp)
-	lw $t0, -452($fp)
-	add $t2, $t0, $fp
-	sw $t2, -452($fp)
-	lw $t0, -444($fp)
-	lw $t1, -452($fp)
-	l.s $f0, 0($t1)
-	li.s $f1, 1.300000
-	add.s $f2, $f0, $f1
-	s.s $f2, 0($t0)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -448($fp)
-	lw $t0, -448($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -448($fp)
-	li $t0, 9
-	lw $t1, -448($fp)
-	add $t2, $t0, $t1
-	sw $t2, -448($fp)
-	lw $t0, -448($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -448($fp)
-	lw $t0, -448($fp)
-	add $t2, $t0, $fp
-	sw $t2, -448($fp)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -456($fp)
-	lw $t0, -456($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -456($fp)
-	li $t0, 93
-	lw $t1, -456($fp)
-	add $t2, $t0, $t1
-	sw $t2, -456($fp)
-	lw $t0, -456($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -456($fp)
-	lw $t0, -456($fp)
-	add $t2, $t0, $fp
-	sw $t2, -456($fp)
-	lw $t0, -456($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -448($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -456($fp)
-	lw $t0, -456($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -456($fp)
-	li $t0, 9
-	lw $t1, -456($fp)
-	add $t2, $t0, $t1
-	sw $t2, -456($fp)
-	lw $t0, -456($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -456($fp)
-	lw $t0, -456($fp)
-	add $t2, $t0, $fp
-	sw $t2, -456($fp)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -464($fp)
-	lw $t0, -464($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -464($fp)
-	li $t0, 93
-	lw $t1, -464($fp)
-	add $t2, $t0, $t1
-	sw $t2, -464($fp)
-	lw $t0, -464($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -464($fp)
-	lw $t0, -464($fp)
-	add $t2, $t0, $fp
-	sw $t2, -464($fp)
-	lw $t0, -464($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -456($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -464($fp)
-	lw $t0, -464($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -464($fp)
-	li $t0, 9
-	lw $t1, -464($fp)
-	add $t2, $t0, $t1
-	sw $t2, -464($fp)
-	lw $t0, -464($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -464($fp)
-	lw $t0, -464($fp)
-	add $t2, $t0, $fp
-	sw $t2, -464($fp)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -472($fp)
-	lw $t0, -472($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -472($fp)
-	li $t0, 93
-	lw $t1, -472($fp)
-	add $t2, $t0, $t1
-	sw $t2, -472($fp)
-	lw $t0, -472($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -472($fp)
-	lw $t0, -472($fp)
-	add $t2, $t0, $fp
-	sw $t2, -472($fp)
-	lw $t0, -472($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -464($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -472($fp)
-	lw $t0, -472($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -472($fp)
-	li $t0, 9
-	lw $t1, -472($fp)
-	add $t2, $t0, $t1
-	sw $t2, -472($fp)
-	lw $t0, -472($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -472($fp)
-	lw $t0, -472($fp)
-	add $t2, $t0, $fp
-	sw $t2, -472($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -480($fp)
-	lw $t0, -480($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -480($fp)
-	li $t0, 93
-	lw $t1, -480($fp)
-	add $t2, $t0, $t1
-	sw $t2, -480($fp)
-	lw $t0, -480($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -480($fp)
-	lw $t0, -480($fp)
-	add $t2, $t0, $fp
-	sw $t2, -480($fp)
-	lw $t0, -480($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -472($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -480($fp)
-	lw $t0, -480($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -480($fp)
-	li $t0, 9
-	lw $t1, -480($fp)
-	add $t2, $t0, $t1
-	sw $t2, -480($fp)
-	lw $t0, -480($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -480($fp)
-	lw $t0, -480($fp)
-	add $t2, $t0, $fp
-	sw $t2, -480($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -488($fp)
-	lw $t0, -488($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -488($fp)
-	li $t0, 93
-	lw $t1, -488($fp)
-	add $t2, $t0, $t1
-	sw $t2, -488($fp)
-	lw $t0, -488($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -488($fp)
-	lw $t0, -488($fp)
-	add $t2, $t0, $fp
-	sw $t2, -488($fp)
-	lw $t0, -488($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -480($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -488($fp)
-	lw $t0, -488($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -488($fp)
-	li $t0, 9
-	lw $t1, -488($fp)
-	add $t2, $t0, $t1
-	sw $t2, -488($fp)
-	lw $t0, -488($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -488($fp)
-	lw $t0, -488($fp)
-	add $t2, $t0, $fp
-	sw $t2, -488($fp)
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -496($fp)
-	lw $t0, -496($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -496($fp)
-	li $t0, 93
-	lw $t1, -496($fp)
-	add $t2, $t0, $t1
-	sw $t2, -496($fp)
-	lw $t0, -496($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -496($fp)
-	lw $t0, -496($fp)
-	add $t2, $t0, $fp
-	sw $t2, -496($fp)
-	lw $t0, -496($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -488($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -496($fp)
-	lw $t0, -496($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -496($fp)
-	li $t0, 9
-	lw $t1, -496($fp)
-	add $t2, $t0, $t1
-	sw $t2, -496($fp)
-	lw $t0, -496($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -496($fp)
-	lw $t0, -496($fp)
-	add $t2, $t0, $fp
-	sw $t2, -496($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -504($fp)
-	lw $t0, -504($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -504($fp)
-	li $t0, 93
-	lw $t1, -504($fp)
-	add $t2, $t0, $t1
-	sw $t2, -504($fp)
-	lw $t0, -504($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -504($fp)
-	lw $t0, -504($fp)
-	add $t2, $t0, $fp
-	sw $t2, -504($fp)
-	lw $t0, -504($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -496($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -504($fp)
-	lw $t0, -504($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -504($fp)
-	li $t0, 9
-	lw $t1, -504($fp)
-	add $t2, $t0, $t1
-	sw $t2, -504($fp)
-	lw $t0, -504($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -504($fp)
-	lw $t0, -504($fp)
-	add $t2, $t0, $fp
-	sw $t2, -504($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -512($fp)
-	lw $t0, -512($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -512($fp)
-	li $t0, 93
-	lw $t1, -512($fp)
-	add $t2, $t0, $t1
-	sw $t2, -512($fp)
-	lw $t0, -512($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -512($fp)
-	lw $t0, -512($fp)
-	add $t2, $t0, $fp
-	sw $t2, -512($fp)
-	lw $t0, -512($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -504($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -512($fp)
-	lw $t0, -512($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -512($fp)
-	li $t0, 9
-	lw $t1, -512($fp)
-	add $t2, $t0, $t1
-	sw $t2, -512($fp)
-	lw $t0, -512($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -512($fp)
-	lw $t0, -512($fp)
-	add $t2, $t0, $fp
-	sw $t2, -512($fp)
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -520($fp)
-	lw $t0, -520($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -520($fp)
-	li $t0, 93
-	lw $t1, -520($fp)
-	add $t2, $t0, $t1
-	sw $t2, -520($fp)
-	lw $t0, -520($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -520($fp)
-	lw $t0, -520($fp)
-	add $t2, $t0, $fp
-	sw $t2, -520($fp)
-	lw $t0, -520($fp)
-	l.s $f0, 0($t0)
-	lw $t1, -512($fp)
-	s.s $f0, 0($t1)
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -528($fp)
-	lw $t0, -528($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -528($fp)
-	li $t0, 9
-	lw $t1, -528($fp)
-	add $t2, $t0, $t1
-	sw $t2, -528($fp)
-	lw $t0, -528($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -528($fp)
-	lw $t0, -528($fp)
-	add $t2, $t0, $fp
-	sw $t2, -528($fp)
-	lw $t0, -528($fp)
 	l.s $f0, 0($t0)
 	li $v0, 2
 	mov.s $f12, $f0
 	syscall
 	li $v0, 4
-	la $a0, -544($fp)
+	la $a0, -328($fp)
 	li $t0, 9
 	sb $t0, 0($a0)
 	li $t0, 0
 	sb $t0, 1($a0)
 	syscall
 	li $t0, 3
-	li $t1, 0
+	li $t1, 2
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -532($fp)
-	lw $t0, -532($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -532($fp)
-	li $t0, 9
-	lw $t1, -532($fp)
-	add $t2, $t0, $t1
-	sw $t2, -532($fp)
-	lw $t0, -532($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -532($fp)
-	lw $t0, -532($fp)
-	add $t2, $t0, $fp
-	sw $t2, -532($fp)
-	lw $t0, -532($fp)
-	l.s $f0, 0($t0)
-	li $v0, 2
-	mov.s $f12, $f0
-	syscall
-	li $v0, 4
-	la $a0, -544($fp)
-	li $t0, 9
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 3
-	li $t1, 0
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -536($fp)
-	lw $t0, -536($fp)
+	sw $t2, -344($fp)
+	lw $t0, -344($fp)
 	li $t1, 2
 	add $t2, $t0, $t1
-	sw $t2, -536($fp)
+	sw $t2, -344($fp)
 	li $t0, 9
-	lw $t1, -536($fp)
+	lw $t1, -344($fp)
 	add $t2, $t0, $t1
-	sw $t2, -536($fp)
-	lw $t0, -536($fp)
+	sw $t2, -344($fp)
+	lw $t0, -344($fp)
 	li $t1, 4
 	mult $t0, $t1
 	mflo $t2
-	sw $t2, -536($fp)
-	lw $t0, -536($fp)
+	sw $t2, -344($fp)
+	lw $t0, -344($fp)
 	add $t2, $t0, $fp
-	sw $t2, -536($fp)
-	lw $t0, -536($fp)
+	sw $t2, -344($fp)
+	lw $t0, -344($fp)
 	l.s $f0, 0($t0)
 	li $v0, 2
 	mov.s $f12, $f0
 	syscall
 	li $v0, 4
-	la $a0, -544($fp)
+	la $a0, -328($fp)
 	li $t0, 9
 	sb $t0, 0($a0)
 	li $t0, 0
 	sb $t0, 1($a0)
 	syscall
 	li $v0, 4
-	la $a0, -540($fp)
+	la $a0, -324($fp)
 	li $t0, 10
 	sb $t0, 0($a0)
 	li $t0, 0
 	sb $t0, 1($a0)
-	syscall
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -540($fp)
-	lw $t0, -540($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -540($fp)
-	li $t0, 9
-	lw $t1, -540($fp)
-	add $t2, $t0, $t1
-	sw $t2, -540($fp)
-	lw $t0, -540($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -540($fp)
-	lw $t0, -540($fp)
-	add $t2, $t0, $fp
-	sw $t2, -540($fp)
-	lw $t0, -540($fp)
-	l.s $f0, 0($t0)
-	li $v0, 2
-	mov.s $f12, $f0
-	syscall
-	li $v0, 4
-	la $a0, -544($fp)
-	li $t0, 9
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -544($fp)
-	lw $t0, -544($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -544($fp)
-	li $t0, 9
-	lw $t1, -544($fp)
-	add $t2, $t0, $t1
-	sw $t2, -544($fp)
-	lw $t0, -544($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -544($fp)
-	lw $t0, -544($fp)
-	add $t2, $t0, $fp
-	sw $t2, -544($fp)
-	lw $t0, -544($fp)
-	l.s $f0, 0($t0)
-	li $v0, 2
-	mov.s $f12, $f0
-	syscall
-	li $v0, 4
-	la $a0, -544($fp)
-	li $t0, 9
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 3
-	li $t1, 1
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -548($fp)
-	lw $t0, -548($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -548($fp)
-	li $t0, 9
-	lw $t1, -548($fp)
-	add $t2, $t0, $t1
-	sw $t2, -548($fp)
-	lw $t0, -548($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -548($fp)
-	lw $t0, -548($fp)
-	add $t2, $t0, $fp
-	sw $t2, -548($fp)
-	lw $t0, -548($fp)
-	l.s $f0, 0($t0)
-	li $v0, 2
-	mov.s $f12, $f0
-	syscall
-	li $v0, 4
-	la $a0, -544($fp)
-	li $t0, 9
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $v0, 4
-	la $a0, -540($fp)
-	li $t0, 10
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -552($fp)
-	lw $t0, -552($fp)
-	li $t1, 0
-	add $t2, $t0, $t1
-	sw $t2, -552($fp)
-	li $t0, 9
-	lw $t1, -552($fp)
-	add $t2, $t0, $t1
-	sw $t2, -552($fp)
-	lw $t0, -552($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -552($fp)
-	lw $t0, -552($fp)
-	add $t2, $t0, $fp
-	sw $t2, -552($fp)
-	lw $t0, -552($fp)
-	l.s $f0, 0($t0)
-	li $v0, 2
-	mov.s $f12, $f0
-	syscall
-	li $v0, 4
-	la $a0, -544($fp)
-	li $t0, 9
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -556($fp)
-	lw $t0, -556($fp)
-	li $t1, 1
-	add $t2, $t0, $t1
-	sw $t2, -556($fp)
-	li $t0, 9
-	lw $t1, -556($fp)
-	add $t2, $t0, $t1
-	sw $t2, -556($fp)
-	lw $t0, -556($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -556($fp)
-	lw $t0, -556($fp)
-	add $t2, $t0, $fp
-	sw $t2, -556($fp)
-	lw $t0, -556($fp)
-	l.s $f0, 0($t0)
-	li $v0, 2
-	mov.s $f12, $f0
-	syscall
-	li $v0, 4
-	la $a0, -544($fp)
-	li $t0, 9
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 3
-	li $t1, 2
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -560($fp)
-	lw $t0, -560($fp)
-	li $t1, 2
-	add $t2, $t0, $t1
-	sw $t2, -560($fp)
-	li $t0, 9
-	lw $t1, -560($fp)
-	add $t2, $t0, $t1
-	sw $t2, -560($fp)
-	lw $t0, -560($fp)
-	li $t1, 4
-	mult $t0, $t1
-	mflo $t2
-	sw $t2, -560($fp)
-	lw $t0, -560($fp)
-	add $t2, $t0, $fp
-	sw $t2, -560($fp)
-	lw $t0, -560($fp)
-	l.s $f0, 0($t0)
-	li $v0, 2
-	mov.s $f12, $f0
-	syscall
-	li $v0, 4
-	la $a0, -544($fp)
-	li $t0, 9
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $v0, 4
-	la $a0, -540($fp)
-	li $t0, 10
-	sb $t0, 0($a0)
-	li $t0, 0
-	sb $t0, 1($a0)
-	syscall
-	li $t0, 0
-	sw $t0, -556($fp)
-	lw $t0, -556($fp)
-	li $t1, 1
-	sub $t2, $t0, $t1
-	sw $t2, -556($fp)
-	lw $t0, -556($fp)
-	li $t1, 1
-	sub $t2, $t0, $t1
-	sw $t2, -556($fp)
-	lw $t0, -556($fp)
-	li $v0, 1
-	move $a0, $t0
 	syscall
 	li $v0, 10
 	syscall
