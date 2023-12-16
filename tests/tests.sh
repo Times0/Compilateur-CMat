@@ -12,8 +12,9 @@ failed_tests=0
 tempdir="programmes/temp"
 mkdir -p "$tempdir"
 
-# Iterate over .cmat files in the programmes directory
-for cmat_file in programmes/*.cmat; do
+
+# -v enables natural sorting and not lexicographical sorting
+for cmat_file in $(ls -v programmes/*.cmat); do
   name=$(basename "$cmat_file")
 
   # Create sibling C program using cmat2c.py
@@ -57,7 +58,7 @@ for cmat_file in programmes/*.cmat; do
     echo -e "\e[92mTest $cmat_file succeeded.\e[0m"
     ((succeeded_tests++))
     # clean up when test succeeds
-    rm "$tempdir/$name.out" "$tempdir/$name.act" "$tempdir/$name.err" "$c_file" > /dev/null 2>&1
+    rm "$tempdir/$name.out" "$tempdir/$name.act" "$tempdir/$name.err" "$c_file" "$tempdir/$name.diff" "$tempdir/$name" > /dev/null 2>&1
   else
     echo -e "\e[91mTest $cmat_file failed. Differences between expected and actual output are in $tempdir/$name.diff.\e[0m"
     ((failed_tests++))

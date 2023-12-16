@@ -19,9 +19,10 @@
 - [x] `printf` to print a string ✅
 - [x] if alone statement ✅
 - [x] if else statement ✅
-- [ ] while statement
+- [x] while statement ✅
 - [ ] for statement
 - [ ] Handle return at the end of main in parser
+- [ ] Fonctions (avec ou sans paramètres)
 - [ ] Fonction recursive
 
 
@@ -42,7 +43,6 @@
 
 
 ### Other
-- [ ] Supprimer les opérations AND / OR ...
 - [ ] -o 
 - [ ] -tos 
 - [ ] -version

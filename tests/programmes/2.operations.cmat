@@ -17,6 +17,4 @@ int main()
     print((a + b) * c);
     print(a * (b + c));
     print((a + b) * (a + c));
-
-    
 }
