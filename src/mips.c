@@ -161,7 +161,7 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
 {
     //////////////////////////////////////////////////////////////
     // convertir les opérandes en int ou float selon le type du résultat
-    __uint32_t type = FLOAT;
+    __uint32_t type = quad->sym1->type;
     __uint32_t type_change_sym2=0;
     __uint32_t type_change_sym3=0;
 
@@ -170,25 +170,36 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         if(quad->sym1->type == INT || quad->by_adress[0] == INT)
         {
             type_change_sym2 = convert_float_to_int(quad->sym2);
-            // if(type_change_sym2)
-                // quad->by_adress[1] = INT;
             type_change_sym3 = convert_float_to_int(quad->sym3);
-            // if(type_change_sym3)
-                // quad->by_adress[2] = INT;
         }
         else if(quad->sym1->type == FLOAT)
         {
             type_change_sym2 = convert_int_to_float(quad->sym2);
-            // if(type_change_sym2)
-                // quad->by_adress[1] = FLOAT;
             type_change_sym3 = convert_int_to_float(quad->sym3);
-            // if(type_change_sym3)
-                // quad->by_adress[2] = FLOAT;
         }
-        type = quad->sym1->type;
     }
-    else
-        load_operator(f, quad->sym1, quad->by_adress[0], 0);    
+
+    if(quad->by_adress[0] != 0)
+    {
+        // si le resultat est un tableau indicé et une des operandes est une constante
+        if(quad->by_adress[1] == 0)
+        {
+            if(quad->by_adress[0] == INT)
+                type_change_sym2 = convert_float_to_int(quad->sym2);
+            else
+                type_change_sym2 = convert_int_to_float(quad->sym2);
+        }
+        if(quad->by_adress[2] == 0)
+        {
+            if(quad->by_adress[0] == INT)
+                type_change_sym3 = convert_float_to_int(quad->sym3);
+            else
+                type_change_sym3 = convert_int_to_float(quad->sym3);
+        }
+        
+        load_operator(f, quad->sym1, quad->by_adress[0], 0);
+        type = quad->by_adress[0];
+    }
 
     // récupérer la valeur de op1 dans un registre temp
     load_operator(f, quad->sym2, quad->by_adress[1], 1);
@@ -213,9 +224,9 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
     }
     else if (quad->kind == BOP_MINUS)
     {
-        if(quad->sym1->type == INT)
+        if(type == INT)
             fprintf (f, "\tsub $t%d, $t%d, $t%d\n", current_register_int, current_register_int - 2, current_register_int - 1);
-        else if(quad->sym1->type == FLOAT)
+        else if(type == FLOAT)
             fprintf (f, "\tsub.s $f%d, $f%d, $f%d\n", current_register_float, current_register_float - 2, current_register_float - 1);
     }
     else if (quad->kind == BOP_MULT)
@@ -264,32 +275,56 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
             current_register_int-=2;
         else if(quad->sym1->type == FLOAT)
             current_register_float-=2;
-
-        //////////////////////////////////////////////////////////////
-        // remettre les types des opérandes à leur type initial
-        if(quad->sym1->type == INT)
-        {
-            if(type_change_sym2)
-                convert_int_to_float(quad->sym2);
-            if(type_change_sym3)
-                convert_int_to_float(quad->sym3);
-        }
-        else if(quad->sym1->type == FLOAT)
-        {
-            if(type_change_sym2)
-                convert_float_to_int(quad->sym2);
-            if(type_change_sym3)
-                convert_float_to_int(quad->sym3);
-        }
     }
     else
     {
         SymbolTableElement t;
         t.type = quad->by_adress[0];
+
         current_register_float++;
-        current_register_int-=2;
+        if(!quad->by_adress[1] || !quad->by_adress[2])
+            current_register_float++;
+
+        if(quad->by_adress[1] == 0)
+        {
+            if(quad->by_adress[0] == INT)
+                current_register_int--;
+            else
+                current_register_float--;
+        }
+        else
+            current_register_int--;
+            
+        if(quad->by_adress[2] == 0)
+        {
+            if(quad->by_adress[0] == INT)
+                current_register_int--;
+            else
+                current_register_float--;
+        }
+        else
+            current_register_int--;
+    
         store_result (f, &t, quad->sym1->attribute.constant.int_value);
+        
         current_register_float -=2;
+    }
+
+    //////////////////////////////////////////////////////////////
+    // remettre les types des opérandes à leur type initial
+    if(quad->sym1->type == INT)
+    {
+        if(type_change_sym2)
+            convert_int_to_float(quad->sym2);
+        if(type_change_sym3)
+            convert_int_to_float(quad->sym3);
+    }
+    else if(quad->sym1->type == FLOAT)
+    {
+        if(type_change_sym2)
+            convert_float_to_int(quad->sym2);
+        if(type_change_sym3)
+            convert_float_to_int(quad->sym3);
     }
 
 }
@@ -336,6 +371,9 @@ void gencode_affect (FILE * f, Quad *quad)
             load_operator(f, quad->sym1, quad->by_adress[0], 0);
             
             store_result (f, &t, quad->sym1->attribute.constant.int_value);
+
+            if(quad->by_adress[1])
+                current_register_int--;
 
             if(type_change_sym2)
                 convert_float_to_int(quad->sym2);
