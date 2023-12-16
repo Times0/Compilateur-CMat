@@ -1,0 +1,26 @@
+int main()
+{
+    int a = 1;
+    int b = 2;
+    int c = 3;
+    
+    // ++ et --
+    b--;
+    print(b);
+    b++;
+    print(b);
+    print(++b);
+    print(b++);
+    print(b);
+
+    // unary
+    print(-a);
+    print(-a + b);
+    print(-a + -b);
+    print(-a + -b + -c);
+
+    // unary avec parenthèses
+    print(-(a + b));
+    print(-(a + b) + c); // fails
+    print(-(a + b) + -(c + a)); // fails
+}

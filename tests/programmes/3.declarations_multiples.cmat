@@ -1,0 +1,21 @@
+int main()
+{
+    int a,b,c;
+    a=1;
+    b=2;
+    c=3;
+
+    print(a + b + c);
+    print(a + b - c);
+    print(a - b + c);
+
+    // avec priorité
+    print(a + b * c);
+    print(a * b + c);
+    print(a * b * c);
+
+    // avec parenthèses
+    print((a + b) * c);
+    print(a * (b + c));
+    print((a + b) * (a + c));
+}

@@ -2,61 +2,73 @@ echo -e "\e[93mRunning tests...\e[0m"
 
 cd ..
 make clean > /dev/null 2>&1 || { echo -e "\e[91mError: Unable to clean the project.\e[0m"; exit 1; }
-make tests > /dev/null 2>&1 || { echo -e "\e[91mError: Unable to build and run tests.\e[0m"; exit 1; }
+make > /dev/null 2>&1 || { echo -e "\e[91mError: Unable to build and run tests.\e[0m"; exit 1; }
 echo -e "\e[92mCompilation successful.\e[0m"
 cd tests
 
 succeeded_tests=0
 failed_tests=0
 
-echo -e "\e[93mRunning lexer tests...\e[0m"
-all_tests=$(ls -d */ | cut -f1 -d'/')
-# Lexer tests
-for test_folder in $all_tests; do
-  if [ -d "$test_folder" ]; then
-    test_name=$(basename "$test_folder")
-    output_file="$test_folder/out"
-    expected_output_file="$test_folder/out_expected"
+tempdir="programmes/temp"
 
-    (../bin/cmat_test_version "$test_folder/in" -l) > "$output_file" 2>&1 || { 
-      echo -e "\e[91mError: Unable to run test $test_name.\e[0m"; 
-      exit 1; 
-    }
+# Iterate over .cmat files in the programmes directory
+for cmat_file in programmes/*.cmat; do
+  name=$(basename "$cmat_file")
 
-    # Compare output with expected
-    if diff "$output_file" "$expected_output_file" > /dev/null 2>&1; then
-      echo -e "\e[92mTest $test_name passed successfully.\e[0m"
-      ((succeeded_tests++))
-    else
-      echo -e "\e[91mError: Test $test_name failed. Output differs from expected.\e[0m"
-      ((failed_tests++))
-    fi
-  fi
-done
+  # Create sibling C program using cmat2c.py
+  c_file="$tempdir/$name.c"
+  python3 cmat2c.py "$cmat_file" "$c_file"
 
-echo -e "\e[93mRunning parser tests...\e[0m"
-# Parser tests
-files_to_test="1_basic_main/in codeTest"
-for file in $files_to_test; do
-  test_name=$(basename "$file")
-  output=$(../bin/cmat_test_version "$file" 2>&1)
-  return_code=$?
-  if [ $return_code -ne 0 ]; then
-    echo -e "\e[91mError: return code $return_code. Test '$test_name' failed.\e[0m"
+  # Compile the C program
+  gcc $c_file -o "$tempdir/$name" 
+
+  # Compile the cmat program and check for errors and put them in the tempdir
+  ../bin/cmat "$cmat_file" > /dev/null 2> "$tempdir/$name.err"
+  if [ $? -ne 0 ]; then
+    echo -e "\e[91mTest $cmat_file compilation failed. See error message in $tempdir/$name.err.\e[0m"
     ((failed_tests++))
-    exit 1
+    continue
+  else
+    rm "$tempdir/$name.err" > /dev/null 2>&1
   fi
-  # If no errors, test passed
-  echo -e "\e[92mTest $test_name passed successfully.\e[0m"
-  ((succeeded_tests++))
+  
+  # get the expected output by running the C program (should not raise any errors)
+  expected_output=$("$tempdir/$name")
+
+  # get the actual output by running the cmat program with spim
+  actual_output=$(spim -file "mips.s" | tail -n +6) 
+  if [ $? -ne 0 ]; then
+    echo -e "\e[91mTest $cmat_file failed. See error message in $tempdir/$name.err.\e[0m"
+    ((failed_tests++))
+    continue
+  else
+    rm "$tempdir/$name.err" > /dev/null 2>&1
+  fi
+
+  # put the expected and actual output in a file named after the cmat file
+  echo "$expected_output" > "$tempdir/$name.out"
+  echo "$actual_output" > "$tempdir/$name.act"
+
+  # compare the expected and actual output and put the diffs in a file named after the cmat file
+  diff "$tempdir/$name.out" "$tempdir/$name.act" > "$tempdir/$name.diff"
+
+  if [ $? -eq 0 ]; then
+    echo -e "\e[92mTest $cmat_file succeeded.\e[0m"
+    ((succeeded_tests++))
+    # clean up when test succeeds
+    rm "$tempdir/$name.out" "$tempdir/$name.act" "$tempdir/$name.err" "$c_file" > /dev/null 2>&1
+  else
+    echo -e "\e[91mTest $cmat_file failed. Differences between expected and actual output are in $tempdir/$name.diff.\e[0m"
+    ((failed_tests++))
+  fi
+
 done
 
+# Clean up
+rm mips.s > /dev/null 2>&1
 
-# Print test results
-echo -e "\n\e[93mTest Results:\e[0m"
-echo -e "\e[92mSucceeded Tests: $succeeded_tests\e[0m"
-echo -e "\e[91mFailed Tests: $failed_tests\e[0m"
 
+echo -e "\e[93mTests complete. $succeeded_tests succeeded, $failed_tests failed.\e[0m"
 # Exit with appropriate status
 if [ "$failed_tests" -eq 0 ]; then
   exit 0
