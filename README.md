@@ -1,9 +1,16 @@
 # Projet de compilation
 
 ## TODO
+- [ ] Pas Implémenté
+
+- [x] Implémenté
+
 ✅ = Testé et fonctionnel
+
 🟨 = Pas testé, fonctionnel
+
 🟥 = Testé, non fonctionnel
+
 ### C restriction
 - [x] Basic operations (+, -, *, /) on integers ✅
 - [x] Basic operations (+, -, *, /) on floats 🟨
