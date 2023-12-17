@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
     uint32_t option;
     uint32_t verbose_flag = 0;
     uint32_t lex_only_flag = 0;
+    uint32_t tos_flag = 0;
     char *output_file = NULL;
 
     // Checking for '-version' option in any position
@@ -24,6 +25,9 @@ int main(int argc, char *argv[])
         if (strcmp(argv[i], "-version") == 0) {
             printf("CMat Compiler\n");
             printf("Developed by: Lucas DELETANG, Zaid GHALI, Dorian CHEVALÉRIAS, Oumarou MAIGA\n");
+        }
+        else if (strcmp(argv[i], "-tos") == 0) {
+            tos_flag = 1;
         }
     }
 
@@ -41,7 +45,7 @@ int main(int argc, char *argv[])
                 output_file = optarg;
                 break;
             default:
-                fprintf(stderr, "Usage: %s [-V] [-l] [-version] [-o <output_file_name>] file [-v]\\n", argv[0]);
+                fprintf(stderr, "Usage: %s [-V] [-l] [-version] [-o <output_file_name>] [-tos] file [-v]\\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
@@ -114,13 +118,14 @@ int main(int argc, char *argv[])
         fclose(yyin);
 
     // Afficher la table des symboles
-    if (!(yyout = fopen("symbol_table.txt", "w+")))
+    if (tos_flag)
+        symbol_table_dump(symbol_table, stdout);
+    else if (!(yyout = fopen("symbol_table.txt", "w+")))
     {
         perror("symbol_table.txt");
         return 1;
+        symbol_table_dump(symbol_table, yyout);
     }
-
-    symbol_table_dump(symbol_table, yyout);
     
     if (yyout != stdout)
         fclose(yyout);

@@ -50,6 +50,7 @@
 
 
 ### Other
-- [ ] -o 
-- [ ] -tos 
-- [ ] -version
+- [x] -o ✅
+- [x] -tos ✅
+- [x] -version ✅
+ 
