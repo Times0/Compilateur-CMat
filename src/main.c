@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
     uint32_t option;
     uint32_t verbose_flag = 0;
     uint32_t lex_only_flag = 0;
+    char *output_file = NULL;
 
     // Checking for '-version' option in any position
     for (int i = 1; i < argc; i++) {
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    while ((option = getopt(argc, argv, "vl")) != -1)
+    while ((option = getopt(argc, argv, "Vlo")) != -1)
     {
         switch (option)
         {
@@ -36,12 +37,15 @@ int main(int argc, char *argv[])
             case 'l':
                 lex_only_flag = 1;
                 break;
+            case 'o':
+                output_file = optarg;
+                break;
             default:
-                fprintf(stderr, "Usage: %s file [-v]\\n", argv[0]);
+                fprintf(stderr, "Usage: %s [-V] [-l] [-version] [-o <output_file_name>] file [-v]\\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
-
+    
     if (optind >= argc)
     {
         fprintf(stderr, "Expected argument after options\n");
@@ -88,10 +92,20 @@ int main(int argc, char *argv[])
     int r = yyparse();
 
     code_dump(code);
-    FILE *ff = fopen("mips.s", "w+");
-    gencode_mips_global_variable(ff, symbol_table);
-    gencode_mips(code, ff);
-    fclose(ff);
+
+    if (output_file != NULL) {
+        FILE *ff = fopen(output_file, "w+");
+        gencode_mips_global_variable(ff, symbol_table);
+        gencode_mips(code, ff);
+        fclose(ff);
+    }
+    else {
+        FILE *ff = fopen("mips.s", "w+");
+        gencode_mips_global_variable(ff, symbol_table);
+        gencode_mips(code, ff);
+        fclose(ff);
+    }
+
 
     if (verbose_flag)
         printf("-> Finished parsing with error code : %d\n", r);
