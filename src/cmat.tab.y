@@ -304,8 +304,8 @@ slice_array : '[' expression_slice_list ']'
                $$.ptr_list = $2.ptr_list;
                $$.size_ptr_list = $2.size_ptr_list;
 
-               for(int i=0; i< $2.size_ptr_list;i++)
-                    printf("%d\n", $2.ptr_list[i]->attribute.constant.int_value);
+               // for(int i=0; i< $2.size_ptr_list;i++)
+               //      printf("%d\n", $2.ptr_list[i]->attribute.constant.int_value);
 
             }
 
@@ -623,7 +623,6 @@ assign :  ID '=' expression
                {
                     semantic_error("can't affect array to %s", e->type == INT?"INT":"FLOAT");
                }
-               printf("%d %d\n", $2.size_ptr_list, $3.size_ptr_list);
                if($2.size_ptr_list > 1 || $3.size_ptr_list > 1)
                {
                     semantic_error("affectation of sliced matrix is impossible");
@@ -1011,6 +1010,15 @@ primary_expression : ID
                          $$.ptr = $2.ptr;
                          $$.by_address = $2.by_address;
                     }
+                    | '~' primary_expression %prec UNARY_OP
+                    {
+                         if($2.ptr->class != ARRAY && $2.ptr->type != MATRIX)
+                         {
+                              semantic_error("\"~\" can only be applied on matrices");
+                         }
+                         $$.ptr = matrix_unary_operation_constant($2.ptr, '~');
+                         $$.by_address = 0;
+                    }
                     | '(' expression ')'
                     {
                          if(logical_expression_flag == 1)
@@ -1101,7 +1109,6 @@ logical_expression  : additive_expression    // si on prend cette regle c'est qu
                          }
                          $$.true_list = create_list(code->nextquad);
                          $$.false_list = create_list(code->nextquad+1);
-                         printf("Gen op_gt %p with %d\n", $$.true_list, $$.true_list[0]);
                          gen_quad_goto(code, K_IFGT, $1.ptr, $3.ptr, -1, (__uint32_t[]){$1.by_address, $3.by_address});
                          gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){$1.by_address, $3.by_address});
                     }
@@ -1208,7 +1215,7 @@ SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableEl
      // 2 dimensions
      if(add2 != NULL)
      {
-          SymbolTableElement *size = insert_constant(&symbol_table, (Constant){.int_value = id->attribute.array.size[0], .float_value = (float)id->attribute.array.size[0]}, INT);
+          SymbolTableElement *size = insert_constant(&symbol_table, (Constant){.int_value = id->attribute.array.size[1], .float_value = (float)id->attribute.array.size[1]}, INT);
           SymbolTableElement *s = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
           adress++;
           gen_quad(code, BOP_MULT, s, size, add1, (__uint32_t[]){0, 0, 0});
@@ -1359,13 +1366,19 @@ SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __ui
      __uint32_t size = r->attribute.array.size[1];
      if(size == 0)
           size++;
-     
+
      if(op == '-')
      {
           r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){a1->attribute.array.size[0], a1->attribute.array.size[1]});
           adress += a1->attribute.array.size[0]*size;
      }
+     else if(op == '~')
+     {
+          r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){size, a1->attribute.array.size[0]});
+          adress += a1->attribute.array.size[0]*size;
 
+          size = a1->attribute.array.size[0]; //jamais = 0
+     }
 
      for(int i=0;i<r->attribute.array.size[0];i++)
      {
@@ -1395,6 +1408,12 @@ SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __ui
                     break;
                     case '-':
                          gen_quad(code, UOP_MINUS, e1, generate_address_quads(a1, add1, add2), NULL,  (__uint32_t[]){FLOAT, FLOAT, 0});
+                    break;
+                    case '~':
+                         if(r->attribute.array.size[0] == 1)
+                              gen_quad(code, K_COPY, e1, generate_address_quads(a1, add1, add2), NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
+                         else
+                              gen_quad(code, K_COPY, e1, generate_address_quads(a1, add2, add1), NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
                     break;
                }
           }
