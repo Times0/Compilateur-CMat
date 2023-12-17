@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "symbol_table.h"
 #include "../include/quad.h"
 #include "../include/mips.h"
@@ -10,27 +9,36 @@
 #include "cmat.tab.h"
 
 extern SymbolTable *symbol_table;
-extern QuadTable * code;
+extern QuadTable *code;
 
 int main(int argc, char *argv[])
 {
+    
     uint32_t option;
     uint32_t verbose_flag = 0;
     uint32_t lex_only_flag = 0;
+
+    // Checking for '-version' option in any position
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-version") == 0) {
+            printf("CMat Compiler\n");
+            printf("Developed by: Lucas DELETANG, Zaid GHALI, Dorian CHEVALÉRIAS, Oumarou MAIGA\n");
+        }
+    }
 
     while ((option = getopt(argc, argv, "vl")) != -1)
     {
         switch (option)
         {
-        case 'v':
-            verbose_flag = 1;
-            break;
-        case 'l':
-            lex_only_flag = 1;
-            break;
-        default:
-            fprintf(stderr, "Usage: %s file [-v]\n", argv[0]);
-            exit(EXIT_FAILURE);
+            case 'V':
+                verbose_flag = 1;
+                break;
+            case 'l':
+                lex_only_flag = 1;
+                break;
+            default:
+                fprintf(stderr, "Usage: %s file [-v]\\n", argv[0]);
+                exit(EXIT_FAILURE);
         }
     }
 
