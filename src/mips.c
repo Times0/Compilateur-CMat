@@ -160,8 +160,7 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
             t.type = quad->by_adress[0];
             
             current_register_int--;
-            store_result (f, &t, quad->sym1->attribute.constant.int_value);
-            
+            store_result (f, &t, quad->sym1->attribute.constant.int_value);   
         }
     }
 
@@ -388,8 +387,8 @@ void gencode_affect (FILE * f, Quad *quad)
             
             store_result (f, &t, quad->sym1->attribute.constant.int_value);
 
-            if(quad->by_adress[1])
-                current_register_int--;
+            // if(quad->by_adress[1])
+                // current_register_int--;
 
             if(type_change_sym2)
                 convert_float_to_int(quad->sym2);
@@ -602,7 +601,7 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
 {
     if(strcmp(elem->attribute.variable.name, "$fp") == 0)
     {
-        current_register_int++;
+        // current_register_int++;
         return;
     }
     
@@ -618,6 +617,7 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
             {
                 fprintf (f, "\tl.s $f%d, 0($t%d)\n", current_register_float, current_register_int);
                 current_register_float++;
+                current_register_int--;
             }
             current_register_int++;
             
