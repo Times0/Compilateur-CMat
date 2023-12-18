@@ -22,6 +22,7 @@ extern SymbolTable *symbol_table;
  __uint32_t lineno = 1;
 __uint32_t adress = 0;                  // donne la prochaine adresse dans la stack
 __uint32_t logical_expression_flag = 0; // permet d'indiquer si on se situe dans une expression logique
+__uint32_t logical_id_flag = 0;
 
 uint32_t get_float_type(uint32_t type1, uint32_t type2);
 SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableElement *add, SymbolTableElement *add2);
@@ -148,7 +149,7 @@ statement : statement_if
           | statement_while
           | statement_for
 
-statement_if : IF '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block statement_else
+statement_if : IF '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block statement_else
              {
                     // si pas de else
                     if($9.ptr == NULL)
@@ -183,7 +184,7 @@ statement_else : ELSE N statement_if
                     $$.ptr = NULL;
                }
 
-statement_while : WHILE M '(' {logical_expression_flag++;} expression ')' {logical_expression_flag--;} M block
+statement_while : WHILE M '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block
                 {
                     complete_list($5.true_list, $8.quad);
                     gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad, (__uint32_t[]){0, 0});
@@ -195,11 +196,10 @@ statement_while : WHILE M '(' {logical_expression_flag++;} expression ')' {logic
                     $$.next_list = $5.false_list;   
                 }
 
-statement_for : FOR M '(' {logical_expression_flag++;} declaration_or_assign ';' expression ';' M expression ')' {logical_expression_flag--;} M block
+statement_for : FOR M '(' {logical_expression_flag++; logical_id_flag++;} declaration_or_assign ';' expression {logical_expression_flag--; logical_id_flag=0;} ';' M expression ')' M block
                {
-                    // NULL
-                    /*complete_list($7.true_list, $13.quad);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad+1);  // +1 pour l'initialisation
+                    complete_list($7.true_list, $13.quad);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad+1, (__uint32_t[]){0, 0, 0});  // +1 pour l'initialisation
                     
                     // on ajoute un label pour le for, on regenere un label (meme si inutile) pour faciliter le free 
                     code->quads[$2.quad].label = $2.quad;
@@ -207,7 +207,7 @@ statement_for : FOR M '(' {logical_expression_flag++;} declaration_or_assign ';'
                     complete_list($14.next_list, $2.quad);
                     $$.next_list = $7.false_list;
 
-                    Quad *q = malloc(sizeof(Quad)*($9.quad-$2.quad-1));
+                    /*Quad *q = malloc(sizeof(Quad)*($9.quad-$2.quad-1));
                     if(q == NULL)
                     {
                          printf("malloc failed in for\n");
@@ -1110,6 +1110,7 @@ primary_expression : ID
                          {
                               $$.true_list = $2.true_list;
                               $$.false_list = $2.false_list;
+                              logical_id_flag=0;
                          }
                          $$.ptr = $2.ptr;
                          $$.by_address = $2.by_address;
@@ -1122,7 +1123,7 @@ logical_expression  : additive_expression    // si on prend cette regle c'est qu
                          $$.ptr = $1.ptr;
                          $$.by_address = $1.by_address;
 
-                         if(logical_expression_flag == 1)
+                         if(logical_expression_flag == 1 && logical_id_flag)
                          {
                               if($1.ptr->class == ARRAY)
                               {
@@ -1136,6 +1137,8 @@ logical_expression  : additive_expression    // si on prend cette regle c'est qu
                               gen_quad_goto(code, K_IFNOT, $$.ptr, lookup_constant(symbol_table, (Constant){.int_value = 0}, INT), -1, (__uint32_t[]){$1.by_address, 0});
                               gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
                          }
+                         else
+                              logical_id_flag++;
                     }
                     | additive_expression EQ_OP additive_expression 
                     {
