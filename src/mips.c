@@ -352,23 +352,39 @@ void gencode_affect (FILE * f, Quad *quad)
     {
         if(quad->sym1->type == INT)
         {
-            type_change_sym2 = convert_float_to_int(quad->sym2);
+            if(!quad->by_adress[1])
+            {
+                type_change_sym2 = convert_float_to_int(quad->sym2);
         
-            load_operator(f, quad->sym2, 0, 0);
-            store_result (f, quad->sym1, 0);
+                load_operator(f, quad->sym2, 0, 0);
+                store_result (f, quad->sym1, 0);
 
-            if(type_change_sym2)
-                convert_int_to_float(quad->sym2);
+                if(type_change_sym2)
+                    convert_int_to_float(quad->sym2);
+            }
+            else
+            {
+                load_operator(f, quad->sym2, quad->by_adress[1], 1);
+                store_result (f, quad->sym1, 0);
+            }
         }
         else if(quad->sym1->type == FLOAT)
         {
-            type_change_sym2 = convert_int_to_float(quad->sym2);
+            if(!quad->by_adress[1])
+            {
+                type_change_sym2 = convert_int_to_float(quad->sym2);
         
-            load_operator(f, quad->sym2, 0, 0);
-            store_result (f, quad->sym1, 0);
+                load_operator(f, quad->sym2, 0, 0);
+                store_result (f, quad->sym1, 0);
         
-            if(type_change_sym2)
-                convert_float_to_int(quad->sym2);
+                if(type_change_sym2)
+                    convert_float_to_int(quad->sym2);
+            }
+            else
+            {
+                load_operator(f, quad->sym2, quad->by_adress[1], 1);
+                store_result (f, quad->sym1, 0);
+            }
         }
     }
     // Si passage par adresse

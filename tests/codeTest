@@ -47,29 +47,45 @@ int main()
 
     matrix A[3];
     A[0] = 1;
-    // A[0][1] = 5;
-    // A[0][2] = 10.1;
-    A[1] = 2;
+    A[0][1] = 5;
+    A[0][2] = 10.1;
+    // A[1] = 2;
     // A[1][1] = 6;
     // A[1][2] = 11.23;
-    A[2] = 3;
+    // A[2] = 3;
     // A[2][1] = 7;
     // A[2][2] = 12;
-    matrix B[3][3];
+    matrix B[1];
     // B[0][0] = 4;
     // B[1][1] = 5;
     // B[2][2] = 6;
 
+    // A[0] = A[0]+3.33;
     // A = -A*2+4;
     // B = A*~A;
     // B = B+B;
-    A = A-A+A;
-    B = A/~A;
-    // float b = ~A*A;
+    // A = A-A+A;
+    // B = A*~A;
+    // matrix C[1][1];
+    // C[0][0] = 1;
+    // C = ~A*A;
+    // float b;
+    // b = C[0][0];
+    // print(b);
+    // B[0] = 8;
+    float d;
+    d = B[0]; //marche pas
+    // d = ~A*A;
+    // printmat(B);
+    // print(d);
+    // printf("\n");
     // A=-A;
     // A--;
-    printmat(A);
-    printmat(B);
+    
+    // printmat(C);
+    // printmat(A);
+    // print(d);
+    // printmat(B);
 
 /*    matrix X[3];
     X[0] = 2;
