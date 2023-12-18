@@ -756,6 +756,15 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                                    $$.by_address = 0;
                                    adress++;
                               }
+                              else if($1.ptr->type == MATRIX && $3.ptr->type == MATRIX)
+                              {
+                                   if($1.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[0])
+                                   {
+                                        semantic_error("matrices should have compatible dimensions for \"/\"");
+                                   }
+
+                                   $$.ptr = matrix_operation_mult($1.ptr, $3.ptr, '/');
+                              }
                               else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
                               {
                                    $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '/');
@@ -1279,8 +1288,8 @@ SymbolTableElement *matrix_operation_mult(SymbolTableElement *a1, SymbolTableEle
                          case '*':
                               gen_quad(code, BOP_MULT, t, e2, e3, (__uint32_t[]){0, FLOAT, FLOAT});
                          break;
-                         case '-':
-                              /* gen_quad(code, BOP_MINUS, e1, e2, e3, (__uint32_t[]){FLOAT, FLOAT, FLOAT}); */
+                         case '/':
+                              gen_quad(code, BOP_DIV, t, e2, e3, (__uint32_t[]){0, FLOAT, FLOAT});
                          break;
                     }
                     gen_quad(code, BOP_PLUS, sum, sum, t, (__uint32_t[]){0, 0, 0});
