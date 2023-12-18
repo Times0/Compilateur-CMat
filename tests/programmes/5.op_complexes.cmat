@@ -10,13 +10,13 @@ int main()
     b++;
     print(b);
     print(++b);
-    //print(b++);
     print(b);
-
-    //print(b--);
+    print(b);
+    
+    print(b--);
     print(b);
     print(--b);
-    //print(b--);
+    print(b--);
 
     // unary
     print(-a);
