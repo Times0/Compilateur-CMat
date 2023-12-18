@@ -625,7 +625,7 @@ assign :  ID '=' expression
                
                if($$.ptr->class != ARRAY && $3.ptr->class != ARRAY)
                {
-                    gen_quad(code, K_COPY, $$.ptr, $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
+                    gen_quad(code, K_COPY, $$.ptr, $3.ptr, NULL, (__uint32_t[]){0, $3.by_address, 0});
                }
                else if($$.ptr->class == VARIABLE && $3.ptr->class == ARRAY)
                {
