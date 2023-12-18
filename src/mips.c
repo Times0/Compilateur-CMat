@@ -429,7 +429,6 @@ void gencode_print(FILE *f, Quad *quad)
             fprintf (f, "\tmov.s $f12, $f%d\n", current_register_float - 1);
             fprintf (f, "\tsyscall\n");
             current_register_float--;
-            current_register_int--; // il faut vider le registre contenant l'addresse
         }
         // Passage par valeur on doit l'evaluer apres car il peyt y avoir des conflits entre les 2 types
         else if(quad->function_parameters[0]->type == INT)
@@ -601,11 +600,11 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
 {
     if(strcmp(elem->attribute.variable.name, "$fp") == 0)
     {
-        // current_register_int++;
+        current_register_int++;
         return;
     }
     
-    if (elem->class == VARIABLE)
+    if(elem->class == VARIABLE)
     {
         // si passage par addresse, on charge la valeur pointé par le registre
         if(address == FLOAT)
@@ -617,9 +616,9 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
             {
                 fprintf (f, "\tl.s $f%d, 0($t%d)\n", current_register_float, current_register_int);
                 current_register_float++;
-                current_register_int--;
             }
-            current_register_int++;
+            else
+                current_register_int++;
             
         }
         else if(address == INT)
@@ -644,10 +643,12 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
                     fprintf (f, "\tl.s $f%d, %s\n", current_register_float, elem->attribute.variable.name);
                     fprintf(f, "\tcvt.w.s $f%d, $f%d\n", current_register_float, current_register_float);
                     fprintf(f, "\tmfc1 $t%d, $f%d\n", current_register_int, current_register_float);
+                    current_register_int++;
                 }
                 else
                 {
                     fprintf (f, "\tlw $t%d, %s\n", current_register_int, elem->attribute.variable.name);
+                    current_register_int++;
                 }
             }
             else
@@ -657,13 +658,14 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
                     fprintf (f, "\tl.s $f%d, %d($fp)\n", current_register_float, -4 * (elem->attribute.variable.adress + 1));
                     fprintf(f, "\tcvt.w.s $f%d, $f%d\n", current_register_float, current_register_float);
                     fprintf(f, "\tmfc1 $t%d, $f%d\n", current_register_int, current_register_float);
+                    current_register_int++;
                 }
                 else
                 {
                     fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
+                    current_register_int++;
                 }
             }
-            current_register_int++;
         }
         else if (elem->type == FLOAT)
         {
@@ -674,10 +676,12 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
                     fprintf (f, "\tlw $t%d, %s\n", current_register_int, elem->attribute.variable.name);
                     fprintf(f, "\tmtc1 $t%d, $f%d\n", current_register_int, current_register_float);
                     fprintf(f, "\tcvt.s.w $f%d, $f%d\n", current_register_float, current_register_float);
+                    current_register_float++;
                 }
                 else
                 {
                     fprintf (f, "\tl.s $f%d, %s\n", current_register_float, elem->attribute.variable.name);
+                    current_register_float++;
                 }
             }
             else
@@ -687,13 +691,14 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
                     fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
                     fprintf(f, "\tmtc1 $t%d, $f%d\n", current_register_int, current_register_float);
                     fprintf(f, "\tcvt.s.w $f%d, $f%d\n", current_register_float, current_register_float);
+                    current_register_float++;
                 }
                 else
                 {
                     fprintf (f, "\tl.s $f%d, %d($fp)\n", current_register_float, -4 * (elem->attribute.variable.adress + 1));
+                    current_register_float++;
                 }
             }
-            current_register_float++;
         }
     }
     // dans le cas ou on lit une addresse
@@ -714,9 +719,10 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
 
 void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
 {
-    if (adress == 0)
+    // si stockage classique
+    if(adress == 0)
     {
-        if (res->class == VARIABLE)
+        if(res->class == VARIABLE)
         {
             if(res->type == INT)
             {
@@ -727,14 +733,14 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
                     fprintf (f, "\tla $t%d, %s\n", current_register_int, res->attribute.variable.name);
                     // save the value in this address
                     fprintf (f, "\tsw $t%d, 0($t%d)\n", current_register_int - 1, current_register_int);
-                    // current_register_int--;
+                    current_register_int--;
                 }
                 else
                 {
                     fprintf(f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, -4 * (res->attribute.variable.adress + 1));
                     fp_type[res->attribute.variable.adress] = res->type;
+                    current_register_int--;
                 }
-                current_register_int--;
             }
             else if(res->type == FLOAT)
             {
@@ -745,14 +751,14 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
                     fprintf (f, "\tla $t%d, %s\n", current_register_int, res->attribute.variable.name);
                     // save the value in this address
                     fprintf (f, "\ts.s $f%d, 0($t%d)\n", current_register_float-1, current_register_int);
-                    // current_register_float--;
+                    current_register_float--;
                 }
                 else
                 {
                     fprintf (f, "\ts.s $f%d, %d($fp)\n", current_register_float - 1, -4 * (res->attribute.variable.adress + 1));
                     fp_type[res->attribute.variable.adress] = res->type;
+                    current_register_float--;
                 }
-                current_register_float--;
             }
         }
     }
