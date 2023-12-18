@@ -277,7 +277,7 @@ declaration :  type ID declaration_affectation
                          insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 0}, -1, current_scope);
                     else
                     {
-                         insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 0}, adress, current_scope);
+                         insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 1}, adress, current_scope);
                          adress += $3*1;
                     }
                }
@@ -1247,15 +1247,10 @@ SymbolTableElement *generate_address_quads(SymbolTableElement *id, SymbolTableEl
 
 SymbolTableElement *matrix_operation_mult(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
 {
-     /* __uint32_t size = a2->attribute.array.size[1]; */
-     /* if(size == 0) */
-          /* size++; */
      SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = (float)0} ,INT);
 
      SymbolTableElement *r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){a1->attribute.array.size[0], a2->attribute.array.size[1]});
      adress += a1->attribute.array.size[0]*a2->attribute.array.size[1];
-
-     /* printf("%d %d %d\n", a1->attribute.array.size[0], a2->attribute.array.size[1], a1->attribute.array.size[1]); */
 
      for(int i=0;i<a1->attribute.array.size[0];i++)
      {
@@ -1301,48 +1296,35 @@ SymbolTableElement *matrix_operation_mult(SymbolTableElement *a1, SymbolTableEle
 
 SymbolTableElement *matrix_operation_add(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
 {
-     __uint32_t size = a2->attribute.array.size[1];
-     if(size == 0)
-          size++;
-
      SymbolTableElement *r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){a2->attribute.array.size[0], a2->attribute.array.size[1]});
-     adress += a2->attribute.array.size[0]*size;
+     adress += a2->attribute.array.size[0]*a2->attribute.array.size[1];
 
      for(int i=0;i<a2->attribute.array.size[0];i++)
      {
-          for(int j=0;j<size;j++)
+          for(int j=0;j<a2->attribute.array.size[1];j++)
           {
                SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
                SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
                SymbolTableElement *e1, *e2, *e3;
 
-               if(size == 1)
-               {
-                    e1 = generate_address_quads(r, add1, NULL);
-                    adress++;
-                    e2 = generate_address_quads(a1, add1, NULL);
-                    adress++;
-                    e3 = generate_address_quads(a2, add1, NULL);
-               }
-               else
-               {
-                    e1 = generate_address_quads(r, add1, add2);
-                    adress++;
-                    e2 = generate_address_quads(a1, add1, add2);
-                    adress++;
-                    e3 = generate_address_quads(a2, add1, add2);
-               }
+               e1 = generate_address_quads(r, add1, add2);
+               adress++;
+               e2 = generate_address_quads(a1, add1, add2);
+               adress++;
+               e3 = generate_address_quads(a2, add1, add2);
 
+               // la variable temporaire est évitable mais cela oblige a changer le mips.c à cause des libérations attives des registres
+               SymbolTableElement *t = newtemp(symbol_table, VARIABLE, FLOAT, adress, (__uint32_t[]){0, 0});
                switch(op)
                {
                     case '+':
-                         gen_quad(code, BOP_PLUS, e1, e2, e3, (__uint32_t[]){FLOAT, FLOAT, FLOAT});
+                         gen_quad(code, BOP_PLUS, t, e2, e3, (__uint32_t[]){0, FLOAT, FLOAT});
                     break;
                     case '-':
-                         gen_quad(code, BOP_MINUS, e1, e2, e3, (__uint32_t[]){FLOAT, FLOAT, FLOAT});
+                         gen_quad(code, BOP_MINUS, t, e2, e3, (__uint32_t[]){0, FLOAT, FLOAT});
                     break;
                }
-                              
+               gen_quad(code , K_COPY, e1, t, NULL, (__uint32_t[]){FLOAT, 0, 0});              
                
                adress-=2;
           }
@@ -1350,7 +1332,7 @@ SymbolTableElement *matrix_operation_add(SymbolTableElement *a1, SymbolTableElem
      return r;
 }
 
-// opération bianires constante/matrice
+// opération binaires constante/matrice
 SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op)
 {
      SymbolTableElement *constant;
@@ -1365,57 +1347,47 @@ SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, Sym
           constant = a2;
           array = a1;
      }
-     
-     __uint32_t size = array->attribute.array.size[1];
-     if(size == 0)
-          size++;
 
      // varaiable temporaire pour le resultat
      SymbolTableElement *r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){array->attribute.array.size[0], array->attribute.array.size[1]});
-     adress += array->attribute.array.size[0]*size;
+     adress += array->attribute.array.size[0]*array->attribute.array.size[1];
 
      for(int i=0;i<array->attribute.array.size[0];i++)
      {
-          for(int j=0;j<size;j++)
+          for(int j=0;j<array->attribute.array.size[1];j++)
           {
                SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
                SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
                SymbolTableElement *e1, *e2;
 
-               if(size == 1)
-               {
-                    e1 = generate_address_quads(r, add1, NULL);
-                    adress++;
-                    e2 = generate_address_quads(array, add1, NULL);
-               }
-               else
-               {
-                    e1 = generate_address_quads(r, add1, add2);
-                    adress++;
-                    e2 = generate_address_quads(array, add1, add2);
-               }
+               e1 = generate_address_quads(r, add1, add2);
+               adress++;
+               e2 = generate_address_quads(array, add1, add2);
 
+               // la variable temporaire est évitable mais cela oblige a changer le mips.c à cause des libérations attives des registres
+               SymbolTableElement *t = newtemp(symbol_table, VARIABLE, FLOAT, adress, (__uint32_t[]){0, 0});
                switch(op)
                {
-                    case '+':
-                         gen_quad(code, BOP_PLUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                    case '+':                         
+                         gen_quad(code, BOP_PLUS, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});
                     break;
                     case '-':
                          if(a1->class == CONSTANT)          // pour assurer la commutativité
-                              gen_quad(code, BOP_MINUS, e1, constant, e2, (__uint32_t[]){FLOAT, 0, FLOAT});
+                              gen_quad(code, BOP_MINUS, t, constant, e2, (__uint32_t[]){0, 0, FLOAT});
                          else
-                              gen_quad(code, BOP_MINUS, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                              gen_quad(code, BOP_MINUS, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});
                     break;
                     case '*':
-                         gen_quad(code, BOP_MULT, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                         gen_quad(code, BOP_MULT, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});
                     break;
                     case '/':
                          if(a1->class == CONSTANT)
-                              gen_quad(code, BOP_DIV, e1, constant, e2, (__uint32_t[]){FLOAT, 0, FLOAT});
+                              gen_quad(code, BOP_DIV, t, constant, e2, (__uint32_t[]){0, 0, FLOAT});
                          else
-                              gen_quad(code, BOP_DIV, e1, e2, constant, (__uint32_t[]){FLOAT, FLOAT, 0});
+                              gen_quad(code, BOP_DIV, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});
                     break;
                }
+               gen_quad(code , K_COPY, e1, t, NULL, (__uint32_t[]){FLOAT, 0, 0});
                
                adress--;
           }
@@ -1428,8 +1400,6 @@ SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __ui
 {     
      SymbolTableElement *r = a1;
      __uint32_t size = r->attribute.array.size[1];
-     if(size == 0)
-          size++;
 
      if(op == '-')
      {
@@ -1450,28 +1420,23 @@ SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __ui
           {
                SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
                SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
-               SymbolTableElement *e1;
-
-               if(size == 1)
-               {
-                    e1 = generate_address_quads(r, add1, NULL);
-               }
-               else
-               {
-                    e1 = generate_address_quads(r, add1, add2);
-               }
+               SymbolTableElement *e1 = generate_address_quads(r, add1, add2);
 
                SymbolTableElement *un = insert_constant(&symbol_table, (Constant){.int_value = 1, .float_value =(float)1}, INT);
+               SymbolTableElement *t = newtemp(symbol_table, VARIABLE, FLOAT, adress, (__uint32_t[]){0, 0});
                switch(op)
                {
                     case INCR:
-                         gen_quad(code, BOP_PLUS, e1, e1, un, (__uint32_t[]){FLOAT, FLOAT, 0});
+                         gen_quad(code, BOP_PLUS, t, e1, un, (__uint32_t[]){0, FLOAT, 0});
+                         gen_quad(code , K_COPY, e1, t, NULL, (__uint32_t[]){FLOAT, 0, 0});
                     break;
                     case DECR:
-                         gen_quad(code, BOP_MINUS, e1, e1, un, (__uint32_t[]){FLOAT, FLOAT, 0});
+                         gen_quad(code, BOP_MINUS, t, e1, un, (__uint32_t[]){0, FLOAT, 0});
+                         gen_quad(code , K_COPY, e1, t, NULL, (__uint32_t[]){FLOAT, 0, 0});
                     break;
                     case '-':
-                         gen_quad(code, UOP_MINUS, e1, generate_address_quads(a1, add1, add2), NULL,  (__uint32_t[]){FLOAT, FLOAT, 0});
+                         gen_quad(code, UOP_MINUS, t, generate_address_quads(a1, add1, add2), NULL,  (__uint32_t[]){0, FLOAT, 0});
+                         gen_quad(code , K_COPY, e1, t, NULL, (__uint32_t[]){FLOAT, 0, 0});
                     break;
                     case '~':
                          if(r->attribute.array.size[0] == 1)
