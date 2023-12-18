@@ -3,7 +3,7 @@
 //                  - Pas de for
 //                  - Faire les matrices globales
 //                  - Pas ff[a[0]]
-//                  - --segfault
+//                  - int = M[0] 
 
 /*int a;
 float d; // b banni car opcode de branch
@@ -19,7 +19,12 @@ float a;
 int c;
 int main()
 {
-    matrix f[3][3];
+    if(((1<2) && (3<4)) || 1==1)
+    {
+
+    }
+    
+    // matrix f[3][3];
     /*f[0][0] = 1;
     f[0][1] = 2;
     f[0][2] = 3;
@@ -45,18 +50,18 @@ int main()
     printf("Matrice ff\n");
     printmat(ff);*/
 
-    matrix A[3];
-    A[0] = 1;
-    A[0][1] = 5;
-    A[0][2] = 10.1;
+    // matrix A[3];
+    // A[0] = 1;
+    // A[0][1] = 5;
+    // A[0][2] = 10.1;
     // A[1] = 2;
     // A[1][1] = 6;
     // A[1][2] = 11.23;
     // A[2] = 3;
     // A[2][1] = 7;
     // A[2][2] = 12;
-    matrix B[1];
-    B[0] = 4;
+    // matrix B[1];
+    // B[0] = 4;
     // B[1][1] = 5;
     // B[2][2] = 6;
 
@@ -73,11 +78,11 @@ int main()
     // b = C[0][0];
     // print(b);
     // B[0] = 8;
-    float d;
-    d = B[0]; //marche pas
+    // int d;
+    // d = B[0];
     // d = ~A*A;
     // printmat(B);
-    print(d);
+    // print(d);
     // printf("\n");
     // A=-A;
     // A--;
