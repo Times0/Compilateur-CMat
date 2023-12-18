@@ -263,7 +263,16 @@ declaration :  type ID declaration_affectation
                     // set a la valeur par initiale
                     if($3.ptr != NULL)
                     {
-                         gen_quad(code, K_COPY, lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0), $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
+                         if($3.ptr->class != ARRAY)
+                              gen_quad(code, K_COPY, lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0), $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
+                         else
+                         {
+                              //affectation d'une matrice 1*1 à une variable
+                              SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
+                              SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value=0, .float_value=(float)0}, INT);
+                              SymbolTableElement *a = generate_address_quads(id, zero, zero);
+                              gen_quad(code, BOP_PLUS, id, a, zero, (__uint32_t[]){0, FLOAT, 0});
+                         }
                     }
                }
                | type ID declaration_array declaration_affectation
@@ -376,7 +385,8 @@ declaration_affectation : '=' additive_expression
                               $$.ptr = $2.ptr;
                               if($2.ptr->class == ARRAY)
                               {
-                                   semantic_error("can't affect array to variable");
+                                   if($2.ptr->attribute.array.size[0] != 1 && $2.ptr->attribute.array.size[1] != 1)
+                                        semantic_error("can't affect array to variable");
                               }
                         }
                         | %empty
@@ -551,43 +561,40 @@ assign :  ID '=' expression
                }
                
                if($$.ptr->class != ARRAY && $3.ptr->class != ARRAY)
+               {
                     gen_quad(code, K_COPY, $$.ptr, $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
+               }
+               else if($$.ptr->class == VARIABLE && $3.ptr->class == ARRAY)
+               {
+                    // copie matrice 1*1 dans une variable
+                    if($3.ptr->attribute.array.size[0] == 1 && $3.ptr->attribute.array.size[1] == 1)
+                    {
+                         SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = (float)0}, INT);
+                         gen_quad(code, K_COPY, $$.ptr, generate_address_quads($3.ptr, zero, zero), NULL, (__uint32_t[]){0, FLOAT, 0});    
+                    }
+               }
                else if($$.ptr->type == MATRIX && $3.ptr->type == MATRIX) // copie de matrice
                {    
                     if($$.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $$.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
                          semantic_error("arrays size must be consistent for affectation");
 
-                    __uint32_t size = $3.ptr->attribute.array.size[1];
-                    if(size == 0)
-                         size++;
-
                     // on ne stocke pas les variables temporaires contenat les adresses
                     for(int i=0;i<$3.ptr->attribute.array.size[0];i++)
                     {
-                         for(int j=0;j<size;j++)
+                         for(int j=0;j<$3.ptr->attribute.array.size[1];j++)
                          {
                               SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
                               SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
                               SymbolTableElement *e1, *e2;
 
-                              if(size == 1)
-                              {
-                                   e1 = generate_address_quads($$.ptr, add1, NULL);
-                                   adress++;
-                                   e2 = generate_address_quads($3.ptr, add1, NULL);
-                              }
-                              else
-                              {
-                                   e1 = generate_address_quads($$.ptr, add1, add2);
-                                   adress++;
-                                   e2 = generate_address_quads($3.ptr, add1, add2);
-                              }
+                              e1 = generate_address_quads($$.ptr, add1, add2);
+                              adress++;
+                              e2 = generate_address_quads($3.ptr, add1, add2);
                               
                               gen_quad(code, K_COPY, e1, e2, NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
                               adress--;
                          }
                     }
-                    
                }
                else
                {
@@ -820,10 +827,6 @@ primary_expression : ID
                          if(e->class != ARRAY)
                          {
                               semantic_error("variable \"%s\" is not an array", $1);
-                         }
-                         if(e->attribute.array.size[1] != 0)
-                         {
-                              semantic_error("variable \"%s\" have two dimensions", $1);
                          }
                          if($2.size_ptr_list == 1)
                          {
