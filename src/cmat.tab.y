@@ -61,6 +61,12 @@ void semantic_warning(const char *format, ...);
           __uint32_t quad;
           __uint32_t size[2];
      }expr;
+
+     struct{
+          size_t size;
+          char *elements[100];
+          int sum;
+     }list_ids;
 }
 
 %token <int_val> INT_CONST
@@ -85,7 +91,7 @@ void semantic_warning(const char *format, ...);
 %right UNARY_OP
 %left '(' ')' OR_OP AND_OP
 
-
+%type <list_ids> ids
 %type <expr> expression
 %type <expr> primary_expression
 %type <expr> multiplicative_expresssion
@@ -124,7 +130,8 @@ instruction_list: instruction_list M instruction   { complete_list($1.next_list,
                 | instruction                      { $$.next_list = $1.next_list; }
 
 
-instruction : declaration ';'           { $$.next_list = create_list(-1);}
+instruction : 
+            | declaration ';'           { $$.next_list = create_list(-1);}
             | declaration_function
             | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
@@ -241,7 +248,7 @@ declaration_or_assign : declaration
 declaration_function : type MAIN '(' ')' block {$$.ptr = NULL;}
 
 // impossible de factoriser, on ne peut pas remplacer par "type assign" car la variable n'existe pas
-declaration :  type ID declaration_affectation
+declaration :  type ID declaration_affectation // on gère les declarations dans en chaine plus bas (int a,b,c;). cette règle ne sert que pour les affectations (int a = 1;)
                {
                     SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
                     if(l != NULL)
@@ -250,7 +257,7 @@ declaration :  type ID declaration_affectation
                     }
                     else if($1 == MATRIX)
                     {
-                         semantic_error("can't declare matrix without bounds");
+                         semantic_error("cannot declare matrix without bounds");
                     }
 
                     if(current_scope == 0)
@@ -296,6 +303,62 @@ declaration :  type ID declaration_affectation
                          adress += $3*$4;
                     }
                }
+               | type ids
+               {
+                    for(size_t i = 0; i<$2.size; i++)
+                    {
+                         SymbolTableElement *l = lookup_variable(symbol_table, $2.elements[i], current_scope, VARIABLE, 1);
+                         if(l != NULL)
+                         {
+                              semantic_error("variable \"%s\" already declared in this scope", $2.elements[i]);
+                         }
+                         if(current_scope == 0)
+                              insert_variable(symbol_table, $2.elements[i], $1, VARIABLE, (__uint32_t[]){1, 1}, -1, current_scope);
+                         else
+                         {
+                              insert_variable(symbol_table, $2.elements[i], $1, VARIABLE, (__uint32_t[]){1, 1},adress, current_scope);
+                              adress++;
+                         }
+                    }
+               }
+
+
+ids :
+     | ids ',' ID 
+          {
+               $$.size = $1.size+1; 
+               $$.elements[0] = (char *)malloc(strlen($3)+1);
+               if($$.elements[0] == NULL)
+               {
+                    printf("Error malloc in ids\n");
+                    exit(1);
+               }
+               strcpy($$.elements[0], $3);
+               for(size_t i = 0; i<$1.size; i++)
+               {
+                    $$.elements[i+1] = (char *)malloc(strlen($1.elements[i])+1);
+                    if($$.elements[i+1] == NULL)
+                    {
+                         printf("Error malloc in ids\n");
+                         exit(1);
+                    }
+                    strcpy($$.elements[i+1], $1.elements[i]);
+               }
+
+          }
+    | ID 
+          {
+               $$.size = 1; 
+               $$.elements[0] = (char *)malloc(strlen($1)+1);
+               if($$.elements[0] == NULL)
+               {
+                    printf("Error malloc in ids\n");
+                    exit(1);
+               }
+               strcpy($$.elements[0], $1);          
+          }
+
+
 
 declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
 
