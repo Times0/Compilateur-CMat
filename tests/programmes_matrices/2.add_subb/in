@@ -1,0 +1,21 @@
+int main()
+{
+    // declaration
+    matrix A[1][3];
+    matrix B[1][3];
+
+    // affectation
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+
+    B[0][0] = 1.5;
+    B[0][1] = 2.5;
+    B[0][2] = 3.5;
+
+    printmat(A + B);
+    printmat(A - B);
+
+    printf("\n");
+    printmat(A + A + A - A - A - A);
+}

@@ -4,6 +4,8 @@ src/cmat.*.c
 include/cmat.*.h
 src/cmat.*.c
 tests/*/out
+tests/*/temp
+tests/*/temp/*
 .vscode/
 *.txt
 *.s

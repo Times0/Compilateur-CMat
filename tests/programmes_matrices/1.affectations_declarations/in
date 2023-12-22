@@ -1,0 +1,21 @@
+int main()
+{
+    // declaration
+    matrix A[1][3];
+    matrix B[3][1];
+    matrix C[2][2];
+
+    // affectation
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+    printmat(A);
+
+    B[0][0] = 1.5;
+    B[1][0] = 2.5;
+    B[2][0] = 3.5;
+    printmat(B);
+
+    printmat(C);
+
+}
