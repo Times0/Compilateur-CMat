@@ -332,6 +332,9 @@ declaration :  type ID declaration_affectation // on gère les declarations dans
                }
 
 
+
+declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
+
 ids :
      | ids ',' ID 
           {
@@ -369,7 +372,6 @@ ids :
 
 
 
-declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
 
 // il manque * generer les quad pour tous les slices
 slice_array : '[' expression_slice_list ']'
