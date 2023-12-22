@@ -18,4 +18,13 @@ int main()
 
     printf("\n");
     printmat(A + A + A - A - A - A);
+
+
+    // ++ --
+    printf("\n");
+    A++;
+    printmat(A);
+    A--;
+    printmat(A);
+    printmat(--A);
 }

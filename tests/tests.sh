@@ -87,13 +87,14 @@ function run_cmat_tests {
     if [ "$dir" == "temp" ]; then
       continue
     fi
+    filename=$(basename "$dir")
     in_file="programmes_matrices/$dir/in"
     expected_out_file="programmes_matrices/$dir/out"
 
     # Compile the cmat program and check for errors and put them in the tempdir
     ../bin/cmat "$in_file" >/dev/null 2>"$tempdir/$dir.err"
     if [ $? -ne 0 ]; then
-      echo -e "\e[91mTest $in_file compilation failed. See error message in $tempdir/$dir.err.\e[0m"
+      echo -e "\e[91mTest $filename failed. See $tempdir/$dir.err.\e[0m"
       ((failed_tests++))
       continue
     else
@@ -103,7 +104,7 @@ function run_cmat_tests {
     # get the actual output by running the cmat program with spim
     actual_output=$(spim -file "mips.s" | tail -n +6)
     if [ $? -ne 0 ]; then
-      echo -e "\e[91mTest $in_file failed. See error message in $tempdir/$dir.err.\e[0m"
+      echo -e "\e[91mTest $filename failed. See error message in $tempdir/$dir.err.\e[0m"
       ((failed_tests++))
       continue
     else
@@ -116,19 +117,19 @@ function run_cmat_tests {
     # compare the expected and actual output and put the diffs in a file named after the cmat file
     diff -w "$expected_out_file" "$tempdir/$dir.act" >"$tempdir/$dir.diff"
     if [ $? -eq 0 ]; then
-      echo -e "\e[92mTest $in_file succeeded.\e[0m"
+      echo -e "\e[92mTest $filename succeeded.\e[0m"
       ((succeeded_tests++))
       # clean up when test succeeds
       rm "$tempdir/$dir.act" "$tempdir/$dir.err" "$tempdir/$dir.diff" >/dev/null 2>&1
     else
-      echo -e "\e[91mTest $in_file failed. Differences between expected and actual output are in $tempdir/$dir.diff.\e[0m"
+      echo -e "\e[91mTest $filename failed. Differences between expected and actual output are in $tempdir/$dir.diff.\e[0m"
       ((failed_tests++))
     fi
 
   done
 }
 
-# cl args
+# 1 for C tests, 2 for cmat tests, None for both
 if [ $# -eq 0 ]; then
   run_c_tests
   run_cmat_tests
