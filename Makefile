@@ -1,6 +1,6 @@
 CC ?= gcc
 LDLIBS ?=
-CFLAGS ?= -g # for debug
+CFLAGS ?= -fprofile-arcs -ftest-coverage 
 
 ifeq ($(MAKECMDGOALS),tests)
     CFLAGS += -DTEST
@@ -11,7 +11,6 @@ endif
 INCLUDE_PATH = ./include
 
 TARGET = cmat
-TARGET_TEST = cmat_test_version
 PREFIX = cmat
 
 SRCDIR = src
@@ -36,8 +35,6 @@ TARGET_OBJ := $(OBJECTS) $(LEXER_OBJS) $(PARSER_OBJS)
 
 all: check_tools $(BINDIR)/$(TARGET)
 
-tests: check_tools $(BINDIR)/$(TARGET_TEST)
-
 $(BINDIR)/$(TARGET) $(BINDIR)/$(TARGET_TEST): $(TARGET_OBJ) 
 	mkdir -p $(BINDIR)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDLIBS)
@@ -55,11 +52,17 @@ $(TARGET_OBJ): $(OBJDIR)/%.o : $(SRCDIR)/%.c $(PARSER_SRCS) $(LEXER_SRCS)
 
 clean:
 	rm -f $(OBJDIR)/*.o
-	rm -f $(OBJDIR)/*.gcda
-	rm -f $(OBJDIR)/*.gcno
-	rm -f $(BINDIR)/$(TARGET) $(BINDIR)/$(TARGET_TEST)
+	rm -f $(BINDIR)/$(TARGET)
 	rm -f $(LEXER_SRCS) $(PARSER_SRCS)
 	rm -f $(INCLUDE_PATH)/$(PREFIX).*.h
+	rm -f $(OBJDIR)/*.gcno $(OBJDIR)/*.gcda
+
+
+# Required to run tests before generating coverage
+cov:
+	lcov --capture --directory . --output-file coverage.info
+	genhtml coverage.info --output-directory out
+
 
 # Check if Flex and Bison are installed
 check_tools:

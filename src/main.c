@@ -1,10 +1,10 @@
-#include <unistd.h> // for getopt
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "symbol_table.h"
-#include "../include/quad.h"
-#include "../include/mips.h"
+#include "quad.h"
+#include "mips.h"
 #include "cmat.lex.h"
 #include "cmat.tab.h"
 
