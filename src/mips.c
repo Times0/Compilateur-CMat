@@ -362,7 +362,7 @@ void gencode_affect (FILE * f, Quad *quad)
                 if(type_change_sym2)
                     convert_int_to_float(quad->sym2);
             }
-            else
+            else //si le deuxieme élément est une référence
             {
                 load_operator(f, quad->sym2, quad->by_adress[1], 1);
                 store_result (f, quad->sym1, 0);
@@ -421,7 +421,6 @@ void gencode_affect (FILE * f, Quad *quad)
             if(type_change_sym2)
                 convert_int_to_float(quad->sym2);
         }
-        
     }
 }
 
@@ -811,5 +810,3 @@ __uint32_t convert_float_to_int(SymbolTableElement *s)
     s->type = INT;
     return 1;
 }
-
-

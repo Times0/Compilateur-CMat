@@ -1,6 +1,6 @@
 CC ?= gcc
 LDLIBS ?=
-CFLAGS ?= -fprofile-arcs -ftest-coverage 
+CFLAGS ?= #-fprofile-arcs -ftest-coverage 
 
 ifeq ($(MAKECMDGOALS),tests)
     CFLAGS += -DTEST

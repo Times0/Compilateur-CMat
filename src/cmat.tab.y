@@ -131,8 +131,7 @@ instruction_list: instruction_list M instruction   { complete_list($1.next_list,
                 | instruction                      { $$.next_list = $1.next_list; }
 
 
-instruction : 
-            | declaration ';'           { $$.next_list = create_list(-1);}
+instruction : declaration ';'           { $$.next_list = create_list(-1);}
             | declaration_function
             | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
@@ -196,50 +195,43 @@ statement_while : WHILE M '(' {logical_expression_flag++; logical_id_flag++;} ex
                     $$.next_list = $5.false_list;   
                 }
 
-statement_for : FOR M '(' {logical_expression_flag++; logical_id_flag++;} declaration_or_assign ';' expression {logical_expression_flag--; logical_id_flag=0;} ';' M expression ')' M block
-               {
-                    complete_list($7.true_list, $13.quad);
+statement_for : FOR M '(' {logical_expression_flag++; logical_id_flag++;} declaration_or_assign ';' expression {logical_expression_flag--; logical_id_flag=0;} ';' M assign_expression ')' M block
+               {                   
                     gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad+1, (__uint32_t[]){0, 0, 0});  // +1 pour l'initialisation
-                    
-                    // on ajoute un label pour le for, on regenere un label (meme si inutile) pour faciliter le free 
-                    code->quads[$2.quad].label = $2.quad;
 
-                    complete_list($14.next_list, $2.quad);
-                    $$.next_list = $7.false_list;
-
-                    /*Quad *q = malloc(sizeof(Quad)*($9.quad-$2.quad-1));
+                    Quad *q = malloc(sizeof(Quad)*($13.quad-$10.quad));
                     if(q == NULL)
                     {
                          printf("malloc failed in for\n");
                          exit(1);
                     }
-                    // on copie les quads de la condition
-                    for(int i = $2.quad+1; i < $9.quad; i++)
-                    {
-                         q[i-$2.quad-1] = code->quads[i];
-                         printf("%d\t%d\n", q[i-$2.quad-1].label, q[i-$2.quad-1].branch_label);
 
-                         /*if(q[i-$2.quad-1].label != -1 && q[i-$2.quad-1].kind != K_GOTO)
-                         {
-                              q[i-$2.quad-1].label += $13.quad-$9.quad;
-                         }
-                         if(q[i-$2.quad-1].branch_label != -1 && q[i-$2.quad-1].kind != K_GOTO)
-                         {
-                              q[i-$2.quad-1].branch_label += $13.quad-$9.quad;
-                         }
-     
-                    }
-                    // on les remplace par les quads de l'expression finale
-                    for(int i = $9.quad; i < $13.quad; i++)
+                    // on copie les quads du ++
+                    printf("%d %d\n", $10.quad, $13.quad);
+                    for(int i = $10.quad; i < $13.quad; i++)
                     {
-                         code->quads[i+$2.quad-$9.quad+1] = code->quads[i];
+                         q[i-$10.quad] = code->quads[i];
                     }
-                    // on reecrit les quads de la condition
-                    for(int i = $2.quad+1+($13.quad-$9.quad); i < $13.quad; i++)
+                    // on decale les quads juste apres la condition 
+                    printf("%d %d\n", $13.quad, code->nextquad-1);
+                    
+                    for(int i = $13.quad; i < code->nextquad-1; i++)
                     {
-                         code->quads[i] = q[i-$2.quad-1-($13.quad-$9.quad)];
+                         code->quads[i-$13.quad+$10.quad] = code->quads[i];
                     }
-                    // 13 20 17 20 11 */
+                    // on reecrit les quads du ++ apres le block et avant le goto de la boucle
+                    for(int i = code->nextquad-1+$10.quad-$13.quad; i < code->nextquad-1; i++)
+                    {
+                         code->quads[i] = q[i-code->nextquad+1-$10.quad+$13.quad];
+                    }
+                    free(q);
+
+                    complete_list($7.true_list, $13.quad-1); // pas sur
+                    // on ajoute un label pour le for, on regenere un label (meme si inutile) pour faciliter le free 
+                    code->quads[$2.quad+1].label = $2.quad+1;
+
+                    complete_list($14.next_list, $2.quad);
+                    $$.next_list = $7.false_list;
                }
 
 declaration_or_assign : declaration
@@ -312,7 +304,7 @@ declaration :  type ID declaration_affectation // on gère les declarations dans
                          adress += $3*$4;
                     }
                }
-               | type ids
+               /*| type ids
                {
                     for(size_t i = 0; i<$2.size; i++)
                     {
@@ -329,14 +321,10 @@ declaration :  type ID declaration_affectation // on gère les declarations dans
                               adress++;
                          }
                     }
-               }
+               }*/
 
 
-
-declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
-
-ids :
-     | ids ',' ID 
+ids : ids ',' ID 
           {
                $$.size = $1.size+1; 
                $$.elements[0] = (char *)malloc(strlen($3)+1);
@@ -372,6 +360,10 @@ ids :
 
 
 
+declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
+
+assign_expression : expression
+                  | assign
 
 // il manque * generer les quad pour tous les slices
 slice_array : '[' expression_slice_list ']'
