@@ -93,7 +93,6 @@ void open_scope();
 %right UNARY_OP
 %left '(' ')' OR_OP AND_OP
 
-%type <list_ids> ids
 %type <expr> expression
 %type <expr> primary_expression
 %type <expr> multiplicative_expresssion
@@ -111,6 +110,8 @@ void open_scope();
 %type <expr> instruction_list
 %type <expr> declaration_function
 %type <expr> declaration_affectation
+%type <expr> declaration_element
+%type <expr> declaration_list
 %type <expr> call
 %type <expr> assign
 %type <expr> declaration
@@ -132,7 +133,7 @@ instruction_list: instruction_list M instruction   { complete_list($1.next_list,
                 | instruction                      { $$.next_list = $1.next_list; }
 
 
-instruction : declaration ';'           { $$.next_list = create_list(-1);}
+instruction : declaration ';'           { $$.next_list = create_list(-1);}      // declaration variable
             | declaration_function
             | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
@@ -236,40 +237,94 @@ declaration_or_assign : declaration
 
 declaration_function : type {open_scope();} MAIN '(' ')' block {$$.ptr = NULL;}
 
-// impossible de factoriser, on ne peut pas remplacer par "type assign" car la variable n'existe pas
-declaration :  type ID declaration_affectation // on gère les declarations dans en chaine plus bas (int a,b,c;). cette règle ne sert que pour les affectations (int a = 1;)
-               {
-                    SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
-                    if(l != NULL)
-                    {
-                         semantic_error("variable \"%s\" already declared in this scope", $2);
-                    }
-                    else if($1 == MATRIX)
-                    {
-                         semantic_error("cannot declare matrix without bounds");
-                    }
+declaration_element : ID declaration_affectation
+                    {  
+                         SymbolTableElement *l = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 1);
+                         if(l != NULL)
+                         {
+                              semantic_error("variable \"%s\" already declared in this scope", $2);
+                         }
 
-                    if(current_scope == 0)
-                         insert_variable(symbol_table, $2, $1, VARIABLE, (__uint32_t[]){1, 1}, -1, current_scope);
-                    else
-                    {
-                         insert_variable(symbol_table, $2, $1, VARIABLE, (__uint32_t[]){1, 1},adress, current_scope);
-                         adress++;
-                    }
-                    // set a la valeur par initiale
-                    if($3.ptr != NULL)
-                    {
-                         if($3.ptr->class != ARRAY)
-                              gen_quad(code, K_COPY, lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0), $3.ptr, NULL, (__uint32_t[]){0, 0, 0});
+                         // on met un type arbitraire quil faut changer apres
+                         if(current_scope == 0)
+                         {
+                              $$.ptr = insert_variable(symbol_table, $1, INT, VARIABLE, (__uint32_t[]){1, 1}, -1, current_scope);
+                         }
                          else
                          {
-                              //affectation d'une matrice 1*1 à une variable
-                              SymbolTableElement *id = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 0);
-                              SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value=0, .float_value=(float)0}, INT);
-                              SymbolTableElement *a = generate_address_quads(id, zero, zero);
-                              gen_quad(code, BOP_PLUS, id, a, zero, (__uint32_t[]){0, FLOAT, 0});
+                              $$.ptr = insert_variable(symbol_table, $1, INT, VARIABLE, (__uint32_t[]){1, 1},adress, current_scope);
+                              adress++;
+                         }
+                    
+                         // set a la valeur par initiale
+                         if($2.ptr != NULL)
+                         {
+                              if($2.ptr->class != ARRAY)
+                                   gen_quad(code, K_COPY, lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0), $2.ptr, NULL, (__uint32_t[]){0, 0, 0});
+                              else
+                              {
+                                   //affectation d'une matrice 1*1 à une variable
+                                   SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
+                                   SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value=0, .float_value=(float)0}, INT);
+                                   SymbolTableElement *a = generate_address_quads(id, zero, zero);
+                                   gen_quad(code, BOP_PLUS, id, a, zero, (__uint32_t[]){0, FLOAT, 0});
+                              }
+                         }
+
+                         $$.ptr->attribute.array.size[0] = 0;
+                    }  
+
+declaration_list : declaration_element
+                 {
+                    $$.capacity_ptr_list = 1;
+                    $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement *));
+                    if($$.ptr_list == NULL)
+                    {
+                         printf("malloc failed\n");
+                         exit(1);
+                    }
+                    $$.ptr_list[0] = $1.ptr;
+                    $$.size_ptr_list = 1;
+                 }
+                 | declaration_list ',' declaration_element
+                 {
+                    if($1.size_ptr_list + 1 >= $1.capacity_ptr_list)
+                    {
+                         $$.capacity_ptr_list = $1.capacity_ptr_list*2;
+                         $$.ptr_list = realloc($1.ptr_list, $$.capacity_ptr_list*sizeof(SymbolTableElement*));
+                         if($$.ptr_list == NULL)
+                         {
+                              printf("Error realloc in declaration_list\n");
+                              exit(1);
                          }
                     }
+                    else
+                    {
+                         $$.capacity_ptr_list = $1.capacity_ptr_list;
+                         $$.ptr_list = $1.ptr_list;
+                    }
+                    $$.ptr_list[$1.size_ptr_list] = $3.ptr;
+                    $$.size_ptr_list = $1.size_ptr_list+1;
+
+                    free($3.ptr_list);
+                 }
+// impossible de factoriser, on ne peut pas remplacer par "type assign" car la variable n'existe pas
+declaration :  type declaration_list
+               {
+                    for(int i=0;i<$2.size_ptr_list;i++)
+                    {
+                         if($1 == MATRIX)
+                         {
+                              if($2.ptr_list[i]->attribute.array.size[0] == 0)
+                              {
+                                   semantic_error("cannot declare matrix without bounds");
+                              }
+                         }
+                         // changement de type
+                         $2.ptr_list[i]->type = $1;
+                    }
+
+                    free($2.ptr_list);
                }
                | type ID declaration_array declaration_affectation
                {
@@ -319,42 +374,6 @@ declaration :  type ID declaration_affectation // on gère les declarations dans
                          }
                     }
                }*/
-
-
-ids : ids ',' ID 
-          {
-               $$.size = $1.size+1; 
-               $$.elements[0] = (char *)malloc(strlen($3)+1);
-               if($$.elements[0] == NULL)
-               {
-                    printf("Error malloc in ids\n");
-                    exit(1);
-               }
-               strcpy($$.elements[0], $3);
-               for(size_t i = 0; i<$1.size; i++)
-               {
-                    $$.elements[i+1] = (char *)malloc(strlen($1.elements[i])+1);
-                    if($$.elements[i+1] == NULL)
-                    {
-                         printf("Error malloc in ids\n");
-                         exit(1);
-                    }
-                    strcpy($$.elements[i+1], $1.elements[i]);
-               }
-
-          }
-    | ID 
-          {
-               $$.size = 1; 
-               $$.elements[0] = (char *)malloc(strlen($1)+1);
-               if($$.elements[0] == NULL)
-               {
-                    printf("Error malloc in ids\n");
-                    exit(1);
-               }
-               strcpy($$.elements[0], $1);          
-          }
-
 
 
 declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
@@ -443,10 +462,7 @@ declaration_affectation : '=' additive_expression
                                         semantic_error("can't affect array to variable");
                               }
                         }
-                        | %empty
-                        {
-                              $$.ptr = NULL;
-                        }
+                        | %empty{$$.ptr = NULL;}
 
 type : INT     {$$ = $1;}
      | FLOAT   {$$ = $1;}

@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         fclose(yyin);
 
     // Afficher la table des symboles
-    if (tos_flag)
+    if (tos_flag || 1)
         symbol_table_dump(symbol_table, stdout);
     else if (!(yyout = fopen("symbol_table.txt", "w+")))
     {

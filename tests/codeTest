@@ -30,7 +30,8 @@ int main()
         print(i);
     }*/
 
-    int a, b, c;
+    float r;
+    matrix a = 1, b, c =2;
 
     // i=9;
     
