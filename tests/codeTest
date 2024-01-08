@@ -30,9 +30,9 @@ int main()
         print(i);
     }*/
 
-    float r;
-    matrix a = 1, b, c =2;
-
+    matrix MyMatrix[5] = {1, 2, 3, 4, 5};
+    // matrix c[2][2] = {{1, 2}, {3, 4}};
+    printmat(MyMatrix);
     // i=9;
     
     // matrix f[3][3];
