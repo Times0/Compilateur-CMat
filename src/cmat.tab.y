@@ -32,6 +32,7 @@ SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, Sym
 SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __uint32_t op);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
+void open_scope();
 %}
 
 %union
@@ -136,8 +137,7 @@ instruction : declaration ';'           { $$.next_list = create_list(-1);}
             | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
             | expression ';'            { $$.next_list = create_list(-1);}
-            | statement                 
-            | block                
+            | statement  
 
 
 M : %empty { $$.quad = code->nextquad; }
@@ -148,21 +148,21 @@ statement : statement_if
           | statement_while
           | statement_for
 
-statement_if : IF '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block statement_else
+statement_if : IF {open_scope();} '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block statement_else
              {
                     // si pas de else
-                    if($9.ptr == NULL)
+                    if($10.ptr == NULL)
                     {
-                         complete_list($4.true_list, $7.quad);
-                         $$.next_list = concat_list($4.false_list, $8.next_list);
+                         complete_list($5.true_list, $8.quad);
+                         $$.next_list = concat_list($5.false_list, $9.next_list);
                          $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
                          gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
                     }
                     else
                     {
-                         complete_list($4.true_list, $7.quad);
-                         complete_list($4.false_list, $9.quad);
-                         $$.next_list = concat_list($8.next_list, $9.next_list);
+                         complete_list($5.true_list, $8.quad);
+                         complete_list($5.false_list, $10.quad);
+                         $$.next_list = concat_list($9.next_list, $10.next_list);
                          $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
                          gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
                     }
@@ -173,33 +173,33 @@ statement_else : ELSE N statement_if
                     $$.next_list = concat_list($2.next_list, $3.next_list);
                     $$.quad = $2.quad;
                }
-               | ELSE N block
+               | ELSE {open_scope();} N block
                {
-                    $$.next_list = concat_list($2.next_list, $3.next_list);
-                    $$.quad = $2.quad;
+                    $$.next_list = concat_list($3.next_list, $4.next_list);
+                    $$.quad = $3.quad;
                }
                | %empty
                {
                     $$.ptr = NULL;
                }
 
-statement_while : WHILE M '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block
+statement_while : WHILE {open_scope();} M '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block
                 {
-                    complete_list($5.true_list, $8.quad);
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad, (__uint32_t[]){0, 0});
+                    complete_list($6.true_list, $9.quad);
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, $3.quad, (__uint32_t[]){0, 0});
                     
                     // on ajoute un label pour le while, on regenere un label (meme si inutile) pour faciliter le free 
-                    code->quads[$2.quad].label = $2.quad;
+                    code->quads[$3.quad].label = $3.quad;
 
-                    complete_list($9.next_list, $2.quad);
-                    $$.next_list = $5.false_list;   
+                    complete_list($10.next_list, $3.quad);
+                    $$.next_list = $6.false_list;   
                 }
 
-statement_for : FOR M '(' {logical_expression_flag++; logical_id_flag++;} declaration_or_assign ';' expression {logical_expression_flag--; logical_id_flag=0;} ';' M assign_expression ')' M block
+statement_for : FOR {open_scope();} M '(' declaration_or_assign ';' {logical_expression_flag=1; logical_id_flag=1;} expression {logical_expression_flag=0; logical_id_flag=0;} ';' M assign_expression ')' M block
                {                   
-                    gen_quad_goto(code, K_GOTO, NULL, NULL, $2.quad+1, (__uint32_t[]){0, 0, 0});  // +1 pour l'initialisation
+                    gen_quad_goto(code, K_GOTO, NULL, NULL, $3.quad+1, (__uint32_t[]){0, 0, 0});  // +1 pour l'initialisation
 
-                    Quad *q = malloc(sizeof(Quad)*($13.quad-$10.quad));
+                    Quad *q = malloc(sizeof(Quad)*($14.quad-$11.quad));
                     if(q == NULL)
                     {
                          printf("malloc failed in for\n");
@@ -207,37 +207,34 @@ statement_for : FOR M '(' {logical_expression_flag++; logical_id_flag++;} declar
                     }
 
                     // on copie les quads du ++
-                    printf("%d %d\n", $10.quad, $13.quad);
-                    for(int i = $10.quad; i < $13.quad; i++)
+                    for(int i = $11.quad; i < $14.quad; i++)
                     {
-                         q[i-$10.quad] = code->quads[i];
+                         q[i-$11.quad] = code->quads[i];
                     }
-                    // on decale les quads juste apres la condition 
-                    printf("%d %d\n", $13.quad, code->nextquad-1);
-                    
-                    for(int i = $13.quad; i < code->nextquad-1; i++)
+                    // on decale les quads juste apres la condition                     
+                    for(int i = $14.quad; i < code->nextquad-1; i++)
                     {
-                         code->quads[i-$13.quad+$10.quad] = code->quads[i];
+                         code->quads[i-$14.quad+$11.quad] = code->quads[i];
                     }
                     // on reecrit les quads du ++ apres le block et avant le goto de la boucle
-                    for(int i = code->nextquad-1+$10.quad-$13.quad; i < code->nextquad-1; i++)
+                    for(int i = code->nextquad-1+$11.quad-$14.quad; i < code->nextquad-1; i++)
                     {
-                         code->quads[i] = q[i-code->nextquad+1-$10.quad+$13.quad];
+                         code->quads[i] = q[i-code->nextquad+1-$11.quad+$14.quad];
                     }
                     free(q);
 
-                    complete_list($7.true_list, $13.quad-1); // pas sur
+                    complete_list($8.true_list, $14.quad-1); // pas sur
                     // on ajoute un label pour le for, on regenere un label (meme si inutile) pour faciliter le free 
-                    code->quads[$2.quad+1].label = $2.quad+1;
+                    code->quads[$3.quad+1].label = $3.quad+1;
 
-                    complete_list($14.next_list, $2.quad);
-                    $$.next_list = $7.false_list;
+                    complete_list($15.next_list, $3.quad);
+                    $$.next_list = $8.false_list;
                }
 
 declaration_or_assign : declaration
                       | assign
 
-declaration_function : type MAIN '(' ')' block {$$.ptr = NULL;}
+declaration_function : type {open_scope();} MAIN '(' ')' block {$$.ptr = NULL;}
 
 // impossible de factoriser, on ne peut pas remplacer par "type assign" car la variable n'existe pas
 declaration :  type ID declaration_affectation // on gère les declarations dans en chaine plus bas (int a,b,c;). cette règle ne sert que pour les affectations (int a = 1;)
@@ -701,19 +698,17 @@ assign :  ID '=' expression
           }
 
 block : '{'                   {
-                                   __uint32_t t = current_scope;
-                                   max_scope++; current_scope = max_scope;
-                                   add_next_symbol_table(&symbol_table, current_scope, t);
+                                   
                               } 
         instruction_list      
         '}'                   {
                                    $$.next_list = $3.next_list;
                                    complete_list($3.next_list, code->nextquad);
                                    
-                                   adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable; // il faut plus que ca pour matrice
+                                   adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable;
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 
                               }
-     | '{' '}' {$$.ptr = NULL;}
+     | '{' '}' { $$.ptr = NULL; }
      /* | instruction */ // tres smart 
 
 
@@ -1520,4 +1515,12 @@ SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __ui
           }
      }
      return r;
+}
+
+void open_scope()
+{
+     __uint32_t t = current_scope;
+     max_scope++; 
+     current_scope = max_scope;
+     add_next_symbol_table(&symbol_table, current_scope, t);
 }

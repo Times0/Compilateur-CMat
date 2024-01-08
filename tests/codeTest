@@ -19,16 +19,19 @@ print(1);
 printf("\n");*/
 int main()
 {
-    int c;
-    int a=9;
-    int gg=90;
-    for(int i=0;i<4&&i<8; i=i+1)
+    /*for (int i = 0; i < 10; i++)
     {
-        c=1;
-        c=8;
-        c=9;
-        print(i);
+        printf("Hello, world!\n");
     }
+
+    int i;
+    for(i = 0; i < 10; i++)
+    {
+        print(i);
+    }*/
+
+    int a, b, c;
+
     // i=9;
     
     // matrix f[3][3];
