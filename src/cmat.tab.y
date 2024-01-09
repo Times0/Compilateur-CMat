@@ -890,7 +890,7 @@ additive_expression : multiplicative_expresssion
 
                               $$.ptr = matrix_operation_add($1.ptr, $3.ptr, '+');
                          }
-                         else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                         else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == VARIABLE || $3.ptr->class == VARIABLE || $1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
                          {
                               $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '+');
                          }
@@ -917,7 +917,7 @@ additive_expression : multiplicative_expresssion
 
                               $$.ptr = matrix_operation_add($1.ptr, $3.ptr, '-');
                          }
-                         else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                         else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == VARIABLE || $3.ptr->class == VARIABLE || $1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
                          {
                               $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '-');
                          }
@@ -946,7 +946,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
 
                                    $$.ptr = matrix_operation_mult($1.ptr, $3.ptr, '*');
                               }
-                              else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                              else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == VARIABLE || $3.ptr->class == VARIABLE || $1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
                               {
                                    $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '*');
                               }
@@ -973,7 +973,7 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
 
                                    $$.ptr = matrix_operation_mult($1.ptr, $3.ptr, '/');
                               }
-                              else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
+                              else if(($1.ptr->type == MATRIX || $3.ptr->type == MATRIX) && ($1.ptr->class == VARIABLE || $3.ptr->class == VARIABLE || $1.ptr->class == CONSTANT || $3.ptr->class == CONSTANT))// matrices
                               {
                                    $$.ptr = matrix_binary_operation_constant($1.ptr, $3.ptr, '/');
                               }
@@ -1553,7 +1553,7 @@ SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, Sym
 {
      SymbolTableElement *constant;
      SymbolTableElement *array;
-     if(a1->class == CONSTANT)
+     if(a1->class == CONSTANT || a1->class == VARIABLE)
      {
           constant = a1;
           array = a2;
@@ -1588,7 +1588,7 @@ SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, Sym
                          gen_quad(code, BOP_PLUS, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});
                     break;
                     case '-':
-                         if(a1->class == CONSTANT)          // pour assurer la commutativité
+                         if(a1->class == CONSTANT || a1->class == VARIABLE)          // pour assurer la commutativité
                               gen_quad(code, BOP_MINUS, t, constant, e2, (__uint32_t[]){0, 0, FLOAT});
                          else
                               gen_quad(code, BOP_MINUS, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});
@@ -1597,7 +1597,7 @@ SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, Sym
                          gen_quad(code, BOP_MULT, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});
                     break;
                     case '/':
-                         if(a1->class == CONSTANT)
+                         if(a1->class == CONSTANT || a1->class == VARIABLE)
                               gen_quad(code, BOP_DIV, t, constant, e2, (__uint32_t[]){0, 0, FLOAT});
                          else
                               gen_quad(code, BOP_DIV, t, e2, constant, (__uint32_t[]){0, FLOAT, 0});

@@ -32,7 +32,8 @@ int main()
     }*/
 
     matrix A[5] = {1, 2, 3, 4, 5};
-    printmat(1.3+A);
+    float a=9;
+    printmat(A-(1+2*3));
 
     /*matrix A[3];
     A[0] = 1+2;
