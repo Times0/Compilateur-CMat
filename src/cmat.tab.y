@@ -266,10 +266,9 @@ declaration_element : ID declaration_affectation
                               else
                               {
                                    //affectation d'une matrice 1*1 à une variable
-                                   SymbolTableElement *id = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0);
-                                   SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value=0, .float_value=(float)0}, INT);
-                                   SymbolTableElement *a = generate_address_quads(id, zero, zero);
-                                   gen_quad(code, BOP_PLUS, id, a, zero, (__uint32_t[]){0, FLOAT, 0});
+                                   // verification de la taille faite a letape precedente
+                                   SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = (float)0}, INT);
+                                   gen_quad(code, K_COPY, $$.ptr, generate_address_quads($2.ptr, zero, zero), NULL, (__uint32_t[]){0, FLOAT, 0});
                               }
                          }
 
@@ -310,9 +309,10 @@ declaration_element : ID declaration_affectation
                               
                                    gen_quad(code, K_COPY, e1, $3.ptr_list[i], NULL, (__uint32_t[]){FLOAT, $3.by_address_list[i], 0});
                               }
+                              free($3.ptr_list);
+                              free($3.by_address_list);
                          }
-                         free($3.ptr_list);
-                         free($3.by_address_list);
+                         
                     }
                     | ID declaration_array declaration_array declaration_affectation_matrix
                     {
@@ -352,9 +352,35 @@ declaration_element : ID declaration_affectation
                                         gen_quad(code, K_COPY, e1, $4.ptr_list[i*$4.size[1]+j], NULL, (__uint32_t[]){FLOAT, $4.by_address_list[i*$4.size[1]+j], 0});
                                    }
                               }
+                              free($4.ptr_list);
+                              free($4.by_address_list);
                          }
-                         free($4.ptr_list);
-                         free($4.by_address_list);
+                         else if($4.ptr != NULL) // affectation a une variable simple
+                         {
+                              if($4.ptr->type == MATRIX)
+                              {
+                                   if($$.ptr->attribute.array.size[0] != $4.ptr->attribute.array.size[0] || $$.ptr->attribute.array.size[1] != $4.ptr->attribute.array.size[1])
+                                        semantic_error("arrays size must be consistent for affectation");
+
+                                   // on ne stocke pas les variables temporaires contenat les adresses
+                                   for(int i=0;i<$4.ptr->attribute.array.size[0];i++)
+                                   {
+                                        for(int j=0;j<$4.ptr->attribute.array.size[1];j++)
+                                        {
+                                             SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                                             SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+                                             SymbolTableElement *e1, *e2;
+
+                                             e1 = generate_address_quads($$.ptr, add1, add2);
+                                             adress++;
+                                             e2 = generate_address_quads($4.ptr, add1, add2);
+                              
+                                             gen_quad(code, K_COPY, e1, e2, NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
+                                             adress--;
+                                        }
+                                   }
+                              }
+                         }
                     }
 
 declaration_list : declaration_element
@@ -501,6 +527,7 @@ declaration_affectation : '=' additive_expression
                         | %empty{$$.ptr = NULL;}
 
 declaration_affectation_matrix : '=' '{' declaration_matrix_constant_list '}' {$$.ptr_list = $3.ptr_list; $$.by_address_list = $3.by_address_list; $$.size_ptr_list = $3.size_ptr_list; $$.size[0] = $3.size[0]; $$.size[1] = $3.size[1];}
+                               | '=' additive_expression {$$.ptr = $2.ptr; $$.by_address = $2.by_address;}
                                | %empty {$$.ptr = NULL;}
 
 declaration_matrix_constant_list : additive_expression_list

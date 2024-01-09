@@ -31,9 +31,30 @@ int main()
         print(i);
     }*/
 
-    matrix A[5] = {1, 2, 3, 4, 5};
-    float a=9;
-    printmat(A-(1+2*3));
+    matrix A[2][2];
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[1][0] = 3;
+    A[1][1] = 4;
+
+    matrix B[2][2];
+    B = ~A;
+    printmat(B);
+
+    matrix C[2][2] = ~A;
+    printmat(C);
+
+    matrix D[5][1];
+    D[0][0] = 1;
+    D[1][0] = 2;
+    D[2][0] = 3;
+    D[3][0] = 4;
+    D[4][0] = 5;
+
+    matrix E[1][5];
+    E = ~D;
+    printmat(E);
+
 
     /*matrix A[3];
     A[0] = 1+2;
