@@ -1,0 +1,13 @@
+int main()
+{
+    matrix A[2][2] = {{12, 27}, {64, 42}}, IA[2][2], B[2] = {1, 8}, X[2];
+    float det;
+    printf("La solution de l'équation AX=B, avec A = ");
+    printmat(A);
+    printf("et B = ");
+    printmat(B);
+    printf("est X= ");
+    // printmat(X);
+    // printf("\n");
+    // return 0;
+}   
