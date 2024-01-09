@@ -239,7 +239,6 @@ declaration_or_assign : declaration
                       | assign
 
 declaration_function : type {open_scope();} MAIN '(' ')' block {$$.ptr = NULL;}
-
 declaration_element : ID declaration_affectation
                     {  
                          SymbolTableElement *l = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 1);
@@ -263,7 +262,7 @@ declaration_element : ID declaration_affectation
                          if($2.ptr != NULL)
                          {
                               if($2.ptr->class != ARRAY)
-                                   gen_quad(code, K_COPY, lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0), $2.ptr, NULL, (__uint32_t[]){0, 0, 0});
+                                   gen_quad(code, K_COPY, lookup_variable(symbol_table, $1, current_scope, VARIABLE, 0), $2.ptr, NULL, (__uint32_t[]){0, $2.by_address, 0});
                               else
                               {
                                    //affectation d'une matrice 1*1 à une variable
@@ -312,12 +311,11 @@ declaration_element : ID declaration_affectation
                                    gen_quad(code, K_COPY, e1, $3.ptr_list[i], NULL, (__uint32_t[]){FLOAT, $3.by_address_list[i], 0});
                               }
                          }
-                         // free($3.ptr_list);
-                         // free($3.by_address_list);
+                         free($3.ptr_list);
+                         free($3.by_address_list);
                     }
                     | ID declaration_array declaration_array declaration_affectation_matrix
                     {
-                         printf("%d %d\n", $4.size[0], $4.size[1]);
                          SymbolTableElement *l = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 1);
                          if(l != NULL)
                          {
@@ -393,7 +391,7 @@ declaration_list : declaration_element
 
                     free($3.ptr_list);
                  }
-// impossible de factoriser, on ne peut pas remplacer par "type assign" car la variable n'existe pas
+
 declaration :  type declaration_list
                {
                     for(int i=0;i<$2.size_ptr_list;i++)
@@ -492,9 +490,11 @@ expression_slice_list : expression_slice ';' expression_slice_list // merge les 
 declaration_affectation : '=' additive_expression
                         {
                               $$.ptr = $2.ptr;
+                              $$.by_address = $2.by_address;
+
                               if($2.ptr->class == ARRAY)
                               {
-                                   if($2.ptr->attribute.array.size[0] != 1 && $2.ptr->attribute.array.size[1] != 1)
+                                   if($2.ptr->attribute.array.size[0] != 1 || $2.ptr->attribute.array.size[1] != 1)
                                         semantic_error("can't affect array to variable");
                               }
                         }
@@ -770,6 +770,10 @@ assign :  ID '=' expression
                          SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = (float)0}, INT);
                          gen_quad(code, K_COPY, $$.ptr, generate_address_quads($3.ptr, zero, zero), NULL, (__uint32_t[]){0, FLOAT, 0});    
                     }
+                    else
+                    {
+                         semantic_error("can't affect array to variable");
+                    }
                }
                else if($$.ptr->type == MATRIX && $3.ptr->type == MATRIX) // copie de matrice
                {    
@@ -793,6 +797,10 @@ assign :  ID '=' expression
                               adress--;
                          }
                     }
+               }
+               else if($$.ptr->class == ARRAY && $3.ptr->class == VARIABLE)
+               {
+                    semantic_error("can't affect a variable to an array");
                }
                else
                {

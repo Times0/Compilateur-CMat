@@ -31,10 +31,9 @@ int main()
         print(i);
     }*/
 
-    matrix M[5] = {1, 2, 3, 4, 5};
-    matrix c[4][2] = {{M[4], 2}, {3, 4}, {4, 5}, {6, 7}};
-    printmat(c);
-    
+    matrix A[5] = {1, 2, 3, 4, 5};
+    printmat(1.3+A);
+
     /*matrix A[3];
     A[0] = 1+2;
     A[1] = 2;
