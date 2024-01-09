@@ -111,7 +111,7 @@ void open_scope();
 %type <expr> declaration_function
 %type <expr> declaration_affectation
 %type <expr> declaration_affectation_matrix
-%type <expr> declaration_matrix_constant
+%type <expr> declaration_matrix_constant_list
 %type <expr> declaration_element
 %type <expr> declaration_list
 %type <expr> call
@@ -309,13 +309,54 @@ declaration_element : ID declaration_affectation
 
                                    e1 = generate_address_quads($$.ptr, add1, zero);
                               
-                                   gen_quad(code, K_COPY, e1, $3.ptr_list[i], NULL, (__uint32_t[]){FLOAT, FLOAT, 0});
+                                   gen_quad(code, K_COPY, e1, $3.ptr_list[i], NULL, (__uint32_t[]){FLOAT, $3.by_address_list[i], 0});
                               }
                          }
+                         // free($3.ptr_list);
+                         // free($3.by_address_list);
                     }
                     | ID declaration_array declaration_array declaration_affectation_matrix
                     {
+                         printf("%d %d\n", $4.size[0], $4.size[1]);
+                         SymbolTableElement *l = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 1);
+                         if(l != NULL)
+                         {
+                              semantic_error("variable \"%s\" already declared in this scope", $1);
+                         }
 
+                         if(current_scope == 0)
+                              // type arbitraire, on le change apres
+                              $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, $3}, -1, current_scope);
+                         else
+                         {
+                              $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, $3}, adress, current_scope);
+                              adress += $2*$3;
+                         }  
+
+                         // set a la valeur par initiale
+                         if($4.ptr_list != NULL)
+                         {
+                              if($$.ptr->attribute.array.size[0] != $4.size[0] || $$.ptr->attribute.array.size[1] != $4.size[1])
+                              {
+                                   semantic_error("sizes not consistent");
+                              }
+                              
+                              for(int i=0; i<$4.size[0];i++)
+                              {
+                                   for(int j=0; j<$4.size[1];j++)
+                                   {
+                                        SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                                        SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+                                        SymbolTableElement *e1;
+
+                                        e1 = generate_address_quads($$.ptr, add1, add2);
+                              
+                                        gen_quad(code, K_COPY, e1, $4.ptr_list[i*$4.size[1]+j], NULL, (__uint32_t[]){FLOAT, $4.by_address_list[i*$4.size[1]+j], 0});
+                                   }
+                              }
+                         }
+                         free($4.ptr_list);
+                         free($4.by_address_list);
                     }
 
 declaration_list : declaration_element
@@ -324,7 +365,7 @@ declaration_list : declaration_element
                     $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement *));
                     if($$.ptr_list == NULL)
                     {
-                         printf("malloc failed\n");
+                         printf("Error malloc in declaration_list\n");
                          exit(1);
                     }
                     $$.ptr_list[0] = $1.ptr;
@@ -370,36 +411,6 @@ declaration :  type declaration_list
 
                     free($2.ptr_list);
                }
-               /*| type ID declaration_array declaration_affectation
-               {
-                    SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
-                    if(l != NULL)
-                    {
-                         semantic_error("variable \"%s\" already declared in this scope", $2);
-                    }
-                    if(current_scope == 0)
-                         insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 1}, -1, current_scope);
-                    else
-                    {
-                         insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 1}, adress, current_scope);
-                         adress += $3*1;
-                    }
-               }
-               | type ID declaration_array declaration_array declaration_affectation
-               {
-                    SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
-                    if(l != NULL)
-                    {
-                         semantic_error("variable \"%s\" already declared in this scope", $2);
-                    }
-                    if(current_scope == 0)
-                         insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, $4}, -1, current_scope);
-                    else
-                    {
-                         insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, $4},adress, current_scope);
-                         adress += $3*$4;
-                    }
-               }*/
 
 declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
 
@@ -489,39 +500,70 @@ declaration_affectation : '=' additive_expression
                         }
                         | %empty{$$.ptr = NULL;}
 
-declaration_affectation_matrix : '=' declaration_matrix_constant {$$.ptr_list = $2.ptr_list;$$.size_ptr_list = $2.size_ptr_list;}
+declaration_affectation_matrix : '=' '{' declaration_matrix_constant_list '}' {$$.ptr_list = $3.ptr_list; $$.by_address_list = $3.by_address_list; $$.size_ptr_list = $3.size_ptr_list; $$.size[0] = $3.size[0]; $$.size[1] = $3.size[1];}
                                | %empty {$$.ptr = NULL;}
 
-declaration_matrix_constant : '{' additive_expression_list '}'
-                            {
-                                   $$.ptr_list = $2.ptr_list;
-                                   $$.size_ptr_list = $2.size_ptr_list;
-                            }
-                            | '{' declaration_matrix_constant_list '}'
-                            {
-
-                            }
-
-declaration_matrix_constant_list : declaration_matrix_constant
+declaration_matrix_constant_list : additive_expression_list
                                  {
-
+                                        $$.ptr_list = $1.ptr_list;
+                                        $$.by_address_list = $1.by_address_list;
+                                        $$.size_ptr_list = $1.size_ptr_list;
                                  }
-                                 | declaration_matrix_constant ',' declaration_matrix_constant_list
+                                 | '{' additive_expression_list '}'
                                  {
+                                        $$.ptr_list = $2.ptr_list;
+                                        $$.by_address_list = $2.by_address_list;
+                                        $$.size_ptr_list = $2.size_ptr_list;
+                                        $$.size[0] = 1;                    // ligne
+                                        $$.size[1] = $2.size_ptr_list;     // colonne
+                                 }
+                                 | '{' additive_expression_list '}' ',' declaration_matrix_constant_list
+                                 {
+                                        if($2.size_ptr_list != $5.size[1])
+                                             semantic_error("sizes not consistent");
+                                        $$.size[1] = $5.size[1];
+                                        $$.size[0] = $5.size[0]+1;
 
+                                        $$.size_ptr_list = $2.size_ptr_list + $5.size_ptr_list;
+
+                                        $$.ptr_list = malloc(($$.size_ptr_list)*sizeof(SymbolTableElement*));
+                                        $$.by_address_list = malloc(($$.size_ptr_list)*sizeof(__uint32_t));
+                                        if($$.ptr_list == NULL || $$.by_address_list == NULL)
+                                        {
+                                             printf("Error malloc in declaration_matrix_constant_list\n");
+                                             exit(1);
+                                        }
+
+                                        for(int i=0;i<$2.size_ptr_list;i++)
+                                        {
+                                             $$.ptr_list[i] = $2.ptr_list[i];
+                                             $$.by_address_list[i] = $2.by_address_list[i];
+                                        }
+                                        for(int i=0;i<$5.size_ptr_list;i++)
+                                        {
+                                             $$.ptr_list[$2.size_ptr_list+i] = $5.ptr_list[i];
+                                             $$.by_address_list[$2.size_ptr_list+i] = $5.by_address_list[i];
+                                        }
+
+                                        free($2.ptr_list);
+                                        free($2.by_address_list);
+                                        free($5.ptr_list);
+                                        free($5.by_address_list);
                                  }
 
 
 additive_expression_list : additive_expression
                          {
                               $$.capacity_ptr_list = 1;
-                              $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement *));
-                              if($$.ptr_list == NULL)
+                              $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement*));
+                              $$.by_address_list = malloc($$.capacity_ptr_list*sizeof(__uint32_t));
+                              if($$.ptr_list == NULL || $$.by_address_list == NULL)
                               {
-                                   printf("malloc failed\n");
+                                   printf("Error malloc in declaration_list\n");
                                    exit(1);
                               }
                               $$.ptr_list[0] = $1.ptr;
+                              $$.by_address_list[0] = $1.by_address;
                               $$.size_ptr_list = 1;
                          }
                          | additive_expression_list ',' additive_expression
@@ -530,7 +572,8 @@ additive_expression_list : additive_expression
                               {
                                    $$.capacity_ptr_list = $1.capacity_ptr_list*2;
                                    $$.ptr_list = realloc($1.ptr_list, $$.capacity_ptr_list*sizeof(SymbolTableElement*));
-                                   if($$.ptr_list == NULL)
+                                   $$.by_address_list = realloc($1.by_address_list, $$.capacity_ptr_list*sizeof(__uint32_t));
+                                   if($$.ptr_list == NULL || $$.by_address_list == NULL)
                                    {
                                         printf("Error realloc in declaration_list\n");
                                         exit(1);
@@ -540,8 +583,10 @@ additive_expression_list : additive_expression
                               {
                                    $$.capacity_ptr_list = $1.capacity_ptr_list;
                                    $$.ptr_list = $1.ptr_list;
+                                   $$.by_address_list = $1.by_address_list;
                               }
                               $$.ptr_list[$1.size_ptr_list] = $3.ptr;
+                              $$.by_address_list[$1.size_ptr_list] = $3.by_address;
                               $$.size_ptr_list = $1.size_ptr_list+1;
 
                               free($3.ptr_list);
@@ -796,13 +841,10 @@ assign :  ID '=' expression
                adress++;
           }
 
-block : '{'                   {
-                                   
-                              } 
-        instruction_list      
+block : '{' instruction_list      
         '}'                   {
-                                   $$.next_list = $3.next_list;
-                                   complete_list($3.next_list, code->nextquad);
+                                   $$.next_list = $2.next_list;
+                                   complete_list($2.next_list, code->nextquad);
                                    
                                    adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable;
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 

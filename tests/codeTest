@@ -3,7 +3,8 @@
 //                  - Pas de for
 //                  - Faire les matrices globales
 //                  - Pas ff[a[0]]
-//                  - int = M[0] 
+//                  - int = M[0]
+// addition dans var decl
 
 // Tester :     - condition avec arrays
 
@@ -30,10 +31,18 @@ int main()
         print(i);
     }*/
 
-    matrix MyMatrix[5] = {1, 2, 3, 4, 5};
-    // matrix c[2][2] = {{1, 2}, {3, 4}};
-    printmat(MyMatrix);
-    // i=9;
+    matrix M[5] = {1, 2, 3, 4, 5};
+    matrix c[4][2] = {{M[4], 2}, {3, 4}, {4, 5}, {6, 7}};
+    printmat(c);
+    
+    /*matrix A[3];
+    A[0] = 1+2;
+    A[1] = 2;
+    A[2] = 3;
+    printmat(A);*/
+
+    // matrix B[3] = {1, 2, 3}, C[3];
+    // printmat(B);
     
     // matrix f[3][3];
     /*f[0][0] = 1;
