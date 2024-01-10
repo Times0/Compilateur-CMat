@@ -9,7 +9,6 @@
 #include "symbol_table.h"
 #include "../include/quad.h"
 
-
 extern FILE *yyin;
 extern FILE *yyout;
 extern int yylex();
@@ -143,8 +142,7 @@ instruction : declaration ';'           { $$.next_list = create_list(-1);}      
             | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
             | expression ';'            { $$.next_list = create_list(-1);}
-            | statement  
-
+            | statement
 
 M : %empty { $$.quad = code->nextquad; }
 
@@ -154,10 +152,10 @@ statement : statement_if
           | statement_while
           | statement_for
 
-statement_if : IF {open_scope();} '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block statement_else
+statement_if : IF {open_scope();} '(' {logical_expression_flag++; logical_id_flag=1;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block statement_else
              {
                     // si pas de else
-                    if($10.ptr == NULL)
+                    if($10.next_list == NULL)
                     {
                          complete_list($5.true_list, $8.quad);
                          $$.next_list = concat_list($5.false_list, $9.next_list);
@@ -168,9 +166,11 @@ statement_if : IF {open_scope();} '(' {logical_expression_flag++; logical_id_fla
                     {
                          complete_list($5.true_list, $8.quad);
                          complete_list($5.false_list, $10.quad);
+
                          $$.next_list = concat_list($9.next_list, $10.next_list);
-                         $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
-                         gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
+                         
+                         // $$.next_list = concat_list($$.next_list, create_list(code->nextquad));
+                         // gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
                     }
              }
 
@@ -186,7 +186,7 @@ statement_else : ELSE N statement_if
                }
                | %empty
                {
-                    $$.ptr = NULL;
+                    $$.next_list = NULL;
                }
 
 statement_while : WHILE {open_scope();} M '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block
@@ -240,7 +240,28 @@ statement_for : FOR {open_scope();} M '(' declaration_or_assign ';' {logical_exp
 declaration_or_assign : declaration
                       | assign
 
-declaration_function : type {open_scope();} MAIN '(' ')' block {$$.ptr = NULL;}
+declaration_function : type MAIN {if(current_scope != 0){semantic_error("can't declare function inside a block");} open_scope();} '(' ')' block
+                     {
+                         SymbolTableElement *fun = lookup_function(symbol_table, "main");
+                         if(fun != NULL)
+                         {
+                              semantic_error("main is already declared");
+                         }
+
+                         fun = insert_function(&symbol_table, "main", $1, 0, (__uint32_t[]){VOID});
+                         if(fun->type != INT)
+                         {
+                              printf("main should have int type\n");
+                              exit(1);
+                         }
+
+                         $$.ptr = NULL;
+                     }
+                     | type ID {if(current_scope != 0){semantic_error("can't declare function inside a block");} open_scope();} '(' ')' block
+                     {
+                         insert_function(&symbol_table, $2, $1, 0, (__uint32_t[]){VOID});
+                     }
+                     
 declaration_element : ID declaration_affectation
                     {  
                          SymbolTableElement *l = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 1);
@@ -851,6 +872,10 @@ assign :  ID '=' expression
                {
                     semantic_error("can't affect array to %s", e->type == INT?"INT":"FLOAT");
                }
+               if($2.size_ptr_list != 1)
+               {
+                    semantic_error("invalid slice");
+               }
                     
                SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], NULL);
                __uint32_t type = e->type;
@@ -870,10 +895,11 @@ assign :  ID '=' expression
                {
                     semantic_error("can't affect array to %s", e->type == INT?"INT":"FLOAT");
                }
-               if($2.size_ptr_list > 1 || $3.size_ptr_list > 1)
+               if($2.size_ptr_list != 1 || $3.size_ptr_list != 1)
                {
-                    semantic_error("affectation of sliced matrix is impossible");
+                    semantic_error("invalid slice");
                }
+
                SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], $3.ptr_list[0]);
                __uint32_t type = e->type;
                if(e->type == MATRIX)
@@ -890,7 +916,7 @@ block : '{' instruction_list
                                    adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable;
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 
                               }
-     | '{' '}' { $$.ptr = NULL; }
+     | '{' '}' { $$.ptr = NULL; current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; }
      /* | instruction */ // tres smart 
 
 
@@ -1112,16 +1138,6 @@ primary_expression : ID
                          {
                               if(e->type == MATRIX)
                               {
-                                   /*SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = e->attribute.array.size[0], .float_value = (float)e->attribute.array.size[0]}, INT);
-                                   SymbolTableElement *temp = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
-                                   adress++;
-                                   gen_quad(code, BOP_MULT, temp, temp, $2.ptr_list[0], (__uint32_t[]){0, 0, 0});
-                                   gen_quad(code, BOP_PLUS, temp, temp, $3.ptr_list[0], (__uint32_t[]){0, 0, 0});
-
-                                   SymbolTableElement *t = generate_address_quads(e, temp, NULL);
-                                   adress++;
-                                   $$.ptr = t;
-                                   $$.by_address = FLOAT;*/
                                    SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], $3.ptr_list[0]);
                                    adress++;
                                    $$.ptr = t;
@@ -1130,7 +1146,6 @@ primary_expression : ID
                               // cas des tableaux
                               else
                               {
-
                                    SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], NULL); // NUL
                                    adress++;
                                    $$.ptr = t;
@@ -1762,6 +1777,7 @@ SymbolTableElement *matrix_slice(SymbolTableElement **ptr_list1, SymbolTableElem
      return r;
 }
 
+// remplace les NULL (*) par une lsite de tous les nombres entre 0 et asize
 void complete_matrix_slice(__uint32_t asize, SymbolTableElement ***ptr_list, __uint32_t *size_ptr_list)
 {
      __uint32_t size = *size_ptr_list;

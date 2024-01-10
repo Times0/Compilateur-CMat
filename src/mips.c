@@ -4,11 +4,13 @@
 #include "../include/symbol_table.h"
 #include "cmat.tab.h"
 
+
 //////////////////////////
 //  On suppose que le programme est une suite de declarations de fonctions
 //  suivie d'une fonction main
 //////////////////////////
 extern __uint32_t lineno;
+extern SymbolTable *symbol_table;
 
 
 __uint32_t current_register_int = 0;        // registre pour les int
@@ -39,6 +41,20 @@ void gencode_mips_global_variable(FILE * f, SymbolTable * s)
 
 void gencode_mips(QuadTable *code, FILE * f)
 {
+    SymbolTableElement *mainn = lookup_function(symbol_table, "main");
+    // le nombre de parametre doit etre 0 sinon la grammaire ne detecte pas
+    if(mainn == NULL)
+    {
+        printf("main is undefined\n");
+        exit(1);
+    }
+    else if(mainn->type != INT)
+    {
+        printf("main should have int type\n");
+        exit(1);
+    }
+
+    
     // main 
     fprintf (f, ".globl main\n");
     fprintf (f, ".text\n");
@@ -46,10 +62,9 @@ void gencode_mips(QuadTable *code, FILE * f)
     fprintf (f, "main:\n"); // temporaire
     fprintf (f, "\tmove $fp, $sp\n");
 
-    code->main_quad = 0;
 
     // parcours de tous les quads apres le main
-    for (size_t i = code->main_quad; i < code->nextquad; i ++)
+    for (size_t i = 0; i < code->nextquad; i ++)
     {
         if(&(code->quads[i]) != NULL) // Peut etre inutile
         {
@@ -66,15 +81,6 @@ void gencode_mips(QuadTable *code, FILE * f)
         free(label);
     }
     fprintf (f, "\tli $v0, 10\n\tsyscall\n");
-
-    // parcours de tous les quads avant le main
-    for (size_t i = 0 ; i < code->main_quad ; i++)
-    {
-        if (&(code->quads[i]) != NULL)
-        {
-            gencode_mips_quad(f, &(code->quads[i]));
-        }
-    }
 }
 
 void gencode_mips_quad(FILE *f, Quad *quad)

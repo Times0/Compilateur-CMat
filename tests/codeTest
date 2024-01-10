@@ -1,10 +1,8 @@
 // Restrictions :   - segfault si on comple iun quad trop loin -> facilement corrigeable
-//                  - Pas de parentheses dans les expr logiques
-//                  - Pas de for
 //                  - Faire les matrices globales
 //                  - Pas ff[a[0]]
 //                  - int = M[0]
-// addition dans var decl
+//                  - addition dans var decl
 
 // Tester :     - condition avec arrays
 
@@ -18,8 +16,95 @@ a=2||2;
 print(a);
 print(1);
 printf("\n");*/
+
+/*int y;
+int re()
+{
+}
+int t;
+
 int main()
 {
+    int a;
+    if(1)
+    {
+        if(2)
+        {
+            int b;
+        }
+    }
+    int c;
+}
+int g;*/
+
+int main() {
+    for (int i = 0; i < 100; i++) {
+        printf("Let's go!\n");
+    }
+
+    // Un cout pour chaque fruit
+    int fraises = 3;
+    int bananes = 2;
+    int pommes = 1;
+    int poires = 1;
+    int peches = 2;
+
+    int total_argent = 100;
+    int total_fruits = 0;
+
+    int choix = 3;
+    while (total_argent > 3)
+    {
+        choix = (choix + 1) % 5;
+        if(choix == 0)
+        {
+            if (total_argent >= fraises)
+            {
+                total_fruits = total_fruits+1;
+                total_argent = total_argent - fraises;   
+            }
+        }
+        else if (choix == 1)
+        {
+            if (total_argent >= bananes)
+            {
+                total_fruits = total_fruits+1;
+                total_argent = total_argent - bananes;
+            }
+        }
+        else if (choix == 2)
+        {
+            if (total_argent >= pommes)
+            {
+                total_fruits = total_fruits+1;
+                total_argent = total_argent - pommes;
+            }
+        }
+        else if (choix == 3)
+        {
+            if (total_argent >= poires)
+            {
+                total_argent = total_argent - poires;
+                total_fruits++;
+            }
+        }
+        else if (choix == 4)
+        {
+            if (total_argent >= peches)
+            {
+                total_argent = total_argent - peches;
+                total_fruits++;
+            }
+        }
+    }
+
+    print(total_fruits);
+    printf("\n");
+    print(total_argent);
+    printf("\n");
+
+    printf("C'est quoi ce programme de golmon ?\n");
+}
     /*for (int i = 0; i < 10; i++)
     {
         printf("Hello, world!\n");
@@ -34,27 +119,6 @@ int main()
     /*matrix A[3][3]= {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
     matrix B[2][2] = A[0..1][1..2];
     printmat(B);*/
-
-    matrix A[2][2] = {{12, 27}, {64, 42}}, IA[2][2], B[2] = {1, 8}, X[2];
-    float det;
-
-    IA = ~A;
-    IA = IA[1;0][1;0];
-    IA[0][1] = -IA[0][1];
-    IA[1][0] = -IA[1][0];
-    /* Calcul du déterminant de A */
-    det = 1/(A[0][0]*A[1][1]-A[0][1]*A[1][0]);
-    IA = det*IA;
-    /* Calcul de X */
-    X = IA*B;
-
-    printf("La solution de l'équation AX=B, avec A = ");
-    printmat(A);
-    printf("et B = ");
-    printmat(B);
-    printf("est X= ");
-    printmat(X);
-    printf("\n");
 
     /*matrix A[3];
     A[0] = 1+2;
@@ -189,7 +253,6 @@ int main()
     a[0] = 999+b;
     print(a[0]);*/
 
-}
     // a = ff[2] + ff[3];
     // print(r);
     /*print(ff[3]);

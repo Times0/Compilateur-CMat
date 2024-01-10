@@ -87,7 +87,7 @@ SymbolTable* add_next_symbol_table(SymbolTable **s, __uint32_t scope, __uint32_t
 SymbolTableElement *get_symbol(SymbolTable *s, __uint32_t i);
 
 SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __uint32_t size[2], __int32_t adress, __uint32_t scope);
-SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type);
+SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t nb_paramaters, __uint32_t *parameters_type);
 SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32_t type);
 SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t adress);
 

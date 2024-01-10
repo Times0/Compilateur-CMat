@@ -33,9 +33,9 @@ void init_symbol_table(SymbolTable **s, __uint32_t scope)
 
 void push_predefined_functions(SymbolTable **s)
 {
-	insert_function(&symbol_table, "print", VOID, FUNCTION, 1, (__uint32_t[]){VOID});
-    insert_function(&symbol_table, "printf", VOID, FUNCTION, 1, (__uint32_t[]){STRING});
-	insert_function(&symbol_table, "printmat", VOID, FUNCTION, 1, (__uint32_t[]){MATRIX});
+	insert_function(&symbol_table, "print", VOID, 1, (__uint32_t[]){VOID});
+    insert_function(&symbol_table, "printf", VOID, 1, (__uint32_t[]){STRING});
+	insert_function(&symbol_table, "printmat", VOID, 1, (__uint32_t[]){MATRIX});
 	insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = 0.0f}, INT);
 	insert_constant(&symbol_table, (Constant){.int_value = 1, .float_value = 1.0f}, INT);
 	insert_constant(&symbol_table, (Constant){.int_value = 4, .float_value = 4.0f}, INT);
@@ -125,7 +125,7 @@ SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t
 	return l;
 }
 
-SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type)
+SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t nb_paramaters, __uint32_t *parameters_type)
 {
 	SymbolTableElement *l = lookup_function(*s, name);
 	if (l == NULL)

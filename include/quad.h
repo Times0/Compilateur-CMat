@@ -24,7 +24,6 @@ typedef struct Quad {
 }Quad;
 
 typedef struct QuadTable{
-    __uint32_t main_quad;
     __uint32_t capacity;
     __uint32_t nextquad;
     Quad * quads;
