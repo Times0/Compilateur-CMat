@@ -31,7 +31,7 @@ SymbolTableElement *matrix_operation_mult(SymbolTableElement *a1, SymbolTableEle
 SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
 SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __uint32_t op);
 SymbolTableElement *matrix_slice(SymbolTableElement **ptr_list1, SymbolTableElement **ptr_list2, __uint32_t size_ptr_list1, __uint32_t size_ptr_list2, SymbolTableElement *mat);
-void complete_matrix_slice(SymbolTableElement* id, SymbolTableElement ***ptr_list, __uint32_t *size_ptr_list);
+void complete_matrix_slice(__uint32_t asize, SymbolTableElement ***ptr_list, __uint32_t *size_ptr_list);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
 void open_scope();
@@ -1062,6 +1062,10 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" is not an array", $1);
                          }
+                         if(e->attribute.array.size[1] != 1)
+                         {
+                              semantic_error("variable \"%s\" have two dimensions", $1);
+                         }
 
                          // si le slice est renvoie un element seul
                          if($2.size_ptr_list == 1 && $2.ptr_list[0] != NULL)
@@ -1084,7 +1088,7 @@ primary_expression : ID
                          }
                          else
                          {
-                              complete_matrix_slice(e, &$2.ptr_list, &$2.size_ptr_list);
+                              complete_matrix_slice(e->attribute.array.size[0], &$2.ptr_list, &$2.size_ptr_list);
                               $$.ptr = matrix_slice($2.ptr_list, NULL, $2.size_ptr_list, 0, e);
                          }
                     }
@@ -1099,11 +1103,12 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" is not an array", $1);
                          }
-                         if(e->attribute.array.size[1] == 0)
+                         if(e->attribute.array.size[1] == 1)
                          {
                               semantic_error("variable \"%s\" have one dimension", $1);
                          }
-                         if($2.size_ptr_list == 1 && $3.size_ptr_list == 1)
+                         // il faut verifier le cas simple a part car on renvoie une variable et non une matrice
+                         if($2.size_ptr_list == 1 && $3.size_ptr_list == 1 && $2.ptr_list[0] != NULL && $3.ptr_list[0] != NULL)
                          {
                               if(e->type == MATRIX)
                               {
@@ -1127,6 +1132,12 @@ primary_expression : ID
                                    $$.ptr = t;
                                    $$.by_address = e->type;         
                               }
+                         }
+                         else
+                         {
+                              complete_matrix_slice(e->attribute.array.size[0], &$2.ptr_list, &$2.size_ptr_list);
+                              complete_matrix_slice(e->attribute.array.size[1], &$3.ptr_list, &$3.size_ptr_list);
+                              $$.ptr = matrix_slice($2.ptr_list, $3.ptr_list, $2.size_ptr_list, $3.size_ptr_list, e);
                          }
                     }
                     | INT_CONST
@@ -1707,24 +1718,37 @@ SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __ui
 
 SymbolTableElement *matrix_slice(SymbolTableElement **ptr_list1, SymbolTableElement **ptr_list2, __uint32_t size_ptr_list1, __uint32_t size_ptr_list2, SymbolTableElement *mat)
 {
+     __uint32_t f=0;
      if(!size_ptr_list2)
           size_ptr_list2=1;
+     else
+          f=1;
+
+     SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = (float)0} ,INT);
 
      SymbolTableElement *r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){size_ptr_list1, size_ptr_list2});
      adress += size_ptr_list1*size_ptr_list2;
 
      for(int i=0;i<size_ptr_list1;i++)
      {
-          /* for(int j=0;j<size_ptr_list2;j++) */
+          for(int j=0;j<size_ptr_list2;j++)
           {
+               SymbolTableElement *e1, *e2;
                SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
                
-               SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = (float)0} ,INT);
-               SymbolTableElement *e1, *e2, *e3;
-
-               e1 = generate_address_quads(r, add1, zero);
-               adress++;
-               e2 = generate_address_quads(mat, ptr_list1[i], zero);
+               if(f)
+               {
+                    SymbolTableElement *add2 = insert_constant(&symbol_table, (Constant){.int_value = j, .float_value = (float)j} ,INT);
+                    e1 = generate_address_quads(r, add1, add2);
+                    adress++;
+                    e2 = generate_address_quads(mat, ptr_list1[i], ptr_list2[j]);
+               }
+               else
+               {
+                    e1 = generate_address_quads(r, add1, zero);
+                    adress++;
+                    e2 = generate_address_quads(mat, ptr_list1[i], zero);
+               }                   
                
                gen_quad(code , K_COPY, e1, e2, NULL, (__uint32_t[]){FLOAT, FLOAT, 0});              
                
@@ -1734,7 +1758,7 @@ SymbolTableElement *matrix_slice(SymbolTableElement **ptr_list1, SymbolTableElem
      return r;
 }
 
-void complete_matrix_slice(SymbolTableElement* id, SymbolTableElement ***ptr_list, __uint32_t *size_ptr_list)
+void complete_matrix_slice(__uint32_t asize, SymbolTableElement ***ptr_list, __uint32_t *size_ptr_list)
 {
      __uint32_t size = *size_ptr_list;
      SymbolTableElement **list = malloc(size*sizeof(SymbolTableElement*));
@@ -1749,7 +1773,7 @@ void complete_matrix_slice(SymbolTableElement* id, SymbolTableElement ***ptr_lis
      {
           if((*ptr_list)[i] == NULL)
           {
-               *size_ptr_list += id->attribute.array.size[0]-1; // car NULL est deja dans la liste
+               *size_ptr_list += asize-1; // car NULL est deja dans la liste
                list = realloc(list, *size_ptr_list*sizeof(SymbolTableElement*));
                if(list == NULL)
                {
@@ -1757,7 +1781,7 @@ void complete_matrix_slice(SymbolTableElement* id, SymbolTableElement ***ptr_lis
                     exit(1);  
                }
                
-               for(int i=0;i<id->attribute.array.size[0];i++)
+               for(int i=0;i<asize;i++)
                {
                     list[index] = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
                     index++;
