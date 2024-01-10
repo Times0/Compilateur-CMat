@@ -1112,13 +1112,17 @@ primary_expression : ID
                          {
                               if(e->type == MATRIX)
                               {
-                                   SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = e->attribute.array.size[0], .float_value = (float)e->attribute.array.size[0]}, INT);
+                                   /*SymbolTableElement *add = insert_constant(&symbol_table, (Constant){.int_value = e->attribute.array.size[0], .float_value = (float)e->attribute.array.size[0]}, INT);
                                    SymbolTableElement *temp = newtemp(symbol_table, VARIABLE, INT, adress, (__uint32_t[]) {0, 0});
                                    adress++;
                                    gen_quad(code, BOP_MULT, temp, temp, $2.ptr_list[0], (__uint32_t[]){0, 0, 0});
                                    gen_quad(code, BOP_PLUS, temp, temp, $3.ptr_list[0], (__uint32_t[]){0, 0, 0});
 
                                    SymbolTableElement *t = generate_address_quads(e, temp, NULL);
+                                   adress++;
+                                   $$.ptr = t;
+                                   $$.by_address = FLOAT;*/
+                                   SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], $3.ptr_list[0]);
                                    adress++;
                                    $$.ptr = t;
                                    $$.by_address = FLOAT;
