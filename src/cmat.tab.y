@@ -30,6 +30,8 @@ SymbolTableElement *matrix_operation_add(SymbolTableElement *a1, SymbolTableElem
 SymbolTableElement *matrix_operation_mult(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
 SymbolTableElement *matrix_binary_operation_constant(SymbolTableElement *a1, SymbolTableElement *a2, __uint32_t op);
 SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __uint32_t op);
+SymbolTableElement *matrix_slice(SymbolTableElement **ptr_list1, SymbolTableElement **ptr_list2, __uint32_t size_ptr_list1, __uint32_t size_ptr_list2, SymbolTableElement *mat);
+void complete_matrix_slice(SymbolTableElement* id, SymbolTableElement ***ptr_list, __uint32_t *size_ptr_list);
 void semantic_error(const char *format, ...);
 void semantic_warning(const char *format, ...);
 void open_scope();
@@ -437,19 +439,12 @@ declaration :  type declaration_list
                }
 
 declaration_array : '[' INT_CONST ']'   { $$ = $2; if($$ == 0){semantic_error("can't declare a matrix with 0 as dimension");}}
-
 assign_or_expression : expression
-                  | assign
-
-// il manque * generer les quad pour tous les slices
+                     | assign
 slice_array : '[' expression_slice_list ']'
             {
                $$.ptr_list = $2.ptr_list;
                $$.size_ptr_list = $2.size_ptr_list;
-
-               // for(int i=0; i< $2.size_ptr_list;i++)
-               //      printf("%d\n", $2.ptr_list[i]->attribute.constant.int_value);
-
             }
 
 expression_slice : INT_CONST DDOT INT_CONST
@@ -491,6 +486,17 @@ expression_slice : INT_CONST DDOT INT_CONST
                     $$.size_ptr_list = 1;
                  }
                  | '*'
+                 {
+                    // on met NULL qu'on remplace plus tard
+                    $$.ptr_list = malloc(sizeof(SymbolTableElement *));
+                    if($$.ptr_list == NULL)
+                    {
+                         printf("Error malloc in expression_slice\n");
+                         exit(1);
+                    }
+                    $$.ptr_list[0] = NULL;
+                    $$.size_ptr_list = 1;
+                 }
 
 expression_slice_list : expression_slice ';' expression_slice_list // merge les listes
                       {
@@ -1056,7 +1062,9 @@ primary_expression : ID
                          {
                               semantic_error("variable \"%s\" is not an array", $1);
                          }
-                         if($2.size_ptr_list == 1)
+
+                         // si le slice est renvoie un element seul
+                         if($2.size_ptr_list == 1 && $2.ptr_list[0] != NULL)
                          {
                               if(e->type == MATRIX)
                               {
@@ -1068,12 +1076,16 @@ primary_expression : ID
                               // cas des tableaux
                               else
                               {
-
                                    SymbolTableElement *t = generate_address_quads(e, $2.ptr_list[0], NULL);
                                    adress++;
                                    $$.ptr = t;
                                    $$.by_address = e->type;         
                               }
+                         }
+                         else
+                         {
+                              complete_matrix_slice(e, &$2.ptr_list, &$2.size_ptr_list);
+                              $$.ptr = matrix_slice($2.ptr_list, NULL, $2.size_ptr_list, 0, e);
                          }
                     }
                     | ID slice_array slice_array
@@ -1691,6 +1703,75 @@ SymbolTableElement *matrix_unary_operation_constant(SymbolTableElement *a1, __ui
           }
      }
      return r;
+}
+
+SymbolTableElement *matrix_slice(SymbolTableElement **ptr_list1, SymbolTableElement **ptr_list2, __uint32_t size_ptr_list1, __uint32_t size_ptr_list2, SymbolTableElement *mat)
+{
+     if(!size_ptr_list2)
+          size_ptr_list2=1;
+
+     SymbolTableElement *r = newtemp(symbol_table, ARRAY, MATRIX, adress, (__uint32_t[]){size_ptr_list1, size_ptr_list2});
+     adress += size_ptr_list1*size_ptr_list2;
+
+     for(int i=0;i<size_ptr_list1;i++)
+     {
+          /* for(int j=0;j<size_ptr_list2;j++) */
+          {
+               SymbolTableElement *add1 = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+               
+               SymbolTableElement *zero = insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = (float)0} ,INT);
+               SymbolTableElement *e1, *e2, *e3;
+
+               e1 = generate_address_quads(r, add1, zero);
+               adress++;
+               e2 = generate_address_quads(mat, ptr_list1[i], zero);
+               
+               gen_quad(code , K_COPY, e1, e2, NULL, (__uint32_t[]){FLOAT, FLOAT, 0});              
+               
+               adress--;
+          }
+     }
+     return r;
+}
+
+void complete_matrix_slice(SymbolTableElement* id, SymbolTableElement ***ptr_list, __uint32_t *size_ptr_list)
+{
+     __uint32_t size = *size_ptr_list;
+     SymbolTableElement **list = malloc(size*sizeof(SymbolTableElement*));
+     if(list == NULL)
+     {
+          printf("Error malloc in complete_matrix_slice\n");
+          exit(1);
+     }
+
+     __uint32_t index=0;
+     for(int i=0;i<size;i++)
+     {
+          if((*ptr_list)[i] == NULL)
+          {
+               *size_ptr_list += id->attribute.array.size[0]-1; // car NULL est deja dans la liste
+               list = realloc(list, *size_ptr_list*sizeof(SymbolTableElement*));
+               if(list == NULL)
+               {
+                    printf("Error realloc in complete_matrix_slice\n");
+                    exit(1);  
+               }
+               
+               for(int i=0;i<id->attribute.array.size[0];i++)
+               {
+                    list[index] = insert_constant(&symbol_table, (Constant){.int_value = i, .float_value = (float)i} ,INT);
+                    index++;
+               }
+          }
+          else
+          {
+               list[index] = (*ptr_list)[i];
+               index++;
+          }          
+     }
+
+     free(*ptr_list);
+     *ptr_list = list;
 }
 
 void open_scope()
