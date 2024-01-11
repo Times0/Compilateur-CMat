@@ -37,7 +37,6 @@ QuadTable *code_new()
     }
     
     r->nextquad = 0;
-    r->main_quad = -1;
     return r;
 }
 
@@ -160,7 +159,6 @@ __int32_t *create_list(__int32_t i)
     }
     r[0] = i;
     r[1] = -1;
-    // printf("create list %d\n", i);
     return r;
 }
 
@@ -169,38 +167,37 @@ __int32_t *concat_list(__int32_t *l1, __int32_t *l2)
     __int32_t size1 = 0;
     if(l1 == NULL)
         l1 = create_list(-1);
+
     while(l1[size1] != -1)
         size1++;
+    
     __int32_t size2 = 0;
     if(l2 == NULL)
         l2 = create_list(-1);
+
     while(l2[size2] != -1)
         size2++;
 
-    __int32_t *r = malloc(size1+size2+1);
+
+    __int32_t *r = malloc((size1+size2+1)*sizeof(__uint32_t));
     if(r == NULL)
     {
         fprintf(stderr, "Error malloc in concat_list");
         exit(1);
     }
 
-    __int32_t i = 0;
-    while(l1[i] != -1)
+    for(int i=0;i<size1;i++)
     {
         r[i] = l1[i];
-        i++;
     }
-    __int32_t j = 0;
-    while(l2[j] != -1)
+    
+    for(int i=0;i<size2;i++)
     {
-        r[i+j] = l2[j];
-        j++;
+        r[size1+i] = l2[i];
     }
-    r[i+j] = -1;
-
-    // printf("concat list %d %d\n", size1, size2);
-
-
+    r[size1+size2] = -1;
+    
+    
     free(l1);
     free(l2);
     return r;
@@ -208,15 +205,12 @@ __int32_t *concat_list(__int32_t *l1, __int32_t *l2)
 
 void complete_list(__int32_t *l, __int32_t i)
 {
-    // printf("complete list %p with %d\n", l, i);
     if(l == NULL)
     {
-        // printf("comple nul\n");
         return;
     }
     if(l[0] == -1)
     {
-        // printf("complete -1 with %d\n", i);
         return;
     }
 
@@ -229,8 +223,7 @@ void complete_list(__int32_t *l, __int32_t i)
         if(code->quads[l[j]].branch_label == -1)
             code->quads[l[j]].branch_label = i;
         j++;
-    }   
-    // printf("complete list %d with %d and size %d\n", l[0], i, j);
+    }
 }
 
 void quad_dump(Quad *q)

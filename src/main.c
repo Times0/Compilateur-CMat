@@ -1,39 +1,55 @@
-#include <unistd.h> // for getopt
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "symbol_table.h"
-#include "../include/quad.h"
-#include "../include/mips.h"
+#include "quad.h"
+#include "mips.h"
 #include "cmat.lex.h"
 #include "cmat.tab.h"
 
 extern SymbolTable *symbol_table;
-extern QuadTable * code;
+extern QuadTable *code;
 
 int main(int argc, char *argv[])
 {
+    
     uint32_t option;
     uint32_t verbose_flag = 0;
     uint32_t lex_only_flag = 0;
+    uint32_t tos_flag = 0;
+    char *output_file = NULL;
 
-    while ((option = getopt(argc, argv, "vl")) != -1)
-    {
-        switch (option)
-        {
-        case 'v':
-            verbose_flag = 1;
-            break;
-        case 'l':
-            lex_only_flag = 1;
-            break;
-        default:
-            fprintf(stderr, "Usage: %s file [-v]\n", argv[0]);
-            exit(EXIT_FAILURE);
+    // Checking for '-version' option in any position
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-version") == 0) {
+            printf("CMat Compiler\n");
+            printf("Developed by: Lucas DELETANG, Zaid GHALI, Dorian CHEVALÉRIAS, Oumarou MAIGA\n");
+        }
+        else if (strcmp(argv[i], "-tos") == 0) {
+            tos_flag = 1;
         }
     }
 
+    while ((option = getopt(argc, argv, "Vlo")) != -1)
+    {
+        switch (option)
+        {
+            case 'V':
+                verbose_flag = 1;
+                break;
+            case 'l':
+                lex_only_flag = 1;
+                break;
+            case 'o':
+                output_file = optarg;
+                break;
+            default:
+                fprintf(stderr, "Usage: %s [-V] [-l] [-version] [-o <output_file_name>] [-tos] file [-v]\\n", argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
+    
     if (optind >= argc)
     {
         fprintf(stderr, "Expected argument after options\n");
@@ -80,10 +96,20 @@ int main(int argc, char *argv[])
     int r = yyparse();
 
     code_dump(code);
-    FILE *ff = fopen("mips.s", "w+");
-    gencode_mips_global_variable(ff, symbol_table);
-    gencode_mips(code, ff);
-    fclose(ff);
+
+    if (output_file != NULL) {
+        FILE *ff = fopen(output_file, "w+");
+        gencode_mips_global_variable(ff, symbol_table);
+        gencode_mips(code, ff);
+        fclose(ff);
+    }
+    else {
+        FILE *ff = fopen("mips.s", "w+");
+        gencode_mips_global_variable(ff, symbol_table);
+        gencode_mips(code, ff);
+        fclose(ff);
+    }
+
 
     if (verbose_flag)
         printf("-> Finished parsing with error code : %d\n", r);
@@ -92,13 +118,14 @@ int main(int argc, char *argv[])
         fclose(yyin);
 
     // Afficher la table des symboles
-    if (!(yyout = fopen("symbol_table.txt", "w+")))
+    if (tos_flag || 1)
+    {}// symbol_table_dump(symbol_table, stdout);
+    else if (!(yyout = fopen("symbol_table.txt", "w+")))
     {
         perror("symbol_table.txt");
         return 1;
+        symbol_table_dump(symbol_table, yyout);
     }
-
-    symbol_table_dump(symbol_table, yyout);
     
     if (yyout != stdout)
         fclose(yyout);
