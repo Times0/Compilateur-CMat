@@ -74,7 +74,7 @@ void open_scope();
 
 %token <int_val> INT_CONST
 %token <float_val> FLOAT_CONST
-%token <type_val> INT FLOAT MATRIX 
+%token <type_val> INT FLOAT MATRIX VOID
 %token <string_val> STRING
 %token <str_val>ID
 %token <int_val> GT_OP GE_OP LT_OP LE_OP EQ_OP NEQ_OP
@@ -83,7 +83,7 @@ void open_scope();
 %token ';' '*' '/' '^' '(' ')'
 %token '+' '-' 
 // useless
-%token VOID MAIN IF ELSE WHILE FOR UNARY_OP DDOT
+%token IF ELSE WHILE FOR UNARY_OP DDOT
 %token DECR INCR
 %token RETURN
 
@@ -115,6 +115,8 @@ void open_scope();
 %type <expr> declaration_matrix_constant_list
 %type <expr> declaration_element
 %type <expr> declaration_list
+%type <expr> declaration_parameter
+%type <expr> declaration_parameter_list
 %type <expr> call
 %type <expr> assign
 %type <expr> declaration
@@ -125,6 +127,7 @@ void open_scope();
 %type <expr> expression_slice
 %type <expr> expression_slice_list
 %type <type_val> type
+%type <type_val> type_function
 %type <expr> M
 %type <expr> N
 
@@ -240,28 +243,93 @@ statement_for : FOR {open_scope();} M '(' declaration_or_assign ';' {logical_exp
 declaration_or_assign : declaration
                       | assign
 
-declaration_function : type MAIN {if(current_scope != 0){semantic_error("can't declare function inside a block");} open_scope();} '(' ')' block
+declaration_function : type ID {if(current_scope != 0){semantic_error("can't declare function inside a block");} open_scope();} '(' declaration_parameter_list ')' M block
                      {
                          SymbolTableElement *fun = lookup_function(symbol_table, "main");
                          if(fun != NULL)
                          {
-                              semantic_error("main is already declared");
+                              semantic_error("function is already declared");
                          }
 
-                         fun = insert_function(&symbol_table, "main", $1, 0, (__uint32_t[]){VOID});
-                         if(fun->type != INT)
+                         fun = insert_function(&symbol_table, $2, $1, $5.size_ptr_list, $5.ptr_list, $7.quad);
+                         
+                         if(!strcmp($2, "main"))
                          {
-                              printf("main should have int type\n");
-                              exit(1);
+                              if(fun->type != INT)
+                              {
+                                   semantic_error("main should have int type");
+                              }
+                              if($5.size_ptr_list != 0)
+                              {
+                                   semantic_error("main should have 0 parameter");
+                              }
+
+                              code->mainquad = $7.quad;
                          }
+                         code->quads[$7.quad].label = $7.quad;
+
+                         // permet de savoir que l'on fini une fonction 
+                         // pas pour main
+                         if(strcmp($2, "main"))
+                              gen_quad_function(code, K_END_FUNCTION, NULL, NULL, NULL, 0, NULL);
 
                          $$.ptr = NULL;
                      }
-                     | type ID {if(current_scope != 0){semantic_error("can't declare function inside a block");} open_scope();} '(' ')' block
-                     {
-                         insert_function(&symbol_table, $2, $1, 0, (__uint32_t[]){VOID});
-                     }
-                     
+
+// redondance de code  + a faire
+declaration_parameter : type ID
+                      {
+                         SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
+                         if(l != NULL)
+                         {
+                              semantic_error("variable \"%s\" already declared in this scope", $2);
+                         }
+                         
+                         $$.ptr = insert_variable(symbol_table, $2, $1, VARIABLE, (__uint32_t[]){1, 1}, adress, current_scope);
+                         adress++;
+                      }
+                      | type ID declaration_array
+                      | type ID declaration_array declaration_array
+
+declaration_parameter_list : declaration_parameter
+                           {
+                                   $$.capacity_ptr_list = 1;
+                                   $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement*));
+                                   if($$.ptr_list == NULL)
+                                   {
+                                        printf("Error malloc in declaration_parameter_list\n");
+                                        exit(1);
+                                   }
+                                   $$.ptr_list[0] = $1.ptr;
+                                   $$.size_ptr_list = 1;          
+                           }
+                           | declaration_parameter_list ',' declaration_parameter
+                           {
+                              if($1.size_ptr_list + 1 >= $1.capacity_ptr_list)
+                              {
+                                   $$.capacity_ptr_list = $1.capacity_ptr_list*2;
+                                   $$.ptr_list = realloc($1.ptr_list, $$.capacity_ptr_list*sizeof(SymbolTableElement*));
+                                   if($$.ptr_list == NULL)
+                                   {
+                                        printf("Error realloc in declaration_list\n");
+                                        exit(1);
+                                   }
+                              }
+                              else
+                              {
+                                   $$.capacity_ptr_list = $1.capacity_ptr_list;
+                                   $$.ptr_list = $1.ptr_list;
+                              }
+                              $$.ptr_list[$1.size_ptr_list] = $3.ptr;
+                              $$.size_ptr_list = $1.size_ptr_list+1;
+
+                              free($3.ptr_list);
+                           }
+                           | %empty
+                           {
+                              $$.size_ptr_list = 0;
+                           }
+
 declaration_element : ID declaration_affectation
                     {  
                          SymbolTableElement *l = lookup_variable(symbol_table, $1, current_scope, VARIABLE, 1);
@@ -650,6 +718,10 @@ type : INT     {$$ = $1;}
      | FLOAT   {$$ = $1;}
      | MATRIX  {$$ = $1;}
 
+/* type_function : type {$$ = $1;} */
+              /* | VOID {$$ = $1;} */
+
+// faire result et cant call main
 call : ID '(' parameter_list ')'
      {
           SymbolTableElement *id = lookup_function(symbol_table, $1);
@@ -748,6 +820,28 @@ call : ID '(' parameter_list ')'
                {
                     semantic_error("function \"%s\" not declared", $1);
                }
+
+               if(id->attribute.function.nb_parameters != $3.size_ptr_list)
+               {
+                    semantic_error("number of parameters not matching");
+               }
+
+               for(int i=0;i<$3.size_ptr_list;i++)
+               {
+                    // verification de la validité des parametres
+                    if(id->attribute.function.parameters[i]->class != $3.ptr_list[i]->class)
+                    {
+                         // on peut avoir des constante dans l'appel
+                         if(!((id->attribute.function.parameters[i]->class == CONSTANT && $3.ptr_list[i]->class == VARIABLE) || (id->attribute.function.parameters[i]->class == VARIABLE && $3.ptr_list[i]->class == CONSTANT)))
+                              semantic_error("parameter %d not matching", i);
+                    }
+                    if(id->attribute.function.parameters[i]->type != $3.ptr_list[i]->type)
+                    {
+                         semantic_error("parameter %d type not matching", i);
+                    }
+               }
+               
+               gen_quad_function(code, K_CALL, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
           }
      }
 
@@ -755,10 +849,6 @@ parameter : expression
           {
                $$.ptr = $1.ptr;
                $$.by_address = $1.by_address;
-
-               // inutile
-               if($1.by_address == MATRIX)
-                    $$.by_address = FLOAT;
           }
           | STRING
           {
@@ -766,32 +856,37 @@ parameter : expression
                // on ne modifie pas adress car on ne stocke pas les strings dans la pile
           }
 
-parameter_list : parameter ',' parameter_list
+parameter_list : parameter_list ',' parameter
                {
-                    /*if($3.size_ptr_list == $3.capacity_ptr_list)
+                    if($1.size_ptr_list + 1 >= $1.capacity_ptr_list)
                     {
-                         $3.capacity_ptr_list *= 2;
-                         $3.ptr_list = realloc($3.ptr_list, $3.capacity_ptr_list*sizeof(SymbolTableElement *));
-                         if($3.ptr_list == NULL)
+                         $$.capacity_ptr_list = $1.capacity_ptr_list*2;
+                         $$.ptr_list = realloc($1.ptr_list, $$.capacity_ptr_list*sizeof(SymbolTableElement*));
+                         $$.by_address_list = realloc($1.by_address_list, $$.capacity_ptr_list*sizeof(__uint32_t));
+                         if($$.ptr_list == NULL || $$.by_address_list == NULL)
                          {
-                              printf("realloc failed\n");
+                              printf("Error realloc in parameter_list\n");
                               exit(1);
                          }
                     }
-                    $3.ptr_list[$3.size_ptr_list] = $1.ptr;
-                    $3.size_ptr_list++;
-                    $$.ptr_list = $3.ptr_list;
-                    $$.size_ptr_list = $3.size_ptr_list;
-                    $$.capacity_ptr_list = $3.capacity_ptr_list;*/
+                    else
+                    {
+                         $$.capacity_ptr_list = $1.capacity_ptr_list;
+                         $$.ptr_list = $1.ptr_list;
+                         $$.by_address_list = $1.by_address_list;
+                    }
+                    $$.ptr_list[$1.size_ptr_list] = $3.ptr;
+                    $$.by_address_list[$1.size_ptr_list] = $3.by_address;
+                    $$.size_ptr_list = $1.size_ptr_list+1;
                }
                | parameter
                {     
-                    $$.capacity_ptr_list = 4;
+                    $$.capacity_ptr_list = 1;
                     $$.ptr_list = malloc($$.capacity_ptr_list*sizeof(SymbolTableElement *));
                     $$.by_address_list = malloc($$.capacity_ptr_list*sizeof(__uint32_t));
                     if($$.ptr_list == NULL || $$.by_address_list == NULL)
                     {
-                         printf("malloc failed\n");
+                         printf("Error malloc in parameter_list\n");
                          exit(1);
                     }
                     $$.ptr_list[0] = $1.ptr;

@@ -39,7 +39,6 @@ FLOAT_CONST {DIGIT}*"."{DIGIT}+
 "while"         { ret_print("KEYWORD_WHILE");   return WHILE;}
 "for"           { ret_print("KEYWORD_FOR");     return FOR;}
 "return"        { ret_print("KEYWORD_RETURN");  return RETURN;}
-"main"          { ret_print("KEYWORD_MAIN");    return MAIN;}
 
 "int"           { ret_print("KEYWORD_INT");     yylval.type_val = INT;   return INT;}
 "float"         { ret_print("KEYWORD_FLOAT");   yylval.type_val = FLOAT; return FLOAT;}

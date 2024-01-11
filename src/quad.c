@@ -94,7 +94,7 @@ void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, Symb
     c->nextquad++;
 }
 
-void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters, __uint32_t *by_address)
+void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement *function, SymbolTableElement **parameters, __uint32_t nb_parameters, __uint32_t *by_address)
 {
     if(c->nextquad == c->capacity)
         code_grow(&c);
@@ -277,7 +277,7 @@ void quad_dump(Quad *q)
             break;
         case K_CALL_PRINT:
         case K_CALL_PRINTF:
-        case K_CALL_PRINTMAT:
+        case K_CALL:
             printf("%s (", q->sym2->attribute.function.name);
             for(int i = q->nb_parameters - 1; i >= 0; i--)
             {
@@ -286,6 +286,9 @@ void quad_dump(Quad *q)
                     printf(", ");
             }
             printf(")");
+            break;
+        case K_END_FUNCTION:
+            printf("}");
             break;
         case K_COPY:
             symbol_dump(q->sym1, q->by_adress[0]);

@@ -17,94 +17,34 @@ print(a);
 print(1);
 printf("\n");*/
 
-/*int y;
-int re()
+int re(int a, int b)
 {
+    int r=5+7;
+    print(r);
 }
-int t;
 
 int main()
 {
-    int a;
+    re(1, 2);
+}
+    /*int a;
+    matrix A[1];
     if(1)
     {
         if(2)
         {
             int b;
+            re(1, b);
+            // printmat(A);
         }
     }
     int c;
 }
-int g;*/
+int g;
 
-int main() {
-    for (int i = 0; i < 100; i++) {
-        printf("Let's go!\n");
-    }
 
-    // Un cout pour chaque fruit
-    int fraises = 3;
-    int bananes = 2;
-    int pommes = 1;
-    int poires = 1;
-    int peches = 2;
 
-    int total_argent = 100;
-    int total_fruits = 0;
 
-    int choix = 3;
-    while (total_argent > 3)
-    {
-        choix = (choix + 1) % 5;
-        if(choix == 0)
-        {
-            if (total_argent >= fraises)
-            {
-                total_fruits = total_fruits+1;
-                total_argent = total_argent - fraises;   
-            }
-        }
-        else if (choix == 1)
-        {
-            if (total_argent >= bananes)
-            {
-                total_fruits = total_fruits+1;
-                total_argent = total_argent - bananes;
-            }
-        }
-        else if (choix == 2)
-        {
-            if (total_argent >= pommes)
-            {
-                total_fruits = total_fruits+1;
-                total_argent = total_argent - pommes;
-            }
-        }
-        else if (choix == 3)
-        {
-            if (total_argent >= poires)
-            {
-                total_argent = total_argent - poires;
-                total_fruits++;
-            }
-        }
-        else if (choix == 4)
-        {
-            if (total_argent >= peches)
-            {
-                total_argent = total_argent - peches;
-                total_fruits++;
-            }
-        }
-    }
-
-    print(total_fruits);
-    printf("\n");
-    print(total_argent);
-    printf("\n");
-
-    printf("C'est quoi ce programme de golmon ?\n");
-}
     /*for (int i = 0; i < 10; i++)
     {
         printf("Hello, world!\n");

@@ -15,6 +15,8 @@
 // Chaque élément contient un pointeur vers un élément de la table des symboles
 // et un pointeur vers le prochain element de meme nom mais de portée inférieure
 
+typedef enum {VARIABLE, ARRAY, CONSTANT, FUNCTION, STR} Class;
+
 typedef struct Constant
 {
     __uint32_t int_value;
@@ -30,8 +32,9 @@ typedef struct Variable
 typedef struct Function
 {
     char name[MAXTOKENLEN];
+    __int32_t label;
     __uint32_t nb_parameters;
-    __uint32_t *parameters_type;
+    struct SymbolTableElement **parameters; // pour pouvoir differencier les variables des tableaux
     __uint32_t *by_adress;
 }Function;
 
@@ -51,7 +54,7 @@ typedef struct Array
 // struct that represents a list node
 typedef struct SymbolTableElement
 {
-    enum {VARIABLE, ARRAY, CONSTANT, FUNCTION, STR} class;
+    Class class;
     __uint32_t type;
 
     union Attribute{
@@ -87,7 +90,7 @@ SymbolTable* add_next_symbol_table(SymbolTable **s, __uint32_t scope, __uint32_t
 SymbolTableElement *get_symbol(SymbolTable *s, __uint32_t i);
 
 SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __uint32_t size[2], __int32_t adress, __uint32_t scope);
-SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t nb_paramaters, __uint32_t *parameters_type);
+SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t nb_paramaters, SymbolTableElement **parameters, __int32_t label);
 SymbolTableElement *insert_constant(SymbolTable **s, Constant constant, __uint32_t type);
 SymbolTableElement *insert_string(SymbolTable *s, const char *string, __uint32_t adress);
 

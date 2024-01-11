@@ -5,8 +5,8 @@
 /* QUADRUPLETS ET CODE */
 
 typedef struct Quad {
-  enum quad_kind {BOP_PLUS, BOP_MINUS, BOP_MULT, BOP_DIV, BOP_MOD, UOP_MINUS, K_COPY, 
-                  K_CALL_PRINT, K_CALL_PRINTF, K_CALL_PRINTMAT, K_CALL, K_GOTO, K_IF, K_IFNOT, K_IFLT, K_IFGT, K_IFLE, K_IFGE} kind;
+  enum quad_kind {BOP_PLUS, BOP_MINUS, BOP_MULT, BOP_DIV, BOP_MOD, UOP_MINUS, K_COPY, K_END_FUNCTION,
+                  K_CALL_PRINT, K_CALL_PRINTF, K_CALL, K_GOTO, K_IF, K_IFNOT, K_IFLT, K_IFGT, K_IFLE, K_IFGE} kind;
   SymbolTableElement *sym1; // result
   SymbolTableElement *sym2; // operand 1 or function 
   SymbolTableElement *sym3; // operand 2 or NULL
@@ -19,13 +19,14 @@ typedef struct Quad {
   __uint32_t *by_address_list;   //used for functions to tell if the parameter is passed by adress
 
   __int32_t branch_label;
-  __int32_t label;      // tell if the quad is preceded by a label, we store a number to facilitate the generation of the label
+  __int32_t label;              // tell if the quad is preceded by a label, we store a number to facilitate the generation of the label
   
 }Quad;
 
 typedef struct QuadTable{
     __uint32_t capacity;
     __uint32_t nextquad;
+    __uint32_t mainquad;
     Quad * quads;
 }QuadTable;
 

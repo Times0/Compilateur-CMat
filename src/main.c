@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
     // Afficher la table des symboles
     if (tos_flag || 1)
-    {}// symbol_table_dump(symbol_table, stdout);
+        symbol_table_dump(symbol_table, stdout);
     else if (!(yyout = fopen("symbol_table.txt", "w+")))
     {
         perror("symbol_table.txt");

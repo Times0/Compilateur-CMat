@@ -48,23 +48,28 @@ void gencode_mips(QuadTable *code, FILE * f)
         printf("main is undefined\n");
         exit(1);
     }
-    else if(mainn->type != INT)
-    {
-        printf("main should have int type\n");
-        exit(1);
-    }
 
     
     // main 
     fprintf (f, ".globl main\n");
     fprintf (f, ".text\n");
 
+    // on parcourt les quads avant le main
+    for (size_t i = 0; i < code->mainquad; i++)
+    {
+        if(&(code->quads[i]) != NULL) // Peut etre inutile
+        {
+            gencode_mips_quad(f, &(code->quads[i]));
+        }
+    }
+
     fprintf (f, "main:\n"); // temporaire
+    code->quads[code->mainquad].label=-1;
     fprintf (f, "\tmove $fp, $sp\n");
 
 
     // parcours de tous les quads apres le main
-    for (size_t i = 0; i < code->nextquad; i ++)
+    for (size_t i = code->mainquad; i < code->nextquad; i ++)
     {
         if(&(code->quads[i]) != NULL) // Peut etre inutile
         {
@@ -109,9 +114,14 @@ void gencode_mips_quad(FILE *f, Quad *quad)
             break;
         case K_CALL_PRINT:
         case K_CALL_PRINTF:
-        case K_CALL_PRINTMAT:
             gencode_print(f, quad);
             break;
+        case K_CALL:
+            gencode_call(f, quad);
+            break;
+        case K_END_FUNCTION:
+            gencode_call(f, quad);
+        break;
         case K_GOTO:
         case K_IF:
         case K_IFNOT:
@@ -521,6 +531,16 @@ void gencode_print(FILE *f, Quad *quad)
         fprintf(f, "\tsb $t%d, %d($a0)\n", current_register_int, char_ptr);
         fprintf(f, "\tsyscall\n");
     }
+}
+
+void gencode_call(FILE *f, Quad *quad)
+{
+    if(quad->kind == K_END_FUNCTION)
+    {
+        fprintf(f, "\tjr $ra\n");
+        return;
+    }
+    fprintf(f, "\tjal %s\n", generate_label_with_nb(quad->sym2->attribute.function.label));
 }
 
 void gencode_goto(FILE *f, Quad *quad)
