@@ -86,6 +86,7 @@ typedef struct SymbolTable
 void init_symbol_table(SymbolTable **s, __uint32_t scope);
 SymbolTable *get_last_symbol_table(SymbolTable *s);
 SymbolTable *get_symbol_table_by_scope(SymbolTable *s, __uint32_t scope);
+SymbolTableElement *get_function_by_scope(SymbolTable *s, __uint32_t scope);
 void push_predefined_functions(SymbolTable **s);
 SymbolTable* add_next_symbol_table(SymbolTable **s, __uint32_t scope, __uint32_t parent_symbol_table_scope);
 SymbolTableElement *get_symbol(SymbolTable *s, __uint32_t i);

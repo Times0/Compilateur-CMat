@@ -101,6 +101,30 @@ SymbolTable *get_symbol_table_by_scope(SymbolTable *s, __uint32_t scope)
 	return tmp;
 }
 
+SymbolTableElement *get_function_by_scope(SymbolTable *s, __uint32_t scope)
+{
+	SymbolTable *tmp = get_symbol_table_by_scope(s, scope);
+	
+	// on remonte jusqu'a trouver la fonction
+	while(tmp->scope != 0)
+	{
+		if(tmp->previous != NULL && tmp->previous->scope == 0)
+			break;
+		tmp = tmp->previous;
+	}
+
+	// on cherche la fonction dans la table de symbole
+	SymbolTableElement *l = s->first_symbol;
+	for(__uint32_t i = 0; i < s->size; i++)
+	{
+		if(l->class == FUNCTION)
+			if(l->attribute.function.scope == tmp->scope)
+				return l;
+		l = l->next;
+	}
+	return NULL;
+}
+
 SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __uint32_t size[2], __int32_t adress, __uint32_t scope)
 {
 	SymbolTableElement *l = lookup_variable(s, name, scope, class, 1);

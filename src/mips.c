@@ -597,9 +597,13 @@ void gencode_call(FILE *f, Quad *quad)
 
     if(quad->kind == K_RETURN)
     {
-        load_operator(f, quad->sym1, quad->by_adress[0], 1);
+        // printf("%s\n", quad->sym2->attribute.function.name);
+        current_fp_type[quad->sym1->attribute.variable.adress] = FLOAT;
+        quad->sym1->type = INT;
+        load_operator(f, quad->sym1, 0, 1);
         SymbolTableElement t;
         t.attribute.variable.adress = -1;
+        current_fp_type[1] = quad->sym1->type;
         t.class = quad->sym1->class;
         t.type = quad->sym1->type;
         store_result(f, &t, 0, 0);
@@ -638,8 +642,18 @@ void gencode_call(FILE *f, Quad *quad)
 
     fprintf(f, "\tmove $fp, $sp\n");
     fprintf(f, "\tjal %s\n", generate_label_with_nb(quad->sym2->attribute.function.label));
+    // on sauvegarde le resultat
+    SymbolTableElement t;
+    t.attribute.variable.adress = -1;
+    t.class = VARIABLE;
+    
+    load_operator(f, &t, 0, 0);
     fprintf(f, "\taddi $sp, $sp, %d\n", 4*(sp_offset+quad->nb_variables));
     fprintf(f, "\tmove $fp, $sp\n");
+
+    // on le sauvegarde dans la stack
+    store_result(f, quad->sym1, 0, 0);
+
 }
 
 void gencode_goto(FILE *f, Quad *quad)

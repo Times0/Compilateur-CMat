@@ -30,6 +30,11 @@ int re(float a, int b)
     return a*b;
 }
 
+int tr()
+{
+    return 1;   
+}
+
 int main()
 {
     float a=5.1;

@@ -289,9 +289,10 @@ declaration_function : type ID
 
                          $$.ptr = NULL;
                      }
+
 return : RETURN expression
        {
-          gen_quad_function(code, K_RETURN, $2.ptr, NULL, NULL, 0, NULL, 0);
+          gen_quad_function(code, K_RETURN, $2.ptr, get_function_by_scope(symbol_table, current_scope), NULL, 0, NULL, current_scope);
           code->quads[code->nextquad-1].by_adress[0] = $2.by_address;
        }
 
