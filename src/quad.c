@@ -287,6 +287,9 @@ void quad_dump(Quad *q)
             }
             printf(")");
             break;
+        case K_BEGIN_FUNCTION:
+            printf("{");
+            break;
         case K_END_FUNCTION:
             printf("}");
             break;

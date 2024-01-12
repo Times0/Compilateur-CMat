@@ -17,15 +17,22 @@ print(a);
 print(1);
 printf("\n");*/
 
-int re(int a, int b)
+int re(float a, int b)
 {
-    int r=5+7;
-    print(r);
+    print(a);
+    // printf("\n");
+    print(b);
+    // printf("\n");
+    
+        // re(a+1, 0);
 }
 
 int main()
 {
-    re(1, 2);
+    float a =5.1;
+    re(a, 3);
+    // int a=1;
+    // int b=1;
 }
     /*int a;
     matrix A[1];

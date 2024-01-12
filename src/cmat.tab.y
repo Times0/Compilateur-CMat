@@ -20,6 +20,7 @@ extern SymbolTable *symbol_table;
  SymbolTable *next_symbol_table = NULL;
  __uint32_t lineno = 1;
 __uint32_t adress = 0;                  // donne la prochaine adresse dans la stack
+__uint32_t function_adress = 0;         // donne le numero de parametre
 __uint32_t logical_expression_flag = 0; // permet d'indiquer si on se situe dans une expression logique
 __uint32_t logical_id_flag = 0;
 
@@ -243,8 +244,15 @@ statement_for : FOR {open_scope();} M '(' declaration_or_assign ';' {logical_exp
 declaration_or_assign : declaration
                       | assign
 
-declaration_function : type ID {if(current_scope != 0){semantic_error("can't declare function inside a block");} open_scope();} '(' declaration_parameter_list ')' M block
+declaration_function : type ID 
                      {
+                         if(current_scope != 0)
+                              semantic_error("can't declare function inside a block");
+                         open_scope();
+                     } 
+                     '(' declaration_parameter_list ')' M
+                     {
+                         // doit etre ici pour mettre la recursivité
                          SymbolTableElement *fun = lookup_function(symbol_table, "main");
                          if(fun != NULL)
                          {
@@ -252,7 +260,14 @@ declaration_function : type ID {if(current_scope != 0){semantic_error("can't dec
                          }
 
                          fun = insert_function(&symbol_table, $2, $1, $5.size_ptr_list, $5.ptr_list, $7.quad);
-                         
+
+                         if(strcmp($2, "main"))
+                              gen_quad_function(code, K_BEGIN_FUNCTION, NULL, NULL, NULL, 0, NULL);
+                         function_adress=0;
+                     } 
+                     block
+                     {
+                         SymbolTableElement *fun = lookup_function(symbol_table, "main");
                          if(!strcmp($2, "main"))
                          {
                               if(fun->type != INT)
@@ -284,9 +299,10 @@ declaration_parameter : type ID
                          {
                               semantic_error("variable \"%s\" already declared in this scope", $2);
                          }
-                         
-                         $$.ptr = insert_variable(symbol_table, $2, $1, VARIABLE, (__uint32_t[]){1, 1}, adress, current_scope);
-                         adress++;
+
+                         $$.ptr = insert_variable(symbol_table, $2, $1, VARIABLE, (__uint32_t[]){1, 1}, -(function_adress+1), current_scope);
+                         function_adress++;
+
                       }
                       | type ID declaration_array
                       | type ID declaration_array declaration_array
@@ -341,7 +357,8 @@ declaration_element : ID declaration_affectation
                          // on met un type arbitraire quil faut changer apres
                          if(current_scope == 0)
                          {
-                              $$.ptr = insert_variable(symbol_table, $1, INT, VARIABLE, (__uint32_t[]){1, 1}, -1, current_scope);
+                              // $$.ptr = insert_variable(symbol_table, $1, INT, VARIABLE, (__uint32_t[]){1, 1}, -1, current_scope);
+                              semantic_error("global variables not allowed");
                          }
                          else
                          {
@@ -375,7 +392,8 @@ declaration_element : ID declaration_affectation
 
                          if(current_scope == 0)
                               // type arbitraire, on le change apres
-                              $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, 1}, -1, current_scope);
+                              // $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, 1}, -1, current_scope);
+                              semantic_error("global variables not allowed");
                          else
                          {
                               $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, 1}, adress, current_scope);
@@ -415,7 +433,8 @@ declaration_element : ID declaration_affectation
 
                          if(current_scope == 0)
                               // type arbitraire, on le change apres
-                              $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, $3}, -1, current_scope);
+                              // $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, $3}, -1, current_scope);
+                              semantic_error("global variables not allowed");
                          else
                          {
                               $$.ptr = insert_variable(symbol_table, $1, INT, ARRAY, (__uint32_t[]){$2, $3}, adress, current_scope);
@@ -839,6 +858,7 @@ call : ID '(' parameter_list ')'
                     {
                          semantic_error("parameter %d type not matching", i);
                     }
+                    // gen_quad(code, K_COPY, id->attribute.function.parameters[i], $3.ptr_list[i], NULL, (__uint32_t[3]){0, 0, 0});
                }
                
                gen_quad_function(code, K_CALL, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
