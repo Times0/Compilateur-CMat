@@ -143,10 +143,10 @@ instruction_list: instruction_list M instruction   { complete_list($1.next_list,
 
 instruction : declaration ';'           { $$.next_list = create_list(-1);}      // declaration variable
             | declaration_function
-            | call ';'                  { $$.next_list = create_list(-1);}
             | assign ';'                { $$.next_list = create_list(-1);}
             | expression ';'            { $$.next_list = create_list(-1);}
             | statement
+            | return ';'                { $$.next_list = create_list(-1);}
 
 M : %empty { $$.quad = code->nextquad; }
 
@@ -289,6 +289,11 @@ declaration_function : type ID
 
                          $$.ptr = NULL;
                      }
+return : RETURN expression
+       {
+          gen_quad_function(code, K_RETURN, $2.ptr, NULL, NULL, 0, NULL, 0);
+          code->quads[code->nextquad-1].by_adress[0] = $2.by_address;
+       }
 
 // redondance de code  + a faire
 declaration_parameter : type ID
@@ -862,8 +867,16 @@ call : ID '(' parameter_list ')'
                     }
                     // gen_quad(code, K_COPY, id->attribute.function.parameters[i], $3.ptr_list[i], NULL, (__uint32_t[3]){0, 0, 0});
                }
-     
-               gen_quad_function(code, K_CALL, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list, get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable);
+
+               if(id->type != VOID)
+               {
+                    $$.ptr = newtemp(symbol_table, VARIABLE, id->type, adress, (__uint32_t[2]){0, 0});
+                    gen_quad_function(code, K_CALL, $$.ptr, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list, get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable);
+                    adress++;
+               }
+               else
+                    gen_quad_function(code, K_CALL, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list, get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable);
+
           }
      }
 
@@ -1438,6 +1451,11 @@ primary_expression : ID
                          }
                          $$.ptr = $2.ptr;
                          $$.by_address = $2.by_address;
+                    }
+                    | call
+                    {
+                         $$.ptr = $1.ptr;
+                         $$.by_address = 0;
                     }
                     
 

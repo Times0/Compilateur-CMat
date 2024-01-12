@@ -19,25 +19,28 @@ printf("\n");*/
 //copier les parametres
 int re(float a, int b)
 {
-    print(a);
+    /*print(a);
     printf("\n");
     print(b);
     printf("\n");
-    print(a*b);
-    printf("\n");
+    /*print(a*b);
+    printf("\n");*/
     
-        // re(a+1, 0);
+    // re(a, 0);
+    return a*b;
 }
 
 int main()
 {
     float a=5.1;
     int b=3;
+    // a+b+1;
+    // matrix A[3]={11, 21, 31};
     
-    re(a, b);
-    print(a);
-    printf("\n");
-    print(b);
+    int c = re(a, b);
+    print(c);
+    // printf("\n");
+    // print(b);
     // int a=1;
     // int b=1;
 }

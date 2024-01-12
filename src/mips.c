@@ -119,6 +119,7 @@ void gencode_mips_quad(FILE *f, Quad *quad)
         case K_CALL:
         case K_BEGIN_FUNCTION:
         case K_END_FUNCTION:
+        case K_RETURN:
             gencode_call(f, quad);
         break;
         case K_GOTO:
@@ -532,6 +533,8 @@ void gencode_print(FILE *f, Quad *quad)
     }
 }
 
+
+// stack des fp
 void gencode_call(FILE *f, Quad *quad)
 {
     // début de fonction
@@ -592,6 +595,17 @@ void gencode_call(FILE *f, Quad *quad)
         return;
     }
 
+    if(quad->kind == K_RETURN)
+    {
+        load_operator(f, quad->sym1, quad->by_adress[0], 1);
+        SymbolTableElement t;
+        t.attribute.variable.adress = -1;
+        t.class = quad->sym1->class;
+        t.type = quad->sym1->type;
+        store_result(f, &t, 0, 0);
+        return;
+    }
+
     // appel de fonction
     //calcul de la taille des parametres
     __uint32_t sp_offset=0;
@@ -602,7 +616,7 @@ void gencode_call(FILE *f, Quad *quad)
         else if(quad->function_parameters[i]->class == ARRAY)
             sp_offset+=quad->function_parameters[i]->attribute.array.size[0]*quad->function_parameters[i]->attribute.array.size[1];
     }
-    // printf("%d\n", get_symbol_table_by_scope(symbol_table, quad->sym2->attribute.function.scope)->scope);
+    
     fprintf(f, "\taddi $sp, $sp, %d\n", -4*(sp_offset+quad->nb_variables));
 
     //chargement des parametres
@@ -621,9 +635,9 @@ void gencode_call(FILE *f, Quad *quad)
         store_result(f, t, 0, 1);
         free(t);
     }
+
     fprintf(f, "\tmove $fp, $sp\n");
     fprintf(f, "\tjal %s\n", generate_label_with_nb(quad->sym2->attribute.function.label));
-
     fprintf(f, "\taddi $sp, $sp, %d\n", 4*(sp_offset+quad->nb_variables));
     fprintf(f, "\tmove $fp, $sp\n");
 }

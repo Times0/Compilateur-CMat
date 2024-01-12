@@ -279,7 +279,12 @@ void quad_dump(Quad *q)
         case K_CALL_PRINT:
         case K_CALL_PRINTF:
         case K_CALL:
-            printf("%s (", q->sym2->attribute.function.name);
+            if(q->sym1 != NULL)
+            {
+                symbol_dump(q->sym1, q->by_adress[0]);
+                printf(" = ");
+            }
+            printf("%s(", q->sym2->attribute.function.name);
             for(int i = q->nb_parameters - 1; i >= 0; i--)
             {
                 symbol_dump(q->function_parameters[i], q->by_address_list[i]);
@@ -287,6 +292,10 @@ void quad_dump(Quad *q)
                     printf(", ");
             }
             printf(")");
+            break;
+        case K_RETURN:
+            printf("return ");
+            symbol_dump(q->sym1, q->by_adress[0]);
             break;
         case K_BEGIN_FUNCTION:
             printf("{");
