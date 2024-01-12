@@ -15,7 +15,7 @@ void gencode_print(FILE *f, Quad *quad);
 void gencode_call(FILE *f, Quad *quad);
 void gencode_goto(FILE *f, Quad *quad);
 void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __uint32_t load_address);
-void store_result (FILE * f, SymbolTableElement *res, __uint32_t offset_res);
+void store_result (FILE * f, SymbolTableElement *res, __uint32_t offset_res, __uint32_t is_parameter);
 __uint32_t convert_int_to_float(SymbolTableElement *s);
 __uint32_t convert_float_to_int(SymbolTableElement *s);
 

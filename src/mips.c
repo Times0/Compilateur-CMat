@@ -168,14 +168,14 @@ void gencode_arith_unary_op (FILE * f, Quad *quad)
         }
         
         if(quad->by_adress[0] == 0)
-            store_result(f, quad->sym1, 0);
+            store_result(f, quad->sym1, 0, 0);
         else
         {
             SymbolTableElement t;
             t.type = quad->by_adress[0];
             
             current_register_int--;
-            store_result (f, &t, quad->sym1->attribute.constant.int_value);   
+            store_result (f, &t, quad->sym1->attribute.constant.int_value, 0);   
         }
     }
 
@@ -299,7 +299,7 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         else if(quad->sym1->type == FLOAT)
             current_register_float++;
 
-        store_result(f, quad->sym1, 0);
+        store_result(f, quad->sym1, 0, 0);
 
         if(quad->sym1->type == INT)
             current_register_int-=2;
@@ -335,7 +335,7 @@ void gencode_arith_binary_op (FILE * f, Quad *quad)
         else
             current_register_int--;
     
-        store_result (f, &t, quad->sym1->attribute.constant.int_value);
+        store_result (f, &t, quad->sym1->attribute.constant.int_value, 0);
         
         current_register_float -=2;
     }
@@ -372,7 +372,7 @@ void gencode_affect (FILE * f, Quad *quad)
                 type_change_sym2 = convert_float_to_int(quad->sym2);
         
                 load_operator(f, quad->sym2, 0, 0);
-                store_result (f, quad->sym1, 0);
+                store_result (f, quad->sym1, 0, 0);
 
                 if(type_change_sym2)
                     convert_int_to_float(quad->sym2);
@@ -380,7 +380,7 @@ void gencode_affect (FILE * f, Quad *quad)
             else //si le deuxieme élément est une référence
             {
                 load_operator(f, quad->sym2, quad->by_adress[1], 1);
-                store_result (f, quad->sym1, 0);
+                store_result (f, quad->sym1, 0, 0);
             }
         }
         else if(quad->sym1->type == FLOAT)
@@ -390,7 +390,7 @@ void gencode_affect (FILE * f, Quad *quad)
                 type_change_sym2 = convert_int_to_float(quad->sym2);
         
                 load_operator(f, quad->sym2, 0, 0);
-                store_result (f, quad->sym1, 0);
+                store_result (f, quad->sym1, 0, 0);
         
                 if(type_change_sym2)
                     convert_float_to_int(quad->sym2);
@@ -398,7 +398,7 @@ void gencode_affect (FILE * f, Quad *quad)
             else
             {
                 load_operator(f, quad->sym2, quad->by_adress[1], 1);
-                store_result (f, quad->sym1, 0);
+                store_result (f, quad->sym1, 0, 0);
             }
         }
     }
@@ -416,7 +416,7 @@ void gencode_affect (FILE * f, Quad *quad)
             load_operator(f, quad->sym2, quad->by_adress[1], 1); // le 4eme parametre indique si on charge la valeur pointé par l'adresse ou seulement l'addresse
             load_operator(f, quad->sym1, quad->by_adress[0], 0);
             
-            store_result (f, &t, quad->sym1->attribute.constant.int_value);
+            store_result (f, &t, quad->sym1->attribute.constant.int_value, 0);
 
             // if(quad->by_adress[1])
                 // current_register_int--;
@@ -431,7 +431,7 @@ void gencode_affect (FILE * f, Quad *quad)
             load_operator(f, quad->sym2, quad->by_adress[1], 1);
             load_operator(f, quad->sym1, quad->by_adress[0], 0);
             
-            store_result (f, &t, quad->sym1->attribute.constant.int_value);
+            store_result (f, &t, quad->sym1->attribute.constant.int_value, 0);
 
             if(type_change_sym2)
                 convert_int_to_float(quad->sym2);
@@ -602,7 +602,8 @@ void gencode_call(FILE *f, Quad *quad)
         else if(quad->function_parameters[i]->class == ARRAY)
             sp_offset+=quad->function_parameters[i]->attribute.array.size[0]*quad->function_parameters[i]->attribute.array.size[1];
     }
-    fprintf(f, "\taddi $sp, $sp, %d\n", -4*sp_offset);
+    // printf("%d\n", get_symbol_table_by_scope(symbol_table, quad->sym2->attribute.function.scope)->scope);
+    fprintf(f, "\taddi $sp, $sp, %d\n", -4*(sp_offset+quad->nb_variables));
 
     //chargement des parametres
     for(int i=0;i<quad->nb_parameters;i++)
@@ -617,12 +618,14 @@ void gencode_call(FILE *f, Quad *quad)
         t->class = VARIABLE;
         t->type = quad->function_parameters[i]->type;
         t->attribute.variable.adress=-(i+1);
-        store_result(f, t, 0);
+        store_result(f, t, 0, 1);
         free(t);
     }
-
+    fprintf(f, "\tmove $fp, $sp\n");
     fprintf(f, "\tjal %s\n", generate_label_with_nb(quad->sym2->attribute.function.label));
-    fprintf(f, "\tmove $sp, $fp\n");
+
+    fprintf(f, "\taddi $sp, $sp, %d\n", 4*(sp_offset+quad->nb_variables));
+    fprintf(f, "\tmove $fp, $sp\n");
 }
 
 void gencode_goto(FILE *f, Quad *quad)
@@ -839,8 +842,12 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
     }
 }
 
-void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
+void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress, __uint32_t is_parameter)
 {
+    char letter ='f';
+    if(is_parameter)
+        letter='s';
+
     // si stockage classique
     if(adress == 0)
     {
@@ -848,21 +855,16 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
         {
             if(res->type == INT)
             {
-                /*if(res->attribute.variable.adress == -1 && res->attribute.variable.name[0] != '\0')
+                /*if(res->attribute.variable.adress <0)
                 {
-                    // get the address of the variable
-                    fprintf (f, "\tla $t%d, %s\n", current_register_int, res->attribute.variable.name);
-                    // save the value in this address
-                    fprintf (f, "\tsw $t%d, 0($t%d)\n", current_register_int - 1, current_register_int);
+                    fprintf(f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, 4 * (res->attribute.variable.adress + 1));
+                    current_fp_type[-res->attribute.variable.adress] = res->type;
                     current_register_int--;
                 }
                 else*/
                 {
-                    fprintf(f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, -4 * (res->attribute.variable.adress + 1));
-                    if(res->attribute.variable.adress >= 0)
-                        current_fp_type[res->attribute.variable.adress] = res->type;
-                    // else // dans le cas des fonctions, les adresse sont négatives
-                        // current_fp_type[-res->attribute.variable.adress] = res->type;
+                    fprintf(f, "\tsw $t%d, %d($%cp)\n", current_register_int - 1, -4 * (res->attribute.variable.adress + 1), letter);
+                    current_fp_type[res->attribute.variable.adress] = res->type;
                     current_register_int--;
                 }
             }
@@ -879,7 +881,7 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
                 }
                 else*/
                 {
-                    fprintf (f, "\ts.s $f%d, %d($fp)\n", current_register_float - 1, -4 * (res->attribute.variable.adress + 1));
+                    fprintf (f, "\ts.s $f%d, %d($%cp)\n", current_register_float - 1, -4 * (res->attribute.variable.adress + 1), letter);
                     if(res->attribute.variable.adress >= 0)
                         current_fp_type[res->attribute.variable.adress] = res->type;
                     // else // dans le cas des fonctions, les adresse sont négatives

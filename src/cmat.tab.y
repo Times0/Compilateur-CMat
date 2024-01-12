@@ -259,9 +259,9 @@ declaration_function : type ID
                               semantic_error("function is already declared");
                          }
 
-                         fun = insert_function(&symbol_table, $2, $1, $5.size_ptr_list, $5.ptr_list, $7.quad);
+                         fun = insert_function(&symbol_table, $2, $1, $5.size_ptr_list, $5.ptr_list, $7.quad, current_scope);
 
-                         gen_quad_function(code, K_BEGIN_FUNCTION, NULL, fun, $5.ptr_list, $5.size_ptr_list, $5.by_address_list);
+                         gen_quad_function(code, K_BEGIN_FUNCTION, NULL, fun, $5.ptr_list, $5.size_ptr_list, $5.by_address_list, 0);
                          function_adress=0;
                      } 
                      block
@@ -285,7 +285,7 @@ declaration_function : type ID
                          // permet de savoir que l'on fini une fonction 
                          // pas pour main
                          if(strcmp($2, "main"))
-                              gen_quad_function(code, K_END_FUNCTION, NULL, NULL, NULL, 0, NULL);
+                              gen_quad_function(code, K_END_FUNCTION, NULL, NULL, NULL, 0, NULL, 0);
 
                          $$.ptr = NULL;
                      }
@@ -300,6 +300,9 @@ declaration_parameter : type ID
                          }
 
                          $$.ptr = insert_variable(symbol_table, $2, $1, VARIABLE, (__uint32_t[]){1, 1}, -(function_adress+1), current_scope);
+                         
+                         // les parametres ne sont pas des variables locales
+                         get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable--;
                          function_adress++;
 
                       }
@@ -361,7 +364,7 @@ declaration_element : ID declaration_affectation
                          }
                          else
                          {
-                              $$.ptr = insert_variable(symbol_table, $1, INT, VARIABLE, (__uint32_t[]){1, 1},adress, current_scope);
+                              $$.ptr = insert_variable(symbol_table, $1, INT, VARIABLE, (__uint32_t[]){1, 1}, adress, current_scope);
                               adress++;
                          }
                     
@@ -753,7 +756,7 @@ call : ID '(' parameter_list ')'
                {
                     semantic_error("print only takes int or float as argument");
                }
-               gen_quad_function(code, K_CALL_PRINT, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
+               gen_quad_function(code, K_CALL_PRINT, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list, 0);
           }
           else if(strcmp($1, "printf") == 0)
           {
@@ -765,7 +768,7 @@ call : ID '(' parameter_list ')'
                {
                     semantic_error("printf only takes one string as argument");
                }
-               gen_quad_function(code, K_CALL_PRINTF, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
+               gen_quad_function(code, K_CALL_PRINTF, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list, 0);
           }
           else if(strcmp($1, "printmat") == 0)
           {
@@ -822,13 +825,13 @@ call : ID '(' parameter_list ')'
 
                          list[0] = e;
                          by_address_list[0] = FLOAT;
-                         gen_quad_function(code, K_CALL_PRINT, NULL, print, list, 1, by_address_list);
+                         gen_quad_function(code, K_CALL_PRINT, NULL, print, list, 1, by_address_list, 0);
                          
                          // \t
-                         gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){t}, 1, (__uint32_t[]){0});
+                         gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){t}, 1, (__uint32_t[]){0}, 0);
                     }
                     // \n
-                    gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){n}, 1, (__uint32_t[]){0});
+                    gen_quad_function(code, K_CALL_PRINTF, NULL, printff, (SymbolTableElement **){n}, 1, (__uint32_t[]){0}, 0);
                }
                adress-=2;
           }
@@ -859,8 +862,8 @@ call : ID '(' parameter_list ')'
                     }
                     // gen_quad(code, K_COPY, id->attribute.function.parameters[i], $3.ptr_list[i], NULL, (__uint32_t[3]){0, 0, 0});
                }
-               
-               gen_quad_function(code, K_CALL, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list);
+     
+               gen_quad_function(code, K_CALL, NULL, id, $3.ptr_list, $3.size_ptr_list, $3.by_address_list, get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable);
           }
      }
 

@@ -94,7 +94,7 @@ void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, Symb
     c->nextquad++;
 }
 
-void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement *function, SymbolTableElement **parameters, __uint32_t nb_parameters, __uint32_t *by_address)
+void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement *function, SymbolTableElement **parameters, __uint32_t nb_parameters, __uint32_t *by_address, __int32_t nb_variables)
 {
     if(c->nextquad == c->capacity)
         code_grow(&c);
@@ -107,6 +107,7 @@ void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * resu
     q->nb_parameters = nb_parameters;
     q->by_address_list = by_address;
     c->nextquad++;
+    q->nb_variables = nb_variables; // on utilise label pour transmettre le nombre de variables locales declarees avant l'appel de la fonction
 }
 
 char* generate_label()

@@ -57,9 +57,9 @@ void push_predefined_functions(SymbolTable **s)
 	}
 	ll1[0] = l1;ll2[0] = l2;ll3[0] = l3;
 
-	insert_function(&symbol_table, "print", VOID, 1, ll1, -1);
-    insert_function(&symbol_table, "printf", VOID, 1, ll2, -1);
-	insert_function(&symbol_table, "printmat", VOID, 1, ll3, -1);
+	insert_function(&symbol_table, "print", VOID, 1, ll1, -1, -1);
+    insert_function(&symbol_table, "printf", VOID, 1, ll2, -1, -1);
+	insert_function(&symbol_table, "printmat", VOID, 1, ll3, -1, -1);
 	insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = 0.0f}, INT);
 	insert_constant(&symbol_table, (Constant){.int_value = 1, .float_value = 1.0f}, INT);
 	insert_constant(&symbol_table, (Constant){.int_value = 4, .float_value = 4.0f}, INT);
@@ -149,7 +149,7 @@ SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t
 	return l;
 }
 
-SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t nb_paramaters, SymbolTableElement **parameters, __int32_t label)
+SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t nb_paramaters, SymbolTableElement **parameters, __int32_t label, __uint32_t scope)
 {
 	SymbolTableElement *l = lookup_function(*s, name);
 	if (l == NULL)
@@ -182,6 +182,7 @@ SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_
 		l->class = FUNCTION;
 		l->type = type;
 		l->attribute.function.label = label;
+		l->attribute.function.scope = scope;
 		(*s)->size++;
 	}
 	return l;

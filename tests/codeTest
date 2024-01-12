@@ -17,12 +17,14 @@ print(1);
 printf("\n");*/
 
 //copier les parametres
-int re(int a, int b)
+int re(float a, int b)
 {
+    print(a);
+    printf("\n");
+    print(b);
+    printf("\n");
     print(a*b);
-    // printf("\n");
-    // print(b);
-    // printf("\n");
+    printf("\n");
     
         // re(a+1, 0);
 }
@@ -31,10 +33,11 @@ int main()
 {
     float a=5.1;
     int b=3;
-    a*b;
-    re(4, 3);
-    // printf("\n");
-    // print(a);
+    
+    re(a, b);
+    print(a);
+    printf("\n");
+    print(b);
     // int a=1;
     // int b=1;
 }
