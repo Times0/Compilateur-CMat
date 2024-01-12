@@ -1,8 +1,7 @@
 // Restrictions :   - segfault si on comple iun quad trop loin -> facilement corrigeable
-//                  - Faire les matrices globales
 //                  - Pas ff[a[0]]
 //                  - int = M[0]
-//                  - addition dans var decl
+
 
 // Tester :     - condition avec arrays
 
@@ -17,11 +16,12 @@ print(a);
 print(1);
 printf("\n");*/
 
-int re(float a, int b)
+//copier les parametres
+int re(int a, int b)
 {
-    print(a);
+    print(a*b);
     // printf("\n");
-    print(b);
+    // print(b);
     // printf("\n");
     
         // re(a+1, 0);
@@ -29,8 +29,12 @@ int re(float a, int b)
 
 int main()
 {
-    float a =5.1;
-    re(a, 3);
+    float a=5.1;
+    int b=3;
+    a*b;
+    re(4, 3);
+    // printf("\n");
+    // print(a);
     // int a=1;
     // int b=1;
 }

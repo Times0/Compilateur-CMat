@@ -15,7 +15,7 @@ extern SymbolTable *symbol_table;
 
 __uint32_t current_register_int = 0;        // registre pour les int
 __uint32_t current_register_float = 0;      // registre pour les float
-__uint32_t fp_type[MAXFPSIZE];              // tableau qui contient le type des variables du stack frame
+__uint32_t *current_fp_type;                // tableau qui contient le type des variables du stack frame
 
 
 void gencode_mips_global_variable(FILE * f, SymbolTable * s)
@@ -460,7 +460,7 @@ void gencode_print(FILE *f, Quad *quad)
             fprintf (f, "\tsyscall\n");
             current_register_float--;
         }
-        // Passage par valeur on doit l'evaluer apres car il peyt y avoir des conflits entre les 2 types
+        // Passage par valeur on doit l'evaluer apres car il peut y avoir des conflits entre les 2 types
         else if(quad->function_parameters[0]->type == INT)
         {
             load_operator(f, quad->function_parameters[0], quad->by_address_list[0], 1);
@@ -538,7 +538,7 @@ void gencode_call(FILE *f, Quad *quad)
     if(quad->kind == K_BEGIN_FUNCTION)
     {
         // sauvegarde des registres
-        for(int i=0;i<current_register_int;i++)
+        /*for(int i=0;i<current_register_int;i++)
         {
             SymbolTableElement *t = malloc(sizeof(SymbolTableElement));
             if(t == NULL)
@@ -565,8 +565,20 @@ void gencode_call(FILE *f, Quad *quad)
             t->attribute.variable.adress=i;
             // t->attribute.variable.name[0] = '\0';
             store_result(f, t, 0);
+        }*/
+
+        current_fp_type = malloc(sizeof(__uint32_t)*MAXFPSIZE);
+        if(current_fp_type == NULL)
+        {
+            printf("Error malloc in gencode_call\n");
+            exit(1);
         }
 
+        // renseignement des types
+        for(int i=0;i<quad->nb_parameters;i++)
+        {
+            current_fp_type[-quad->function_parameters[i]->attribute.variable.adress] = quad->function_parameters[i]->type;
+        }
 
         return;
     }
@@ -575,8 +587,8 @@ void gencode_call(FILE *f, Quad *quad)
     {
         //restaurer les registres
 
-
         fprintf(f, "\tjr $ra\n");
+        // free(current_fp_type);
         return;
     }
 
@@ -746,10 +758,9 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
         else if(elem->type == INT)
         {   
             // Pour charger un int, on le charge dans un registre float puis on le convertit en int
-            // si variable globale
-            /*if(elem->attribute.variable.adress == -1)
+            if(elem->attribute.variable.adress<0)
             {
-                if(fp_type[elem->attribute.variable.adress] == FLOAT)
+                if(current_fp_type[elem->attribute.variable.adress] == FLOAT)
                 {
                     fprintf (f, "\tl.s $f%d, %s\n", current_register_float, elem->attribute.variable.name);
                     fprintf(f, "\tcvt.w.s $f%d, $f%d\n", current_register_float, current_register_float);
@@ -758,13 +769,13 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
                 }
                 else
                 {
-                    fprintf (f, "\tlw $t%d, %s\n", current_register_int, elem->attribute.variable.name);
+                    fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
                     current_register_int++;
                 }
             }
-            else*/
+            else
             {
-                if(fp_type[elem->attribute.variable.adress] == FLOAT)
+                if(current_fp_type[elem->attribute.variable.adress] == FLOAT)
                 {
                     fprintf (f, "\tl.s $f%d, %d($fp)\n", current_register_float, -4 * (elem->attribute.variable.adress + 1));
                     fprintf(f, "\tcvt.w.s $f%d, $f%d\n", current_register_float, current_register_float);
@@ -780,24 +791,24 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
         }
         else if (elem->type == FLOAT)
         {
-            /*if(elem->attribute.variable.adress == -1)
+            if(elem->attribute.variable.adress < 0)
             {
-                if(fp_type[elem->attribute.variable.adress] == INT)
+                if(current_fp_type[-elem->attribute.variable.adress] == INT)
                 {
-                    fprintf (f, "\tlw $t%d, %s\n", current_register_int, elem->attribute.variable.name);
+                    fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
                     fprintf(f, "\tmtc1 $t%d, $f%d\n", current_register_int, current_register_float);
                     fprintf(f, "\tcvt.s.w $f%d, $f%d\n", current_register_float, current_register_float);
                     current_register_float++;
                 }
                 else
                 {
-                    fprintf (f, "\tl.s $f%d, %s\n", current_register_float, elem->attribute.variable.name);
+                    fprintf (f, "\tl.s $f%d, %d($fp)\n", current_register_float, -4 * (elem->attribute.variable.adress + 1));
                     current_register_float++;
                 }
             }
-            else*/
+            else
             {
-                if(fp_type[elem->attribute.variable.adress] == INT)
+                if(current_fp_type[elem->attribute.variable.adress] == INT)
                 {
                     fprintf (f, "\tlw $t%d, %d($fp)\n", current_register_int, -4 * (elem->attribute.variable.adress + 1));
                     fprintf(f, "\tmtc1 $t%d, $f%d\n", current_register_int, current_register_float);
@@ -837,7 +848,6 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
         {
             if(res->type == INT)
             {
-                // variable non temporaire ie declarée dans .data
                 /*if(res->attribute.variable.adress == -1 && res->attribute.variable.name[0] != '\0')
                 {
                     // get the address of the variable
@@ -849,7 +859,10 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
                 else*/
                 {
                     fprintf(f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, -4 * (res->attribute.variable.adress + 1));
-                    fp_type[res->attribute.variable.adress] = res->type;
+                    if(res->attribute.variable.adress >= 0)
+                        current_fp_type[res->attribute.variable.adress] = res->type;
+                    // else // dans le cas des fonctions, les adresse sont négatives
+                        // current_fp_type[-res->attribute.variable.adress] = res->type;
                     current_register_int--;
                 }
             }
@@ -867,7 +880,10 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
                 else*/
                 {
                     fprintf (f, "\ts.s $f%d, %d($fp)\n", current_register_float - 1, -4 * (res->attribute.variable.adress + 1));
-                    fp_type[res->attribute.variable.adress] = res->type;
+                    if(res->attribute.variable.adress >= 0)
+                        current_fp_type[res->attribute.variable.adress] = res->type;
+                    // else // dans le cas des fonctions, les adresse sont négatives
+                        // current_fp_type[-res->attribute.variable.adress] = res->type;
                     current_register_float--;
                 }
             }
@@ -878,14 +894,14 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress)
         if(res->type == FLOAT)
         {
             fprintf (f, "\ts.s $f%d, 0($t%d)\n", current_register_float-1, current_register_int-1);
-            fp_type[adress] = FLOAT;
+            current_fp_type[adress] = FLOAT;
             current_register_int--;
             current_register_float--;
         }
         else if(res->type == INT)
         {
             fprintf (f, "\tsw $t%d, 0($t%d)\n", current_register_int-2, current_register_int-1);
-            fp_type[adress] = INT;
+            current_fp_type[adress] = INT;
             current_register_int-=2;
         }
     }

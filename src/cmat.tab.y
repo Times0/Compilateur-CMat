@@ -261,8 +261,7 @@ declaration_function : type ID
 
                          fun = insert_function(&symbol_table, $2, $1, $5.size_ptr_list, $5.ptr_list, $7.quad);
 
-                         if(strcmp($2, "main"))
-                              gen_quad_function(code, K_BEGIN_FUNCTION, NULL, NULL, NULL, 0, NULL);
+                         gen_quad_function(code, K_BEGIN_FUNCTION, NULL, fun, $5.ptr_list, $5.size_ptr_list, $5.by_address_list);
                          function_adress=0;
                      } 
                      block
