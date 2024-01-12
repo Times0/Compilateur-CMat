@@ -597,15 +597,15 @@ void gencode_call(FILE *f, Quad *quad)
 
     if(quad->kind == K_RETURN)
     {
-        // printf("%s\n", quad->sym2->attribute.function.name);
-        current_fp_type[quad->sym1->attribute.variable.adress] = FLOAT;
-        quad->sym1->type = INT;
+        quad->sym1->type = quad->sym2->type;
+        
         load_operator(f, quad->sym1, 0, 1);
         SymbolTableElement t;
         t.attribute.variable.adress = -1;
         current_fp_type[1] = quad->sym1->type;
         t.class = quad->sym1->class;
         t.type = quad->sym1->type;
+        
         store_result(f, &t, 0, 0);
         return;
     }

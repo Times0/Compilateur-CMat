@@ -17,7 +17,7 @@ print(1);
 printf("\n");*/
 
 //copier les parametres
-int re(float a, int b)
+int re(int a, int b)
 {
     /*print(a);
     printf("\n");
@@ -37,13 +37,14 @@ int tr()
 
 int main()
 {
-    float a=5.1;
+    int a=5.1;
     int b=3;
     // a+b+1;
     // matrix A[3]={11, 21, 31};
     
-    int c = re(a, b);
+    int c = re(a, 2);
     print(c);
+    // print(a);
     // printf("\n");
     // print(b);
     // int a=1;
