@@ -5,6 +5,13 @@
 
 // Tester :     - condition avec arrays
 
+// adresse a reset dans une fonction
+// pile du tableau de fp
+// erreur si pas de return dans une fonction non void
+// recursvite
+// parametres de fonction plus large
+// segfault quand declaration
+
 /*int a;
 float d; // b banni car opcode de branch
 int e;
@@ -16,23 +23,49 @@ print(a);
 print(1);
 printf("\n");*/
 
-//copier les parametres
-int re(int a, int b)
+int mult(int x, int y)
+{
+    print(x);
+    print(y);
+    return x * y;
+}
+
+int fact(int val)
+{
+    // val = val-1;
+    // int a=9;
+    // int b=9+a;
+    // print(val);
+    if(val == 0 || val == 2)
+    {
+        // print(2);
+        return 111;
+    }
+    return 33;
+    /*else
+    {
+        return val;
+    }*/
+}
+
+
+int main()
+{
+    // int j = fact(2);
+    int j=mult(2, 3);
+    print(j);
+}
+/*int re(int a, int b)
 {
     /*print(a);
     printf("\n");
     print(b);
     printf("\n");
     /*print(a*b);
-    printf("\n");*/
+    printf("\n");
     
     // re(a, 0);
     return a*b;
-}
-
-int tr()
-{
-    return 1;   
 }
 
 int main()
@@ -49,7 +82,7 @@ int main()
     // print(b);
     // int a=1;
     // int b=1;
-}
+}*/
     /*int a;
     matrix A[1];
     if(1)

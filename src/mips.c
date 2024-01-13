@@ -603,7 +603,11 @@ void gencode_call(FILE *f, Quad *quad)
         SymbolTableElement t;
         t.attribute.variable.adress = -1;
         current_fp_type[1] = quad->sym1->type;
+        
         t.class = quad->sym1->class;
+        if(quad->sym1->class == CONSTANT)
+            t.class = VARIABLE;
+        
         t.type = quad->sym1->type;
         
         store_result(f, &t, 0, 0);
@@ -640,14 +644,15 @@ void gencode_call(FILE *f, Quad *quad)
         free(t);
     }
 
-    fprintf(f, "\tmove $fp, $sp\n");
+    // fprintf(f, "\tmove $fp, $sp\n");
     fprintf(f, "\tjal %s\n", generate_label_with_nb(quad->sym2->attribute.function.label));
     // on sauvegarde le resultat
     SymbolTableElement t;
     t.attribute.variable.adress = -1;
     t.class = VARIABLE;
-    
+    t.type = quad->sym2->type;
     load_operator(f, &t, 0, 0);
+
     fprintf(f, "\taddi $sp, $sp, %d\n", 4*(sp_offset+quad->nb_variables));
     fprintf(f, "\tmove $fp, $sp\n");
 
@@ -883,13 +888,13 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress, __uint3
         {
             if(res->type == INT)
             {
-                /*if(res->attribute.variable.adress <0)
+                if(res->attribute.variable.adress <0)
                 {
-                    fprintf(f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, 4 * (res->attribute.variable.adress + 1));
+                    fprintf(f, "\tsw $t%d, %d($fp)\n", current_register_int - 1, -4 * (res->attribute.variable.adress + 1));
                     current_fp_type[-res->attribute.variable.adress] = res->type;
                     current_register_int--;
                 }
-                else*/
+                else
                 {
                     fprintf(f, "\tsw $t%d, %d($%cp)\n", current_register_int - 1, -4 * (res->attribute.variable.adress + 1), letter);
                     current_fp_type[res->attribute.variable.adress] = res->type;

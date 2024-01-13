@@ -62,6 +62,7 @@ void open_scope();
           __int32_t *true_list;        // liste des indices quads à compléter pour le vrai
           __int32_t *false_list;       // liste des indices quads à compléter pour le faux
           __int32_t *next_list;        // liste des indices quads à compléter pour le suivant ?
+          __int32_t *return_list;        // liste des indices quads à compléter pour le return
           __uint32_t quad;
           __uint32_t size[2];
      }expr;
@@ -123,6 +124,7 @@ void open_scope();
 %type <expr> declaration
 %type <expr> declaration_or_assign
 %type <expr> additive_expression_list
+%type <expr> return
 %type <int_val> declaration_array
 %type <expr> slice_array
 %type <expr> expression_slice
@@ -137,16 +139,16 @@ void open_scope();
 start: instruction_list
      | %empty
 
-instruction_list: instruction_list M instruction   { complete_list($1.next_list, $2.quad); $$.next_list = $3.next_list; }
-                | instruction                      { $$.next_list = $1.next_list; }
+instruction_list: instruction_list M instruction   { complete_list($1.next_list, $2.quad); $$.next_list = $3.next_list; $$.return_list = concat_list($1.return_list, $3.return_list);}
+                | instruction                      { $$.next_list = $1.next_list; $$.return_list = $1.return_list;}
 
 
-instruction : declaration ';'           { $$.next_list = create_list(-1);}      // declaration variable
+instruction : declaration ';'           { if(current_scope==0){semantic_error("global operation aren't allowed");} $$.next_list = create_list(-1);}      // declaration variable
             | declaration_function
-            | assign ';'                { $$.next_list = create_list(-1);}
-            | expression ';'            { $$.next_list = create_list(-1);}
-            | statement
-            | return ';'                { $$.next_list = create_list(-1);}
+            | assign ';'                { if(current_scope==0){semantic_error("global operation aren't allowed");} $$.next_list = create_list(-1);}
+            | expression ';'            { if(current_scope==0){semantic_error("global operation aren't allowed");} $$.next_list = create_list(-1);}
+            | statement                 { if(current_scope==0){semantic_error("global operation aren't allowed");}}
+            | return ';'                { if(current_scope==0){semantic_error("global operation aren't allowed");} $$.next_list = create_list(-1); $$.return_list = $1.return_list;}
 
 M : %empty { $$.quad = code->nextquad; }
 
@@ -158,6 +160,7 @@ statement : statement_if
 
 statement_if : IF {open_scope();} '(' {logical_expression_flag++; logical_id_flag=1;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block statement_else
              {
+                    $$.return_list = $9.return_list;
                     // si pas de else
                     if($10.next_list == NULL)
                     {
@@ -185,6 +188,7 @@ statement_else : ELSE N statement_if
                }
                | ELSE {open_scope();} N block
                {
+                    $$.return_list = $4.return_list;
                     $$.next_list = concat_list($3.next_list, $4.next_list);
                     $$.quad = $3.quad;
                }
@@ -195,6 +199,7 @@ statement_else : ELSE N statement_if
 
 statement_while : WHILE {open_scope();} M '(' {logical_expression_flag++; logical_id_flag++;} expression ')' {logical_expression_flag--; logical_id_flag=0;} M block
                 {
+                    $$.return_list = $10.return_list;
                     complete_list($6.true_list, $9.quad);
                     gen_quad_goto(code, K_GOTO, NULL, NULL, $3.quad, (__uint32_t[]){0, 0});
                     
@@ -207,6 +212,7 @@ statement_while : WHILE {open_scope();} M '(' {logical_expression_flag++; logica
 
 statement_for : FOR {open_scope();} M '(' declaration_or_assign ';' {logical_expression_flag=1; logical_id_flag=1;} expression {logical_expression_flag=0; logical_id_flag=0;} ';' M assign_or_expression ')' M block
                {                   
+                    $$.return_list = $15.return_list;
                     gen_quad_goto(code, K_GOTO, NULL, NULL, $3.quad+1, (__uint32_t[]){0, 0, 0});  // +1 pour l'initialisation
 
                     Quad *q = malloc(sizeof(Quad)*($14.quad-$11.quad));
@@ -292,8 +298,15 @@ declaration_function : type ID
 
 return : RETURN expression
        {
-          gen_quad_function(code, K_RETURN, $2.ptr, get_function_by_scope(symbol_table, current_scope), NULL, 0, NULL, current_scope);
+          SymbolTableElement*fun = get_function_by_scope(symbol_table, current_scope);
+          if(fun->type == VOID)
+          {
+               semantic_error("return in a void function");
+          }
+          gen_quad_function(code, K_RETURN, $2.ptr, fun, NULL, 0, NULL, current_scope);
           code->quads[code->nextquad-1].by_adress[0] = $2.by_address;
+          gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
+          $$.return_list = create_list(code->nextquad-1);
        }
 
 // redondance de code  + a faire
@@ -1042,10 +1055,15 @@ assign :  ID '=' expression
 block : '{' instruction_list      
         '}'                   {
                                    $$.next_list = $2.next_list;
+                                   $$.return_list = $2.return_list;
                                    complete_list($2.next_list, code->nextquad);
                                    
                                    adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable;
                                    current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; 
+
+                                   // si on finit une fonction
+                                   if(current_scope == 0)
+                                        complete_list(&$2.return_list[0], code->nextquad);
                               }
      | '{' '}' { $$.ptr = NULL; current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; }
      /* | instruction */ // tres smart 

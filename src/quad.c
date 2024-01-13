@@ -224,6 +224,7 @@ void complete_list(__int32_t *l, __int32_t i)
         if(code->quads[l[j]].branch_label == -1)
             code->quads[l[j]].branch_label = i;
         j++;
+        
     }
 }
 
