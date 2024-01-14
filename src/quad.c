@@ -250,43 +250,43 @@ void quad_dump(Quad *q)
     {
         case BOP_PLUS:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" := ");
+            //printf(" := ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" + ");
+            //printf(" + ");
             symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_MINUS:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" := ");
+            //printf(" := ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" - ");
+            //printf(" - ");
             symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_MULT:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" := ");
+            //printf(" := ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" * ");
+            //printf(" * ");
             symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_DIV:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" := ");
+            //printf(" := ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" / ");
+            //printf(" / ");
             symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case BOP_MOD:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" := ");
+            //printf(" := ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" %% ");
+            //printf(" %% ");
             symbol_dump(q->sym3, q->by_adress[2]);
             break;
         case UOP_MINUS:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" = ");
-            printf("- ");
+            //printf(" = ");
+            //printf("- ");
             symbol_dump(q->sym2, q->by_adress[1]);
             break;
         case K_CALL_PRINT:
@@ -295,79 +295,79 @@ void quad_dump(Quad *q)
             if(q->sym1 != NULL)
             {
                 symbol_dump(q->sym1, q->by_adress[0]);
-                printf(" = ");
+                //printf(" = ");
             }
-            printf("%s(", q->sym2->attribute.function.name);
+            //printf("%s(", q->sym2->attribute.function.name);
             for(int i = q->nb_parameters - 1; i >= 0; i--)
             {
                 symbol_dump(q->function_parameters[i], q->by_address_list[i]);
-                if(i > 0)
-                    printf(", ");
+                // if(i > 0)
+                    //printf(", ");
             }
-            printf(")");
+            //printf(")");
             break;
         case K_RETURN:
-            printf("return ");
+            //printf("return ");
             symbol_dump(q->sym1, q->by_adress[0]);
             break;
         case K_BEGIN_FUNCTION:
-            printf("{");
+            //printf("{");
             break;
         case K_END_FUNCTION:
-            printf("}");
+            //printf("}");
             break;
         case K_COPY:
             symbol_dump(q->sym1, q->by_adress[0]);
-            printf(" = ");
+            //printf(" = ");
             symbol_dump(q->sym2, q->by_adress[1]);
             break;
         case K_GOTO:
-            printf("goto %s", l);
+            //printf("goto %s", l);
             break;
         case K_IF:
-            printf("if ");
+            //printf("if ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" == ");
+            //printf(" == ");
             symbol_dump(q->sym3, q->by_adress[2]);
-            printf(" goto %s", l);
+            //printf(" goto %s", l);
             break;
         case K_IFNOT:
-            printf("if ");
+            //printf("if ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" != ");
+            //printf(" != ");
             symbol_dump(q->sym3, q->by_adress[2]);
-            printf(" goto %s", l);
+            //printf(" goto %s", l);
             break;
         case K_IFLT:
-            printf("if ");
+            //printf("if ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" < ");
+            //printf(" < ");
             symbol_dump(q->sym3, q->by_adress[2]);
-            printf(" goto %s", l);
+            //printf(" goto %s", l);
             break;
         case K_IFGT:
-            printf("if ");
+            //printf("if ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" > ");
+            //printf(" > ");
             symbol_dump(q->sym3, q->by_adress[2]);
-            printf(" goto %s", l);
+            //printf(" goto %s", l);
             break;
         case K_IFLE:
-            printf("if ");
+            //printf("if ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" <= ");
+            //printf(" <= ");
             symbol_dump(q->sym3, q->by_adress[2]);
-            printf(" goto %s", l);
+            //printf(" goto %s", l);
             break;
         case K_IFGE:
-            printf("if ");
+            //printf("if ");
             symbol_dump(q->sym2, q->by_adress[1]);
-            printf(" >= ");
+            //printf(" >= ");
             symbol_dump(q->sym3, q->by_adress[2]);
-            printf(" goto %s", l);
+            //printf(" goto %s", l);
             break;
         default:
-            printf("BUG\n");
+            //printf("BUG\n");
             break;
     }
     if(l != NULL)
@@ -379,9 +379,9 @@ void code_dump(QuadTable *c)
     unsigned int i;
     for ( i=0 ; i<c->nextquad ; i++ )
     {
-        printf("%4u | ",i);
+        //printf("%4u | ",i);
         quad_dump(&(c->quads[i]));
-        printf("\n");
+        //printf("\n");
     }
 }
 

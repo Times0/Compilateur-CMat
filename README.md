@@ -1,7 +1,14 @@
 # Projet compilateur cmat
 ## Rapport
+Ce projet concrétise la réalisation d'un compilateur pour le langage cmat décrit dans `projet_sujet.pdf`.
+C'est un compilateur éco-friendly (il n'est pas écrit en Python) qui génère du code assembleur MIPS. 
 
+Il utilise les outils flex et bison pour générer un analyseur lexical et syntaxique. 
+Des efforts ont été faits pour assurer la modularité et la lisibilité du code. 
 
+Le code est totalement testé et fonctionnel pour les fonctionnalités décrites si dessous.
+
+Le process de tests est décrit dans le fichier `tests.md`
 
 ## Suivi
 
@@ -33,6 +40,7 @@
 | Fonctions with parameters | ✅ | |
 | Fonction recursive |🟥 | Not implemented |
 
+
 ### Matrices
 
 | Feature | Status | Notes |
@@ -56,3 +64,4 @@
 - [x] -o ✅
 - [x] -tos ✅
 - [x] -version ✅
+- [ ] Optimisations 🟥
