@@ -1,0 +1,20 @@
+Calculating PI (Taylor Series)
+=========
+void main() {
+    float pi = 0.0;
+    float denominator = 1.0;
+    int i = 0;
+
+    for(i = 0; i < 10000; i++) {
+        pi = pi + (1.0 / denominator);
+        if (denominator < 0) {
+            denominator = -denominator + 2.0;
+        } else {
+            denominator = -denominator - 2.0;
+        }
+    }
+
+    print(pi * 4);
+}
+=========
+3.1414986

@@ -1,0 +1,10 @@
+Unused variable
+
+- compilation error
+- arguments -Wnone -Wunused-variable -Werror
+=========
+void main() {
+    int a = 2;
+}
+=========
+<stdin>:2: error: unused variable 'a' [-Wunused-variable]

@@ -1,0 +1,10 @@
+Uninitialized const matrix
+
+- compilation error
+- arguments -Wnone -Wuninitialized-const -Werror
+=========
+void main() {
+    const matrix A[5][5];
+}
+=========
+<stdin>:2: error: uninitialized constant matrix 'A' [-Wuninitialized-const]

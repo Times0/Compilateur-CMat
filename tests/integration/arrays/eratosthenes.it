@@ -1,0 +1,53 @@
+Sieve of Eratosthenes
+=========
+void main() {
+    int data[100];
+    int len = 100;
+    int i, j;
+
+    // Initialize the array to 1
+    for(i = 0; i < len; i++)
+        data[i] = 1;
+
+    // Calculate
+    for(i = 2; i <= 10; i++) // SQRT of len (can't calculate it lol)
+        if (data[i])
+            for(j = i * i; j < len; j = j + i)
+                data[j] = 0;
+
+    // Print
+    for(i = 0; i < len; i++) {
+        if (data[i]) {
+            print(i);
+            printf("\n");
+        }
+    }
+}
+=========
+0
+1
+2
+3
+5
+7
+11
+13
+17
+19
+23
+29
+31
+37
+41
+43
+47
+53
+59
+61
+67
+71
+73
+79
+83
+89
+97

@@ -1,0 +1,12 @@
+Use of a variable as an array
+
+- compilation error
+=========
+void main() {
+    int a;
+    a = a[1];
+    a[1] = 1;
+}
+=========
+<stdin>:3: error: use of identifier 'a' as an extractable
+<stdin>:4: error: use of identifier 'a' as an extractable

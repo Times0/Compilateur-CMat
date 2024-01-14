@@ -1,0 +1,14 @@
+Function call
+
+=========
+void a() {
+    printf("a");
+}
+
+void main() {
+    printf("b");
+    a();
+    printf("c");
+}
+=========
+bac

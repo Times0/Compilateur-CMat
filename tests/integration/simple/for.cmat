@@ -1,0 +1,23 @@
+For
+=========
+void main() {
+    int a = 0;
+    int b = 0;
+
+    for(a = 0; a < 5; a = a + 1) {
+        b = b + 2;
+    }
+
+    print(b);
+
+    b = 0;
+    
+    for(a = 0; a < 5;) {
+        b = b + 2;
+        a = a + 1;
+    }
+
+    print(b);
+}
+=========
+1010

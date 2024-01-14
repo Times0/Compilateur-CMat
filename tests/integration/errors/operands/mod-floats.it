@@ -1,0 +1,18 @@
+Float modulo
+
+- compilation error
+=========
+void main() {
+    float a = 1.2;
+    float b = 0.5;
+    int c = 4;
+    int d = 6;
+
+    print(a % b);
+    print(a % c);
+    print(c % b);
+}
+=========
+<stdin>:7: error: invalid operands to binary expression ('float' and 'float')
+<stdin>:8: error: invalid operands to binary expression ('float' and 'int')
+<stdin>:9: error: invalid operands to binary expression ('int' and 'float')

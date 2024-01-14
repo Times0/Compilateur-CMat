@@ -1,0 +1,29 @@
+int main()
+{
+    int list[2], i, j, temp, list2[3];
+
+    list[0] = 1;
+    list[1] = 5;
+
+    
+    list2[0] = 1;
+    list2[1] = 2;
+    list2[2] = 3;
+
+    
+    i = 0;
+    j = 0;
+
+    printf("\nlist: ");
+    print(list[0]);
+    print(list[1]);
+    
+    printf("list2: ");
+    print(list2[0]);
+    print(list2[1]);
+    print(list2[2]);
+
+    
+    print(i);
+    print(j);
+}

@@ -1,0 +1,15 @@
+Function prototype
+=========
+void a();
+
+void main() {
+    printf("b");
+    a();
+    printf("c");
+}
+
+void a() {
+    printf("a");
+}
+=========
+bac

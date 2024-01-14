@@ -1,0 +1,57 @@
+Return type
+
+- compilation error
+- arguments -Wnone -Wreturn-type -Werror
+=========
+void a() {
+   return 1;
+}
+
+int b() {
+   return;
+}
+
+int c() {
+
+}
+
+int d() {
+   if (1) {
+      return 1;
+   }
+}
+
+int e() {
+   if (1) {
+      return 1;
+   } else {
+      return 2;
+   }
+}
+
+int f() {
+   if (1) {
+      return 1;
+   }
+
+   return 3;
+}
+
+int g() {
+   int i;
+   for(i = 0; i < 10; i++) {
+      return i;
+   }
+}
+
+int h() {
+   do {
+      return 1;
+   } while(1 == 0);
+}
+=========
+<stdin>:2: error: 'return' with a value, in function returning void [-Wreturn-type]
+<stdin>:6: error: 'return' with no value, in function returning non-void [-Wreturn-type]
+<stdin>:11: error: control reaches end of non-void function [-Wreturn-type]
+<stdin>:17: error: control reaches end of non-void function [-Wreturn-type]
+<stdin>:40: error: control reaches end of non-void function [-Wreturn-type]

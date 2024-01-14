@@ -1,0 +1,29 @@
+Multiple functions
+
+This tests mostly serves the purpose of checking
+if functions are generated properly and if having
+code arround the main distracts the compiler into
+generating shitty assembly code.
+=========
+void one() {
+    int i;
+    for(i = 1; i < 11; i++) {
+        print(i);
+    }
+}
+
+void main() {
+    int i;
+    for(i = 0; i < 10; i++) {
+        print(i);
+    }
+}
+
+void two() {
+    int i;
+    for(i = 2; i < 12; i++) {
+        print(i);
+    }
+}
+=========
+0123456789

@@ -1,0 +1,27 @@
+Function return value
+=========
+int aaa() {
+    return 5;
+}
+
+float bbb() {
+    return 5.0;
+}
+
+matrix[2][2] ccc() {
+    matrix A[2][2] = {{1, 2}, {3, 4}};
+    return A;
+}
+
+void main() {
+    print(aaa());
+    printf("\n");
+    print(bbb());
+    printf("\n");
+    printmat(ccc());
+}
+=========
+5
+5.0
+1.0	2.0	
+3.0	4.0	

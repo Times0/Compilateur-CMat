@@ -1,0 +1,12 @@
+Symbol redeclaration
+
+- compilation error
+=========
+void main() {
+    int b;
+    int b;
+    int b[2];
+}
+=========
+<stdin>:3: error: redeclaration of symbol 'b'
+<stdin>:4: error: redeclaration of symbol 'b'

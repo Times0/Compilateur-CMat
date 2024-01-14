@@ -1,0 +1,10 @@
+Uninitialized const variable
+
+- compilation error
+- arguments -Wnone -Wuninitialized-const -Werror
+=========
+void main() {
+    const int a;
+}
+=========
+<stdin>:2: error: uninitialized constant variable 'a' [-Wuninitialized-const]

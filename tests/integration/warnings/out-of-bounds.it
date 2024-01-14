@@ -1,0 +1,14 @@
+Out of bounds accessor
+
+- arguments -Wnone -Wout-of-bounds -Werror
+- compilation error
+=========
+void main() {
+    int a[5];
+
+    print(a[10]);
+    a[6] = 2;
+}
+=========
+<stdin>:4: error: extractor goes out of bounds [-Wout-of-bounds]
+<stdin>:5: error: extractor goes out of bounds [-Wout-of-bounds]
