@@ -16,7 +16,7 @@ extern SymbolTable *symbol_table;
 __uint32_t current_register_int = 0;        // registre pour les int
 __uint32_t current_register_float = 0;      // registre pour les float
 __uint32_t *current_fp_type;                // tableau qui contient le type des variables du stack frame
-
+__uint32_t fp_size = 0;
 
 void gencode_mips_global_variable(FILE * f, SymbolTable * s)
 {
@@ -380,6 +380,7 @@ void gencode_affect (FILE * f, Quad *quad)
             }
             else //si le deuxieme élément est une référence
             {
+                quad->sym2->attribute.variable.name[0] = '\0';
                 load_operator(f, quad->sym2, quad->by_adress[1], 1);
                 store_result (f, quad->sym1, 0, 0);
             }
@@ -570,7 +571,9 @@ void gencode_call(FILE *f, Quad *quad)
             store_result(f, t, 0);
         }*/
 
+        //ajout a la fin de pile
         current_fp_type = malloc(sizeof(__uint32_t)*MAXFPSIZE);
+        fp_size = MAXFPSIZE;
         if(current_fp_type == NULL)
         {
             printf("Error malloc in gencode_call\n");
@@ -582,12 +585,14 @@ void gencode_call(FILE *f, Quad *quad)
         {
             current_fp_type[-quad->function_parameters[i]->attribute.variable.adress] = quad->function_parameters[i]->type;
         }
-
+        
         return;
     }
     // fin de fonction
     if(quad->kind == K_END_FUNCTION)
     {
+        // depiler fp
+        // stack_pop(fp_stack);
         //restaurer les registres
 
         fprintf(f, "\tjr $ra\n");
@@ -597,9 +602,12 @@ void gencode_call(FILE *f, Quad *quad)
 
     if(quad->kind == K_RETURN)
     {
+        int r = quad->sym1->type;
         quad->sym1->type = quad->sym2->type;
         
-        load_operator(f, quad->sym1, 0, 1);
+        // if(quad->sym1->type == INT && quad->sym2->type == FLOAT)
+            // quad->sym1->attribute.variable.name[0] = '\0';
+        load_operator(f, quad->sym1, quad->by_adress[0], 1);
         SymbolTableElement t;
         t.attribute.variable.adress = -1;
         current_fp_type[1] = quad->sym1->type;
@@ -607,10 +615,11 @@ void gencode_call(FILE *f, Quad *quad)
         t.class = quad->sym1->class;
         if(quad->sym1->class == CONSTANT)
             t.class = VARIABLE;
-        
+    
         t.type = quad->sym1->type;
         
         store_result(f, &t, 0, 0);
+        quad->sym1->type = r;
         return;
     }
 
@@ -629,35 +638,80 @@ void gencode_call(FILE *f, Quad *quad)
 
     //chargement des parametres
     for(int i=0;i<quad->nb_parameters;i++)
-    {
-        load_operator(f, quad->function_parameters[i], quad->by_address_list[i], 0);
-        SymbolTableElement *t = malloc(sizeof(SymbolTableElement));
-        if(t == NULL)
+    {   
+        if(quad->function_parameters[i]->class == ARRAY)
         {
-            printf("Error malloc in gencode_call\n");
-            exit(1);
+            /*for(int j=0;j<quad->function_parameters[i]->attribute.array.size[0];j++)
+            {
+                SymbolTableElement param;
+                param.class = VARIABLE;
+                param.type = FLOAT; // CAR seulement des parametres matrice
+                param.attribute.variable.adress = quad->function_parameters[i]->attribute.array.adress+j;
+                load_operator(f, &param, 0, 0);
+                
+                SymbolTableElement *t = malloc(sizeof(SymbolTableElement));
+                if(t == NULL)
+                {
+                    printf("Error malloc in gencode_call\n");
+                    exit(1);
+                }
+                t->class = VARIABLE;
+                if(quad->by_address_list[i] == 0)
+                    t->type = quad->function_parameters[i]->type;
+                else
+                    t->type = quad->by_address_list[i];
+                
+                t->attribute.variable.adress=-(i+1);
+                store_result(f, t, 0, 1);
+                free(t);
+            }*/
         }
-        t->class = VARIABLE;
-        t->type = quad->function_parameters[i]->type;
-        t->attribute.variable.adress=-(i+1);
-        store_result(f, t, 0, 1);
-        free(t);
+        else
+        { 
+            if(quad->by_address_list[i])
+            {
+                // quad->function_parameters[i]->attribute.variable.name[0] = '\0';
+                load_operator(f, quad->function_parameters[i], quad->by_address_list[i], 1);
+            }
+            else
+                load_operator(f, quad->function_parameters[i], quad->by_address_list[i], 0);
+
+            SymbolTableElement *t = malloc(sizeof(SymbolTableElement));
+            if(t == NULL)
+            {
+                printf("Error malloc in gencode_call\n");
+                exit(1);
+            }
+            t->class = VARIABLE;
+            if(quad->by_address_list[i] == 0)
+                t->type = quad->function_parameters[i]->type;
+            else
+                t->type = quad->by_address_list[i];
+            t->attribute.variable.adress=-(i+1);
+            store_result(f, t, 0, 1);
+            free(t);
+        }
     }
 
     // fprintf(f, "\tmove $fp, $sp\n");
     fprintf(f, "\tjal %s\n", generate_label_with_nb(quad->sym2->attribute.function.label));
-    // on sauvegarde le resultat
-    SymbolTableElement t;
-    t.attribute.variable.adress = -1;
-    t.class = VARIABLE;
-    t.type = quad->sym2->type;
-    load_operator(f, &t, 0, 0);
+    
+    if(quad->sym2->type != VOID)
+    {
+        // on sauvegarde le resultat
+        SymbolTableElement t;
+        t.attribute.variable.adress = -1;
+        t.class = VARIABLE;
+        t.type = quad->sym2->type;
+        load_operator(f, &t, 0, 0);
+    }
 
     fprintf(f, "\taddi $sp, $sp, %d\n", 4*(sp_offset+quad->nb_variables));
     fprintf(f, "\tmove $fp, $sp\n");
 
-    // on le sauvegarde dans la stack
-    store_result(f, quad->sym1, 0, 0);
+    if(quad->sym2->type != VOID)
+        // on le sauvegarde dans la stack
+        store_result(f, quad->sym1, 0, 0);
 
 }
 
@@ -774,6 +828,14 @@ void load_operator (FILE * f, SymbolTableElement *elem, __uint32_t address, __ui
             if(load_address)
             {
                 fprintf (f, "\tl.s $f%d, 0($t%d)\n", current_register_float, current_register_int);
+                
+                if(elem->attribute.variable.name[0] == '\0') // condition eclaté au sol pour différencier le cas
+                {
+                    fprintf(f, "\tcvt.w.s $f%d, $f%d\n", current_register_float, current_register_float);
+                    fprintf(f, "\tmfc1 $t%d, $f%d\n", current_register_int, current_register_float);
+                    current_register_int++;
+                    current_register_float--;
+                }
                 current_register_float++;
             }
             else
@@ -903,22 +965,16 @@ void store_result (FILE * f, SymbolTableElement *res, __uint32_t adress, __uint3
             }
             else if(res->type == FLOAT)
             {
-                // variable non temporaire ie declarée dans .data
-                /*if(res->attribute.variable.adress == -1)
+                if(res->attribute.variable.adress <0)
                 {
-                    // get the address of the variable
-                    fprintf (f, "\tla $t%d, %s\n", current_register_int, res->attribute.variable.name);
-                    // save the value in this address
-                    fprintf (f, "\ts.s $f%d, 0($t%d)\n", current_register_float-1, current_register_int);
+                    fprintf (f, "\ts.s $f%d, %d($fp)\n", current_register_float - 1, -4 * (res->attribute.variable.adress + 1));
+                    current_fp_type[-res->attribute.variable.adress] = res->type;
                     current_register_float--;
                 }
-                else*/
+                else
                 {
                     fprintf (f, "\ts.s $f%d, %d($%cp)\n", current_register_float - 1, -4 * (res->attribute.variable.adress + 1), letter);
-                    if(res->attribute.variable.adress >= 0)
-                        current_fp_type[res->attribute.variable.adress] = res->type;
-                    // else // dans le cas des fonctions, les adresse sont négatives
-                        // current_fp_type[-res->attribute.variable.adress] = res->type;
+                    current_fp_type[res->attribute.variable.adress] = res->type;
                     current_register_float--;
                 }
             }

@@ -215,10 +215,22 @@ void complete_list(__int32_t *l, __int32_t i)
         return;
     }
 
+    if(i >= code->capacity)
+    {
+        code->capacity *= 2;
+        code->quads = realloc(code->quads, code->capacity*sizeof(Quad));
+        if(code->quads == NULL)
+        {
+            fprintf(stderr, "Error realloc in complete_list");
+            exit(1);
+        }
+    }
+
     code->quads[i].label = i;
 
     __int32_t j = 0;
     
+    // pas besoin de verifier qu'on est pas out of bound car on complete des quads deja genere
     while(l[j] != -1)
     {
         if(code->quads[l[j]].branch_label == -1)

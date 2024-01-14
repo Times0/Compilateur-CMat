@@ -130,7 +130,6 @@ void open_scope();
 %type <expr> expression_slice
 %type <expr> expression_slice_list
 %type <type_val> type
-%type <type_val> type_function
 %type <expr> M
 %type <expr> N
 
@@ -235,6 +234,17 @@ statement_for : FOR {open_scope();} M '(' declaration_or_assign ';' {logical_exp
                     // on reecrit les quads du ++ apres le block et avant le goto de la boucle
                     for(int i = code->nextquad-1+$11.quad-$14.quad; i < code->nextquad-1; i++)
                     {
+                         if(i-code->nextquad+1-$11.quad+$14.quad >= code->capacity)
+                         {
+                              code->capacity *= 2;
+                              code->quads = realloc(code->quads, code->capacity*sizeof(Quad));
+                              if(code->quads == NULL)
+                              {
+                                   printf("realloc failed in statement_for\n");
+                                   exit(1);
+                              }
+                         }
+                         
                          code->quads[i] = q[i-code->nextquad+1-$11.quad+$14.quad];
                     }
                     free(q);
@@ -252,6 +262,11 @@ declaration_or_assign : declaration
 
 declaration_function : type ID 
                      {
+                         if($1 == MATRIX)
+                         {
+                              semantic_error("matrix function type not allowed");
+                         }
+
                          if(current_scope != 0)
                               semantic_error("can't declare function inside a block");
                          open_scope();
@@ -269,6 +284,7 @@ declaration_function : type ID
 
                          gen_quad_function(code, K_BEGIN_FUNCTION, NULL, fun, $5.ptr_list, $5.size_ptr_list, $5.by_address_list, 0);
                          function_adress=0;
+                         adress+=$5.size_ptr_list;
                      } 
                      block
                      {
@@ -304,6 +320,18 @@ return : RETURN expression
                semantic_error("return in a void function");
           }
           gen_quad_function(code, K_RETURN, $2.ptr, fun, NULL, 0, NULL, current_scope);
+
+          if(code->nextquad >= code->capacity)
+          {
+               code->capacity *= 2;
+               code->quads = realloc(code->quads, code->capacity*sizeof(Quad));
+               if(code->quads == NULL)
+               {
+                    printf("realloc failed in return\n");
+                    exit(1);
+               }
+          }
+
           code->quads[code->nextquad-1].by_adress[0] = $2.by_address;
           gen_quad_goto(code, K_GOTO, NULL, NULL, -1, (__uint32_t[]){0, 0});
           $$.return_list = create_list(code->nextquad-1);
@@ -312,6 +340,10 @@ return : RETURN expression
 // redondance de code  + a faire
 declaration_parameter : type ID
                       {
+                         if($1 == VOID)
+                         {
+                              semantic_error("void type not allowed");
+                         }
                          SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
                          if(l != NULL)
                          {
@@ -320,13 +352,39 @@ declaration_parameter : type ID
 
                          $$.ptr = insert_variable(symbol_table, $2, $1, VARIABLE, (__uint32_t[]){1, 1}, -(function_adress+1), current_scope);
                          
-                         // les parametres ne sont pas des variables locales
+                         // les parametres ne sont pas des variables locales donc --
                          get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable--;
                          function_adress++;
 
                       }
                       | type ID declaration_array
+                      {
+                         if($1 == VOID)
+                         {
+                              semantic_error("void type not allowed");
+                         }
+                         // else if($1 != MATRIX)
+                         {
+                              semantic_error("can't declare array as parameter");
+                         }
+                         
+                         SymbolTableElement *l = lookup_variable(symbol_table, $2, current_scope, VARIABLE, 1);
+                         if(l != NULL)
+                         {
+                              semantic_error("variable \"%s\" already declared in this scope", $1);
+                         }
+
+                         $$.ptr = insert_variable(symbol_table, $2, $1, ARRAY, (__uint32_t[]){$3, 1}, adress, current_scope);
+                         adress += $3*1;
+                      }
                       | type ID declaration_array declaration_array
+                      {
+                         if($1 == VOID)
+                         {
+                              semantic_error("void type not allowed");
+                         }
+                         semantic_error("can't declare array as parameter");
+                      }
 
 declaration_parameter_list : declaration_parameter
                            {
@@ -551,6 +609,11 @@ declaration_list : declaration_element
 
 declaration :  type declaration_list
                {
+                    if($1 == VOID)
+                    {
+                         semantic_error("void type not allowed");
+                    }
+
                     for(int i=0;i<$2.size_ptr_list;i++)
                     {
                          if($1 == MATRIX)
@@ -757,9 +820,8 @@ additive_expression_list : additive_expression
 type : INT     {$$ = $1;}
      | FLOAT   {$$ = $1;}
      | MATRIX  {$$ = $1;}
-
-/* type_function : type {$$ = $1;} */
-              /* | VOID {$$ = $1;} */
+     | VOID    {$$ = $1;}
+              
 
 // faire result et cant call main
 call : ID '(' parameter_list ')'
@@ -875,11 +937,10 @@ call : ID '(' parameter_list ')'
                          if(!((id->attribute.function.parameters[i]->class == CONSTANT && $3.ptr_list[i]->class == VARIABLE) || (id->attribute.function.parameters[i]->class == VARIABLE && $3.ptr_list[i]->class == CONSTANT)))
                               semantic_error("parameter %d not matching", i);
                     }
-                    if(id->attribute.function.parameters[i]->type != $3.ptr_list[i]->type)
+                    if(id->attribute.function.parameters[i]->type != $3.ptr_list[i]->type && id->attribute.function.parameters[i]->type != $3.by_address_list[i])
                     {
                          semantic_error("parameter %d type not matching", i);
                     }
-                    // gen_quad(code, K_COPY, id->attribute.function.parameters[i], $3.ptr_list[i], NULL, (__uint32_t[3]){0, 0, 0});
                }
 
                if(id->type != VOID)
