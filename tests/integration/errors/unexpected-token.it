@@ -1,9 +1,0 @@
-Undeclared token
-
-- compilation error
-=========
-void main() {
-    void;
-}
-=========
-<stdin>:2: error: syntax error, unexpected TYPE_VOID

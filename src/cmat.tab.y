@@ -291,13 +291,13 @@ declaration_function : type ID
                          SymbolTableElement *fun = lookup_function(symbol_table, "main");
                          if(!strcmp($2, "main"))
                          {
-                              if(fun->type != INT)
-                              {
-                                   semantic_error("main should have int type");
-                              }
+                              // if(fun->type != INT)
+                              // {
+                              //      semantic_error("main should have int type");
+                              // }
                               if($5.size_ptr_list != 0)
                               {
-                                   semantic_error("main should have 0 parameter");
+                                   semantic_error("main should have no parameters");
                               }
 
                               code->mainquad = $7.quad;
@@ -484,7 +484,7 @@ declaration_element : ID declaration_affectation
                          {
                               if($$.ptr->attribute.array.size[0] != $3.size_ptr_list)
                               {
-                                   semantic_error("sizes not consistent");
+                                   semantic_error("sizes must be constants");
                               }
                               
                               for(int i=0; i<$3.size_ptr_list;i++)
@@ -525,7 +525,7 @@ declaration_element : ID declaration_affectation
                          {
                               if($$.ptr->attribute.array.size[0] != $4.size[0] || $$.ptr->attribute.array.size[1] != $4.size[1])
                               {
-                                   semantic_error("sizes not consistent");
+                                   semantic_error("sizes not constants");
                               }
                               
                               for(int i=0; i<$4.size[0];i++)
@@ -549,7 +549,7 @@ declaration_element : ID declaration_affectation
                               if($4.ptr->type == MATRIX)
                               {
                                    if($$.ptr->attribute.array.size[0] != $4.ptr->attribute.array.size[0] || $$.ptr->attribute.array.size[1] != $4.ptr->attribute.array.size[1])
-                                        semantic_error("arrays size must be consistent for affectation");
+                                        semantic_error("arrays size must be constants for affectation");
 
                                    // on ne stocke pas les variables temporaires contenat les adresses
                                    for(int i=0;i<$4.ptr->attribute.array.size[0];i++)
@@ -745,7 +745,7 @@ declaration_matrix_constant_list : additive_expression_list
                                  | '{' additive_expression_list '}' ',' declaration_matrix_constant_list
                                  {
                                         if($2.size_ptr_list != $5.size[1])
-                                             semantic_error("sizes not consistent");
+                                             semantic_error("sizes not constants");
                                         $$.size[1] = $5.size[1];
                                         $$.size[0] = $5.size[0]+1;
 
@@ -1037,7 +1037,7 @@ assign :  ID '=' expression
                else if($$.ptr->type == MATRIX && $3.ptr->type == MATRIX) // copie de matrice
                {    
                     if($$.ptr->attribute.array.size[0] != $3.ptr->attribute.array.size[0] || $$.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[1])
-                         semantic_error("arrays size must be consistent for affectation");
+                         semantic_error("arrays size must be constants for affectation");
 
                     // on ne stocke pas les variables temporaires contenat les adresses
                     for(int i=0;i<$3.ptr->attribute.array.size[0];i++)

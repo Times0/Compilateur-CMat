@@ -1,53 +1,55 @@
-# Projet de compilation
+# Projet compilateur cmat
+## Rapport
 
-## TODO
 
-- [ ] Pas Implémenté
 
-- [x] Implémenté
+## Suivi
 
 ✅ = Testé et fonctionnel
 
-🟨 = Pas testé, fonctionnel
+🟨 = Pas de tests avancés
 
 🟥 = Testé, non fonctionnel
 
 ### C restriction
-
-- [x] Basic operations (+, -, *, /) on integers ✅
-- [x] Basic operations (+, -, *, /) on floats 🟨
-- [x] Multiple variable declaration (eg: int a, b, c;) 🟥 Works only with ints and floats
-- [x] Affectation of variables (int, float and operations of ints and floats) ✅
-- [x] Affectation of int on float and float on int ✅
-- [x] Minus unary operator ✅
-- [x] ++ and -- operators ✅
-- [x] || and && operators ✅
-
-- [x] `print` to print a variable ✅
-- [x] `printf` to print a string ✅
-- [x] if alone statement ✅
-- [x] if else statement ✅
-- [x] while statement ✅
-- [ ] for statement
-- [ ] Handle return at the end of main in parser
-- [ ] Fonctions (avec ou sans paramètres)
-- [ ] Fonction recursive
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Basic operations (+, -, *, /) on integers | ✅ | |
+| Basic operations (+, -, *, /) on floats | 🟨 | |
+| Multiple variable declaration (eg: int a, b, c;) | ✅ | |
+| Affectation of variables (int, float and operations of ints and floats) | ✅ | |
+| Affectation of int on float and float on int | ✅ | |
+| Minus unary operator | ✅ | |
+| ++ and -- operators | ✅ | |
+| \|\| and && operators | ✅ | |
+| `print` to print a variable | ✅ | |
+| `printf` to print a string | ✅ | |
+| if alone statement | ✅ | |
+| if else statement | ✅ | |
+| while loop | ✅ | |
+| for loop | 🟥 | Weird behaviors with nested for loops |
+| Handle return keyword | ✅ | |
+| Fonctions without parameters | ✅ | |
+| Fonctions with parameters | ✅ | |
+| Fonction recursive |🟥 | Not implemented |
 
 ### Matrices
 
-- [x] Matrix declaration (multidimensional)
-- [x] Matrix affectation
-- [x] Matrix access
-- [x] Matrix slices (eg: A[0..2][*]) 🟥 (segfault)
-- [ ] Slices good error handling
-- [x] printmat
-- [x] Matrtices ++ and --  ✅
-- [ ] Transpose
-- [x] Matrix Matrix multiplication ✅
-- [x] Matrix Matrix addition ✅
-- [x] Matrix Matrix substraction ✅
-- [x] Matrix Matrix division ✅
-- [ ] Matrix operations with scalars
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Matrix declaration (multidimensional) | ✅ | |
+| Matrix affectation | ✅ | |
+| Matrix access | ✅ | |
+| Matrix slices (eg: A[0..2][*]) | ✅ |  |
+| Slices good error handling |✅ | |
+| printmat | ✅ | |
+| Matrices ++ and -- | ✅ | |
+| Transpose |✅ | |
+| Matrix Matrix multiplication | ✅ | |
+| Matrix Matrix addition | ✅ | |
+| Matrix Matrix subtraction | ✅ | |
+| Matrix Matrix division | ✅ | |
+| Matrix operations with scalars |✅ | |
 
 ### Other
 
