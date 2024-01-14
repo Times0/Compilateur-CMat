@@ -43,21 +43,21 @@ Le process de tests est décrit dans le fichier `tests.md`
 
 ### Matrices
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Matrix declaration (multidimensional) | ✅ | |
-| Matrix affectation | ✅ | |
-| Matrix access | ✅ | |
-| Matrix slices (eg: A[0..2][*]) | ✅ |  |
-| Slices good error handling |✅ | |
-| printmat | ✅ | |
-| Matrices ++ and -- | ✅ | |
-| Transpose |✅ | |
-| Matrix Matrix multiplication | ✅ | |
-| Matrix Matrix addition | ✅ | |
-| Matrix Matrix subtraction | ✅ | |
-| Matrix Matrix division | ✅ | |
-| Matrix operations with scalars |✅ | |
+| Feature | Status |
+|---------|--------|
+| Matrix declaration (multidimensional) | ✅ 
+| Matrix affectation | ✅ 
+| Matrix access | ✅ 
+| Matrix slices (eg: A[0..2][*]) | ✅ |
+| Slices good error handling |✅ 
+| printmat | ✅ 
+| Matrices ++ and -- | ✅ 
+| Transpose |✅ 
+| Matrix Matrix multiplication | ✅ 
+| Matrix Matrix addition | ✅ 
+| Matrix Matrix subtraction | ✅ 
+| Matrix Matrix division | ✅ 
+| Matrix operations with scalars |✅ 
 
 ### Other
 
