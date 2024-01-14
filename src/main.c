@@ -131,18 +131,18 @@ int main(int argc, char *argv[])
 
     code_dump(code);
 
-    FILE *output_file   ;
+    FILE *output_fp;
     if (output_file != NULL)
     {
-        output_file = fopen(output_file, "w+");
+        output_fp = fopen(output_file, "w+");
     }
     else
     {
-        output_file = fopen("mips.s", "w+");
+        output_fp = fopen("mips.s", "w+");
     }
-    gencode_mips_global_variable(output_file, symbol_table);
-    gencode_mips(code, output_file);
-    fclose(output_file);
+    gencode_mips_global_variable(output_fp, symbol_table);
+    gencode_mips(code, output_fp);
+    fclose(output_fp);
 
     if (verbose_flag)
         printf("-> Finished parsing, returned code : %d\n", r);
