@@ -1,6 +1,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <getopt.h>
+#include <stdint.h>
 
 #include "symbol_table.h"
 #include "quad.h"
@@ -11,48 +14,78 @@
 extern SymbolTable *symbol_table;
 extern QuadTable *code;
 
+void show_options()
+{
+    printf("Usage: cmat [options] <file>\n");
+    printf("Options:\n");
+    printf("  -h \t\t show this help\n");
+    printf("  -V \t\t verbose mode\n");
+    printf("  -l: \t\t lex only\n");
+    printf("  -o <file> \t specify the output file for the MIPS code\n");
+    printf("  -version \t show who made this compiler\n");
+    printf("  -tos \t\t show the symbol table at the end of the compilation\n");
+}
+
+void show_version()
+{
+    printf("CMat Compiler\n");
+    printf("Made by: Lucas DELETANG, Zaid GHALI, Dorian CHEVALÉRIAS, Oumarou MAIGA\n");
+    printf("Version: 1.0\n");
+    exit(EXIT_SUCCESS);
+}
+
+static struct option long_options[] = {
+    {"tos", no_argument, 0, 't'},
+    {"version", no_argument, 0, 'v'},
+    {"verbose", no_argument, 0, 'V'},
+    {"lex-only", no_argument, 0, 'l'},
+    {"output", required_argument, 0, 'o'},
+    {"help", no_argument, 0, 'h'},
+    {0, 0, 0, 0}};
+
 int main(int argc, char *argv[])
 {
-    
     uint32_t option;
     uint32_t verbose_flag = 0;
     uint32_t lex_only_flag = 0;
     uint32_t tos_flag = 0;
     char *output_file = NULL;
 
-    // Checking for '-version' option in any position
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-version") == 0) {
-            printf("CMat Compiler\n");
-            printf("Developed by: Lucas DELETANG, Zaid GHALI, Dorian CHEVALÉRIAS, Oumarou MAIGA\n");
-        }
-        else if (strcmp(argv[i], "-tos") == 0) {
+    int option_index = 0;
+    int c;
+
+    while ((c = getopt_long(argc, argv, "hVlo:t", long_options, &option_index)) != -1)
+    {
+        switch (c)
+        {
+        case 'h':
+            show_options();
+            exit(EXIT_SUCCESS);
+        case 'V':
+            verbose_flag = 1;
+            break;
+        case 'l':
+            lex_only_flag = 1;
+            break;
+        case 'o':
+            output_file = optarg;
+            break;
+        case 't':
             tos_flag = 1;
+            break;
+        case 'v':
+            show_version();
+            break;
+
+        default:
+            show_options();
+            abort();
         }
     }
 
-    while ((option = getopt(argc, argv, "Vlo")) != -1)
-    {
-        switch (option)
-        {
-            case 'V':
-                verbose_flag = 1;
-                break;
-            case 'l':
-                lex_only_flag = 1;
-                break;
-            case 'o':
-                output_file = optarg;
-                break;
-            default:
-                fprintf(stderr, "Usage: %s [-V] [-l] [-version] [-o <output_file_name>] [-tos] file [-v]\\n", argv[0]);
-                exit(EXIT_FAILURE);
-        }
-    }
-    
     if (optind >= argc)
     {
-        fprintf(stderr, "Expected argument after options\n");
+        fprintf(stderr, "error: no input file\n");
         exit(EXIT_FAILURE);
     }
 
@@ -60,12 +93,13 @@ int main(int argc, char *argv[])
     if (!(yyin = fopen(argv[optind], "r")))
     {
         perror(argv[optind]);
-        return 2;
+        exit(EXIT_FAILURE);
     }
 
     if (verbose_flag)
         printf("-> Initializing symbol table...\n");
-    
+
+    /* Program starts here */
     init_symbol_table(&symbol_table, 0);
     push_predefined_functions(&symbol_table);
     code = code_new();
@@ -81,7 +115,7 @@ int main(int argc, char *argv[])
             token = yylex();
         }
 
-        if(verbose_flag)
+        if (verbose_flag)
             printf("-> Lexical analysis finished\n");
 
         if (yyin != stdin)
@@ -97,40 +131,28 @@ int main(int argc, char *argv[])
 
     code_dump(code);
 
-    if (output_file != NULL) {
-        FILE *ff = fopen(output_file, "w+");
-        gencode_mips_global_variable(ff, symbol_table);
-        gencode_mips(code, ff);
-        fclose(ff);
+    FILE *ff;
+    if (output_file != NULL)
+    {
+        ff = fopen(output_file, "w+");
     }
-    else {
-        FILE *ff = fopen("mips.s", "w+");
-        gencode_mips_global_variable(ff, symbol_table);
-        gencode_mips(code, ff);
-        fclose(ff);
+    else
+    {
+        ff = fopen("mips.s", "w+");
     }
-
+    gencode_mips_global_variable(ff, symbol_table);
+    gencode_mips(code, ff);
+    fclose(ff);
 
     if (verbose_flag)
-        printf("-> Finished parsing with error code : %d\n", r);
+        printf("-> Finished parsing, returned code : %d\n", r);
 
     if (yyin != stdin)
         fclose(yyin);
 
-    // Afficher la table des symboles
-    if (tos_flag || 1)
+    if (tos_flag == 1)
         symbol_table_dump(symbol_table, stdout);
-    else if (!(yyout = fopen("symbol_table.txt", "w+")))
-    {
-        perror("symbol_table.txt");
-        return 1;
-        symbol_table_dump(symbol_table, yyout);
-    }
-    
-    if (yyout != stdout)
-        fclose(yyout);
 
     free_symbol_table(symbol_table);
-
     return 0;
 }
