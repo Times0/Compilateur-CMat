@@ -33,9 +33,33 @@ void init_symbol_table(SymbolTable **s, __uint32_t scope)
 
 void push_predefined_functions(SymbolTable **s)
 {
-	insert_function(&symbol_table, "print", VOID, FUNCTION, 1, (__uint32_t[]){VOID});
-    insert_function(&symbol_table, "printf", VOID, FUNCTION, 1, (__uint32_t[]){STRING});
-	insert_function(&symbol_table, "printmat", VOID, FUNCTION, 1, (__uint32_t[]){MATRIX});
+	SymbolTableElement *l1, *l2, *l3;
+	l1 = malloc(sizeof(SymbolTableElement));
+	l2 = malloc(sizeof(SymbolTableElement));
+	l3 = malloc(sizeof(SymbolTableElement));
+	if(l1 == NULL || l2 == NULL || l3 == NULL)
+	{
+		printf("Error malloc in push_predefined_functions\n");
+		exit(1);
+	}
+	l1->class = VARIABLE; l1->type = VOID;
+	l2->class = STR; l2->type = VOID;
+	l3->class = ARRAY; l3->type = MATRIX; l3->attribute.array.size[0] = 0;l3->attribute.array.size[1] = 0;
+	
+	SymbolTableElement **ll1, **ll2, **ll3;
+	ll1 = malloc(sizeof(SymbolTableElement*));
+	ll2 = malloc(sizeof(SymbolTableElement*));
+	ll3 = malloc(sizeof(SymbolTableElement*));
+	if(ll1 == NULL || ll2 == NULL || ll3 == NULL)
+	{
+		printf("Error malloc in push_predefined_functions\n");
+		exit(1);
+	}
+	ll1[0] = l1;ll2[0] = l2;ll3[0] = l3;
+
+	insert_function(&symbol_table, "print", VOID, 1, ll1, -1, -1);
+    insert_function(&symbol_table, "printf", VOID, 1, ll2, -1, -1);
+	insert_function(&symbol_table, "printmat", VOID, 1, ll3, -1, -1);
 	insert_constant(&symbol_table, (Constant){.int_value = 0, .float_value = 0.0f}, INT);
 	insert_constant(&symbol_table, (Constant){.int_value = 1, .float_value = 1.0f}, INT);
 	insert_constant(&symbol_table, (Constant){.int_value = 4, .float_value = 4.0f}, INT);
@@ -75,6 +99,30 @@ SymbolTable *get_symbol_table_by_scope(SymbolTable *s, __uint32_t scope)
 		tmp = tmp->next;
 	
 	return tmp;
+}
+
+SymbolTableElement *get_function_by_scope(SymbolTable *s, __uint32_t scope)
+{
+	SymbolTable *tmp = get_symbol_table_by_scope(s, scope);
+	
+	// on remonte jusqu'a trouver la fonction
+	while(tmp->scope != 0)
+	{
+		if(tmp->previous != NULL && tmp->previous->scope == 0)
+			break;
+		tmp = tmp->previous;
+	}
+
+	// on cherche la fonction dans la table de symbole
+	SymbolTableElement *l = s->first_symbol;
+	for(__uint32_t i = 0; i < s->size; i++)
+	{
+		if(l->class == FUNCTION)
+			if(l->attribute.function.scope == tmp->scope)
+				return l;
+		l = l->next;
+	}
+	return NULL;
 }
 
 SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t type, __uint32_t class, __uint32_t size[2], __int32_t adress, __uint32_t scope)
@@ -125,7 +173,7 @@ SymbolTableElement *insert_variable(SymbolTable *s, const char *name, __uint32_t
 	return l;
 }
 
-SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t class, __uint32_t nb_paramaters, __uint32_t *parameters_type)
+SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_t type, __uint32_t nb_paramaters, SymbolTableElement **parameters, __int32_t label, __uint32_t scope)
 {
 	SymbolTableElement *l = lookup_function(*s, name);
 	if (l == NULL)
@@ -141,18 +189,24 @@ SymbolTableElement *insert_function(SymbolTable **s, const char *name, __uint32_
 
 		strncpy(l->attribute.function.name, name, MAXTOKENLEN);
 		l->attribute.function.nb_parameters = nb_paramaters;
+		l->attribute.function.parameters = parameters;
 		
-		l->attribute.function.parameters_type = malloc(nb_paramaters * sizeof(__uint32_t));
+		/* l->attribute.function.parameters_type = malloc(nb_paramaters * sizeof(__uint32_t));
 		if(l->attribute.function.parameters_type == NULL)
 		{
 			perror("Error malloc in insert_function\n");
 			exit(1);
 		}
 		for (int i = 0; i < nb_paramaters; i++)
-			l->attribute.function.parameters_type[i] = parameters_type[i];
+		{
+			l->attribute.function.parameters_type[i].class = parameters_type[i].class;
+			l->attribute.function.parameters_type[i].type = parameters_type[i].type;
+		}*/
 		
 		l->class = FUNCTION;
 		l->type = type;
+		l->attribute.function.label = label;
+		l->attribute.function.scope = scope;
 		(*s)->size++;
 	}
 	return l;
@@ -392,22 +446,42 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 				fprintf(of, "%-14s %-11s %-19s (", elem->attribute.function.name, classStr, typeStr);
 				for(int j = 0; j < elem->attribute.function.nb_parameters; j++)
 				{
-					switch (elem->attribute.function.parameters_type[j])
+					switch (elem->attribute.function.parameters[j]->class)
 					{
-					case INT:
-						fprintf(of, "int");
-						break;
-					case FLOAT:
-						fprintf(of, "float");
-						break;
-					case MATRIX:
-						fprintf(of, "matrix");
-						break;
-					case VOID:
-						fprintf(of, "void*");
-						break;
-					case STRING:
+					case STR:
 						fprintf(of, "string");
+						break;
+					case VARIABLE:
+						switch (elem->attribute.function.parameters[j]->type)
+						{
+							case INT:
+								fprintf(of, "int");
+							break;
+							case FLOAT:
+								fprintf(of, "float");
+							break;
+							case VOID:
+								fprintf(of, "void*");
+							break;
+						}
+						break;
+					case ARRAY:
+						switch (elem->attribute.function.parameters[j]->type)
+						{
+							case INT:
+								fprintf(of, "int");
+							case FLOAT:
+								fprintf(of, "float");
+							break;
+							case MATRIX:
+								fprintf(of, "matrix");
+							break;
+						}
+
+						if(elem->attribute.function.parameters[j]->attribute.array.size[0] != 0)
+							fprintf(of, "[%d]", elem->attribute.function.parameters[j]->attribute.array.size[0]);
+						if(elem->attribute.function.parameters[j]->attribute.array.size[1] != 0)
+							fprintf(of, "[%d]", elem->attribute.function.parameters[j]->attribute.array.size[1]);
 						break;
 					}
 					if(j < elem->attribute.function.nb_parameters - 1)

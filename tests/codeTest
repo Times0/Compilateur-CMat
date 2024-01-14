@@ -1,11 +1,8 @@
-// Restrictions :   - segfault si on comple iun quad trop loin -> facilement corrigeable
-//                  - Pas de parentheses dans les expr logiques
-//                  - Pas de for
-//                  - Faire les matrices globales
+// Restrictions :
 //                  - Pas ff[a[0]]
-//                  - int = M[0] 
-
-// Tester :     - condition avec arrays
+//                  - Pas de parametres/matrice
+//                  - Pas de retour matrices/tableaux mais A[0]
+//                  - Pas de recursvite
 
 /*int a;
 float d; // b banni car opcode de branch
@@ -17,8 +14,106 @@ a=2||2;
 print(a);
 print(1);
 printf("\n");*/
+
+/*int mult(int x, int y)
+{
+    // print(x);
+    // print(y);
+    return x * y;
+}*/
+
+float fact(int a, int y)
+{
+    // int a = 1+1+1+1+1+1+1+1+1+1;
+    // return a;
+    // print(A[]);
+    // printmat(A);
+    // if (val < 2)
+    // {
+    // return A[0];
+    // }
+    // else
+    // {
+        // return fact(val - 1);
+        // fact(val - 1);
+    // }
+    return a*y;
+    /*else
+    {
+        return val;
+    }*/
+}
+
+
 int main()
 {
+    // matrix A[3] = {1, 0, 33};
+    // float j = fact(A[1]);
+    // fact(A[1]);
+    // int a = A[A[0]];
+    // fact(0.0);
+    // print(r[2]);
+    // float aa = fact(A[1]);
+    // print(aa); 
+    int a = fact(5,3);
+
+    // if(A[1])
+    // {
+        print(a);
+    // }
+
+    
+    // printmat(A);
+    // int j=mult(2, 3);
+    // print(j);
+    return 1;
+}
+/*int re(int a, int b)
+{
+    /*print(a);
+    printf("\n");
+    print(b);
+    printf("\n");
+    /*print(a*b);
+    printf("\n");
+    
+    // re(a, 0);
+    return a*b;
+}
+
+int main()
+{
+    int a=5.1;
+    int b=3;
+    // a+b+1;
+    // matrix A[3]={11, 21, 31};
+    
+    int c = re(a, 2);
+    print(c);
+    // print(a);
+    // printf("\n");
+    // print(b);
+    // int a=1;
+    // int b=1;
+}*/
+    /*int a;
+    matrix A[1];
+    if(1)
+    {
+        if(2)
+        {
+            int b;
+            re(1, b);
+            // printmat(A);
+        }
+    }
+    int c;
+}
+int g;
+
+
+
+
     /*for (int i = 0; i < 10; i++)
     {
         printf("Hello, world!\n");
@@ -30,10 +125,18 @@ int main()
         print(i);
     }*/
 
-    float r;
-    matrix a = 1, b, c =2;
+    /*matrix A[3][3]= {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    matrix B[2][2] = A[0..1][1..2];
+    printmat(B);*/
 
-    // i=9;
+    /*matrix A[3];
+    A[0] = 1+2;
+    A[1] = 2;
+    A[2] = 3;
+    printmat(A);*/
+
+    // matrix B[3] = {1, 2, 3}, C[3];
+    // printmat(B);
     
     // matrix f[3][3];
     /*f[0][0] = 1;
@@ -159,7 +262,6 @@ int main()
     a[0] = 999+b;
     print(a[0]);*/
 
-}
     // a = ff[2] + ff[3];
     // print(r);
     /*print(ff[3]);

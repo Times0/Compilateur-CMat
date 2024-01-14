@@ -37,7 +37,6 @@ QuadTable *code_new()
     }
     
     r->nextquad = 0;
-    r->main_quad = -1;
     return r;
 }
 
@@ -95,7 +94,7 @@ void gen_quad_goto(QuadTable *c, enum quad_kind k, SymbolTableElement * s1, Symb
     c->nextquad++;
 }
 
-void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement * function, SymbolTableElement ** parameters, __uint32_t nb_parameters, __uint32_t *by_address)
+void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * result, SymbolTableElement *function, SymbolTableElement **parameters, __uint32_t nb_parameters, __uint32_t *by_address, __int32_t nb_variables)
 {
     if(c->nextquad == c->capacity)
         code_grow(&c);
@@ -108,6 +107,7 @@ void gen_quad_function(QuadTable *c, enum quad_kind k, SymbolTableElement * resu
     q->nb_parameters = nb_parameters;
     q->by_address_list = by_address;
     c->nextquad++;
+    q->nb_variables = nb_variables; // on utilise label pour transmettre le nombre de variables locales declarees avant l'appel de la fonction
 }
 
 char* generate_label()
@@ -160,7 +160,6 @@ __int32_t *create_list(__int32_t i)
     }
     r[0] = i;
     r[1] = -1;
-    // printf("create list %d\n", i);
     return r;
 }
 
@@ -169,38 +168,37 @@ __int32_t *concat_list(__int32_t *l1, __int32_t *l2)
     __int32_t size1 = 0;
     if(l1 == NULL)
         l1 = create_list(-1);
+
     while(l1[size1] != -1)
         size1++;
+    
     __int32_t size2 = 0;
     if(l2 == NULL)
         l2 = create_list(-1);
+
     while(l2[size2] != -1)
         size2++;
 
-    __int32_t *r = malloc(size1+size2+1);
+
+    __int32_t *r = malloc((size1+size2+1)*sizeof(__uint32_t));
     if(r == NULL)
     {
         fprintf(stderr, "Error malloc in concat_list");
         exit(1);
     }
 
-    __int32_t i = 0;
-    while(l1[i] != -1)
+    for(int i=0;i<size1;i++)
     {
         r[i] = l1[i];
-        i++;
     }
-    __int32_t j = 0;
-    while(l2[j] != -1)
+    
+    for(int i=0;i<size2;i++)
     {
-        r[i+j] = l2[j];
-        j++;
+        r[size1+i] = l2[i];
     }
-    r[i+j] = -1;
-
-    // printf("concat list %d %d\n", size1, size2);
-
-
+    r[size1+size2] = -1;
+    
+    
     free(l1);
     free(l2);
     return r;
@@ -208,29 +206,38 @@ __int32_t *concat_list(__int32_t *l1, __int32_t *l2)
 
 void complete_list(__int32_t *l, __int32_t i)
 {
-    // printf("complete list %p with %d\n", l, i);
     if(l == NULL)
     {
-        // printf("comple nul\n");
         return;
     }
     if(l[0] == -1)
     {
-        // printf("complete -1 with %d\n", i);
         return;
+    }
+
+    if(i >= code->capacity)
+    {
+        code->capacity *= 2;
+        code->quads = realloc(code->quads, code->capacity*sizeof(Quad));
+        if(code->quads == NULL)
+        {
+            fprintf(stderr, "Error realloc in complete_list");
+            exit(1);
+        }
     }
 
     code->quads[i].label = i;
 
     __int32_t j = 0;
     
+    // pas besoin de verifier qu'on est pas out of bound car on complete des quads deja genere
     while(l[j] != -1)
     {
         if(code->quads[l[j]].branch_label == -1)
             code->quads[l[j]].branch_label = i;
         j++;
-    }   
-    // printf("complete list %d with %d and size %d\n", l[0], i, j);
+        
+    }
 }
 
 void quad_dump(Quad *q)
@@ -284,8 +291,13 @@ void quad_dump(Quad *q)
             break;
         case K_CALL_PRINT:
         case K_CALL_PRINTF:
-        case K_CALL_PRINTMAT:
-            printf("%s (", q->sym2->attribute.function.name);
+        case K_CALL:
+            if(q->sym1 != NULL)
+            {
+                symbol_dump(q->sym1, q->by_adress[0]);
+                printf(" = ");
+            }
+            printf("%s(", q->sym2->attribute.function.name);
             for(int i = q->nb_parameters - 1; i >= 0; i--)
             {
                 symbol_dump(q->function_parameters[i], q->by_address_list[i]);
@@ -293,6 +305,16 @@ void quad_dump(Quad *q)
                     printf(", ");
             }
             printf(")");
+            break;
+        case K_RETURN:
+            printf("return ");
+            symbol_dump(q->sym1, q->by_adress[0]);
+            break;
+        case K_BEGIN_FUNCTION:
+            printf("{");
+            break;
+        case K_END_FUNCTION:
+            printf("}");
             break;
         case K_COPY:
             symbol_dump(q->sym1, q->by_adress[0]);
