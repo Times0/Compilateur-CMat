@@ -249,8 +249,9 @@ statement_for : FOR {open_scope();} M '(' declaration_or_assign ';' {logical_exp
                     }
                     free(q);
 
-                    complete_list($8.true_list, $14.quad-1); // pas sur
-                    // on ajoute un label pour le for, on regenere un label (meme si inutile) pour faciliter le free 
+                    complete_list($8.true_list, $11.quad); // pas sur
+                    
+                    // on ajoute un label pour le for
                     code->quads[$3.quad+1].label = $3.quad+1;
 
                     complete_list($15.next_list, $3.quad);
@@ -1131,11 +1132,11 @@ block : '{' instruction_list
           $$.ptr = NULL;
           current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;
      }
-     | instruction
+     | %empty
      {
-          $$.next_list = $1.next_list;
-          // $$.return_list = $2.return_list;
-          complete_list($1.next_list, code->nextquad);
+          // $$.next_list = $1.next_list;
+          // $$.return_list = $1.return_list;
+          // complete_list($1.next_list, code->nextquad);
           
           adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable;
           current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;

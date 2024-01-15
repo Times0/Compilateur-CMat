@@ -509,7 +509,7 @@ void symbol_table_dump(SymbolTable *s, FILE *of)
 
 void symbol_dump(SymbolTableElement *e, __uint32_t by_adress)
 {
-	return; // Only used for debugging
+	// return; // Only used for debugging
 	if (e->class == VARIABLE)
 		if (by_adress)
 			printf("[%s]", e->attribute.variable.name);
