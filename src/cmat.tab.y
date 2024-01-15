@@ -1224,6 +1224,11 @@ multiplicative_expresssion : multiplicative_expresssion '*' primary_expression
                               }
                               else if($1.ptr->type == MATRIX && $3.ptr->type == MATRIX)
                               {
+                                   if($1.ptr->attribute.array.size[0] == $3.ptr->attribute.array.size[0])
+                                   {
+                                        $1.ptr->attribute.array.size[1] = $1.ptr->attribute.array.size[0];
+                                        $1.ptr->attribute.array.size[0] = 1;
+                                   }    
                                    if($1.ptr->attribute.array.size[1] != $3.ptr->attribute.array.size[0])
                                    {
                                         semantic_error("matrices should have compatible dimensions for \"*\"");
