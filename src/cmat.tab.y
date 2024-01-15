@@ -1126,8 +1126,23 @@ block : '{' instruction_list
                                    if(current_scope == 0)
                                         complete_list(&$2.return_list[0], code->nextquad);
                               }
-     | '{' '}' { $$.ptr = NULL; current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope; }
-     /* | instruction */ // tres smart 
+     | '{' '}' 
+     { 
+          $$.ptr = NULL;
+          current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;
+     }
+     | instruction
+     {
+          $$.next_list = $1.next_list;
+          // $$.return_list = $2.return_list;
+          complete_list($1.next_list, code->nextquad);
+          
+          adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable;
+          current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;
+          // si on finit une fonction
+          if(current_scope == 0)
+               semantic_error("can't declare a function without {}");
+     }
 
 
 additive_expression : multiplicative_expresssion
