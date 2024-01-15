@@ -1132,11 +1132,11 @@ block : '{' instruction_list
           $$.ptr = NULL;
           current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;
      }
-     | %empty
+     | instruction
      {
-          // $$.next_list = $1.next_list;
-          // $$.return_list = $1.return_list;
-          // complete_list($1.next_list, code->nextquad);
+          $$.next_list = $1.next_list;
+          $$.return_list = $1.return_list;
+          complete_list($1.next_list, code->nextquad);
           
           adress -= get_symbol_table_by_scope(symbol_table, current_scope)->nb_variable;
           current_scope = get_symbol_table_by_scope(symbol_table, current_scope)->previous->scope;

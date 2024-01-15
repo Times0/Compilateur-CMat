@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
     int r = yyparse();
 
-    code_dump(code);
+    // code_dump(code);
 
     FILE *output_fp;
     if (output_file != NULL)

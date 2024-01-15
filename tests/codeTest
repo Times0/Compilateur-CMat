@@ -43,7 +43,7 @@ float fact(int a, int y)
         return val;
     }*/
 }
-//13 18
+// 18
 
 
 int main()

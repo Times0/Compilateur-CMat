@@ -9,9 +9,9 @@ float g(float y) {
 }
 
 int main() {
-  int a = g(42.0);
+  int a = g(42);
   print(a);
-  float b = f(42);
+  float b = f(42.42);
   print(b);
   return 0;
 }
