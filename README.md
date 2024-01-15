@@ -34,7 +34,7 @@ Le process de tests est décrit dans le fichier `tests.md`
 | if alone statement | ✅ | |
 | if else statement | ✅ | |
 | while loop | ✅ | |
-| for loop | 🟥 | Weird behaviors with nested for loops |
+| for loop | ✅ |  |
 | Handle return keyword | ✅ | |
 | Fonctions without parameters | ✅ | |
 | Fonctions with parameters | ✅ | |

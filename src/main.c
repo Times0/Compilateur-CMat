@@ -19,7 +19,7 @@ void show_options()
     printf("Usage: cmat [options] <file>\n");
     printf("Options:\n");
     printf("  -h \t\t show this help\n");
-    printf("  -V \t\t verbose mode\n");
+    printf("  -V \t\t verbose mode (show symbol table, intermediate code, etc.)\n");
     printf("  -l: \t\t lex only\n");
     printf("  -o <file> \t specify the output file for the MIPS code\n");
     printf("  -version \t show who made this compiler\n");
@@ -46,9 +46,9 @@ static struct option long_options[] = {
 int main(int argc, char *argv[])
 {
     uint32_t option;
-    uint32_t verbose_flag = 0;
     uint32_t lex_only_flag = 0;
     uint32_t tos_flag = 0;
+    uint32_t verbose_flag = 0;
     char *output_file = NULL;
 
     int option_index = 0;
@@ -129,7 +129,13 @@ int main(int argc, char *argv[])
 
     int r = yyparse();
 
-    // code_dump(code);
+    if (verbose_flag)
+    {
+        printf("-> Here is the generated intermediate code:\n");
+        printf("--------START OF INTERMEDIATE CODE--------\n");
+        code_dump(code);
+        printf("--------END OF INTERMEDIATE CODE--------\n");
+    }
 
     FILE *output_fp;
     if (output_file != NULL)
@@ -150,7 +156,7 @@ int main(int argc, char *argv[])
     if (yyin != stdin)
         fclose(yyin);
 
-    if (tos_flag == 1)
+    if (tos_flag == 1 || verbose_flag == 1)
         symbol_table_dump(symbol_table, stdout);
 
     free_symbol_table(symbol_table);
